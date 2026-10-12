@@ -63,6 +63,12 @@ for r in home stations checklist contacts rsvp condolences gallery account admin
   check "$r" 200 "$BASE?r=$r"
 done
 
+if curl -s -b "$JAR" "$BASE?r=admin" | grep -q "Version $(tr -d '[:space:]' < "$ROOT/VERSION")"; then
+  ok "Version im Dashboard"
+else
+  fail "Version wird im Dashboard nicht angezeigt"
+fi
+
 echo "Benutzer anlegen und als Benutzer anmelden"
 GROUP=$(php -r '$g = json_decode(file_get_contents($argv[1]), true); echo $g[0]["id"] ?? "";' "$TMP/app/data/groups.json")
 C=$(csrf "admin&a=users")

@@ -28,6 +28,7 @@ return [
     'log.action.change' => 'Änderung',
     'log.action.admin' => 'Verwaltung',
     'admin.title' => 'Verwaltung',
+    'dash.version' => 'Version {v}',
     'admin.tab.overview' => 'Übersicht',
     'admin.tab.users' => 'Benutzer',
     'admin.tab.groups' => 'Gruppen & Rechte',

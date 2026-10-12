@@ -33,6 +33,17 @@ function upload_limit_bytes(): int
     return min($limits);
 }
 
+/** Version der Anwendung aus der Datei VERSION im Anwendungsverzeichnis; '' wenn sie fehlt oder ungültig ist. */
+function app_version(): string
+{
+    static $v = null;
+    if ($v === null) {
+        $raw = trim((string)@file_get_contents(ROOT_DIR . '/VERSION'));
+        $v = preg_match('/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/', $raw) ? $raw : '';
+    }
+    return $v;
+}
+
 function e(mixed $s): string
 {
     return htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');

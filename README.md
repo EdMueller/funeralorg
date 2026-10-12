@@ -85,7 +85,7 @@ curl -sI https://example.com/gedenkseite/app/bootstrap.php   | head -1
 ```bash
 cd /var/www/example.com
 mkdir -p private/gedenkseite
-cp -a /path/to/gedenkseite/{app,bin,configs,data,docs} private/gedenkseite/
+cp -a /path/to/gedenkseite/{app,bin,configs,data,docs,VERSION} private/gedenkseite/
 cp -a /path/to/gedenkseite/{index.php,.htaccess,assets} web/
 chown -R www-data:www-data private/gedenkseite web
 chmod -R o-rwx private/gedenkseite

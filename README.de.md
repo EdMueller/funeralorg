@@ -93,7 +93,7 @@ Die Verwaltungsebene legt je Website `web/` (Webroot) und `private/` an:
 ```bash
 cd /var/www/clients/client1/web1
 mkdir -p private/gedenkseite
-cp -a /tmp/gs/gedenkseite/{app,bin,configs,data,docs} private/gedenkseite/
+cp -a /tmp/gs/gedenkseite/{app,bin,configs,data,docs,VERSION} private/gedenkseite/
 cp -a /tmp/gs/gedenkseite/{index.php,.htaccess,assets} web/
 rm -f web/index.html                             # ISPConfig-Platzhalter (vorher prüfen)
 

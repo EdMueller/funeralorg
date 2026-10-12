@@ -48,6 +48,12 @@ Please also check the change manually where it matters: as administrator, as a u
 through a shared link, and on a phone-sized screen (about 390 px). Update `ECKDATEN.md` if you change routes, the data
 model or configuration keys.
 
+## Releases
+
+The version number lives in the `VERSION` file and must match the newest entry in `CHANGELOG.md` (checked in CI).
+To release: move the entries from “Unreleased” to a new version heading, update `VERSION`, commit, tag
+(`git tag -a vX.Y.Z`), push the tag and create the GitHub release from the changelog entry.
+
 ## Pull requests
 
 - Keep them focused: one topic per pull request.

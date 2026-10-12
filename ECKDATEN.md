@@ -89,6 +89,7 @@ gedenkseite/                    ← Webroot (gesamter Projektordner)
 ├── docs/                       Server-Snippets für ISPConfig (nginx/Apache), screenshots/ (Bilder für das README, erfundene Beispieldaten)
 ├── README.md                   Vorstellung, Schnellstart, Installation, Betrieb (englisch)
 ├── README.de.md                dieselbe Anleitung auf Deutsch
+├── VERSION                     Versionsnummer (`app_version()`, Anzeige im Admin-Dashboard; muss zum neuesten CHANGELOG-Eintrag passen, per CI geprüft)
 ├── LICENSE                     GNU GPL v3.0
 ├── CHANGELOG.md                Änderungsprotokoll (Keep a Changelog, Semantic Versioning; aktuell 0.0.1)
 ├── SECURITY.md  CONTRIBUTING.md  CODE_OF_CONDUCT.md   Meldeweg für Sicherheitslücken, Beitragsregeln, Verhaltenskodex (Contributor Covenant 2.1, Kontakt support@eduard.de; englisch)

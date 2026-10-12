@@ -29,6 +29,13 @@ jobs:
           errors=$(find . -name '*.php' -not -path './data/*' -exec php -l {} \; | grep -v 'No syntax errors detected' || true)
           if [ -n "$errors" ]; then echo "$errors"; exit 1; fi
 
+      - name: VERSION matches CHANGELOG
+        run: |
+          latest=$(grep -m1 -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+[^]]*\]' CHANGELOG.md | sed 's/^## \[//; s/\]$//')
+          current=$(tr -d '[:space:]' < VERSION)
+          echo "CHANGELOG: $latest, VERSION: $current"
+          [ "$latest" = "$current" ]
+
       - name: Language files (de/en)
         run: php bin/check-lang.php
 

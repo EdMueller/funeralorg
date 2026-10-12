@@ -14,6 +14,11 @@ DirectorySlash On
   Require all granted
 </Files>
 
+# Versionsdatei nicht ausliefern
+<Files "VERSION">
+  Require all denied
+</Files>
+
 # Dokumentation, Daten- und Hilfsdateien nicht ausliefern
 <FilesMatch "\.(md|json|jsonl|lock|sh|ini|yml|log)$">
   Require all denied

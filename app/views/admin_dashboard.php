@@ -102,3 +102,6 @@ $fails = ($t['login_fail'] ?? 0) + ($t['login_blocked'] ?? 0);
           <td><?= $u['last_login'] ? e(fmt_date($u['last_login'], true)) : '<span class="text-muted">' . e(t('common.never')) . '</span>' ?></td></tr>
     <?php endforeach; ?></tbody></table></div>
 </section>
+<?php if (app_version() !== ''): ?>
+<p class="small text-muted mt-3 mb-0"><?= e(t('dash.version', ['v' => app_version()])) ?></p>
+<?php endif; ?>
