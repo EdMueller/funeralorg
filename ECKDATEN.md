@@ -481,7 +481,7 @@ Format je Zeile (`data/logs/JJJJ-MM.jsonl`):
 | `backup_keep_days` | 14 | Tages-Snapshots |
 | `upload_max_mb`, `thumb_size`, `medium_size`, `jpeg_quality`, `image_memory_limit` | 40, 480, 1800, 88, 768M | |
 | `label_formats` | 3x8, 2x7 | Etikettenmaße in mm |
-| `access_formats` | 2x10, 2x9 (`Access::FORMATS`) | Klebestreifen-Bögen in mm (wie `label_formats`); Standard 2 × 10 à 105 × 28 mm |
+| `access_formats` | 2x10, 2x9, 2x6 (`Access::FORMATS`) | Klebestreifen-Bögen in mm (wie `label_formats`); Standard 2 × 10 à 105 × 28 mm |
 | `privacy_url` | leer | Optionaler Link zur Datenschutzerklärung auf den Seiten „Passwort vergessen“ |
 | `mail_from` | leer | Absender für „Passwort vergessen“; leer = `noreply@<Domain der Anwendung ohne www./Port>` (`Reset::fromAddress()`) |
 | `image_max_pixels` | 50000000 | Obergrenze Breite × Höhe beim Upload (0 = unbegrenzt); Prüfung vor dem Dekodieren |

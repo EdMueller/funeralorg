@@ -5,6 +5,10 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+### Added
+
+- Access-details printing: label format 2 × 6 (99.1 × 42 mm, 12 labels per A4 sheet, with side margin)
+
 ## [0.0.1] - 2026-10-12
 
 First public release.

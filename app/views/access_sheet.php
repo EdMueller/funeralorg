@@ -6,6 +6,8 @@ $pages = array_chunk($cells, $perPage) ?: [[]];
 $fmtMm = fn($v) => number_format((float)$v, 2, '.', '') . 'mm';
 $shown = preg_replace('#^https?://#', '', rtrim($addr, '/'));
 $qr = Qr::svg($addr, t('access.qr_alt'));
+// Ab dieser Länge passt der Benutzername in Normalschrift nicht mehr neben Beschriftung und QR-Code
+$maxChars = (int)floor(((float)$fmt['w'] - 59) / 2.65);
 ?><!doctype html>
 <html lang="<?= e(I18n::lang()) ?>">
 <head>
@@ -50,7 +52,7 @@ $qr = Qr::svg($addr, t('access.qr_alt'));
       <div class="cell">
         <?php if ($r): ?>
           <div class="txt">
-            <div class="ln"><span class="k"><?= e(t('access.username')) ?></span><span class="v<?= strlen($r['username']) > 17 ? ' long' : '' ?>"><?= e($r['username']) ?></span></div>
+            <div class="ln"><span class="k"><?= e(t('access.username')) ?></span><span class="v<?= strlen($r['username']) > $maxChars ? ' long' : '' ?>"><?= e($r['username']) ?></span></div>
             <div class="ln"><span class="k"><?= e(t('access.password')) ?></span><span class="v"><?= e($r['password']) ?></span></div>
             <div class="url"><?= e($shown) ?></div>
           </div>
