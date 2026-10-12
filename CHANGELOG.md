@@ -22,6 +22,7 @@ First public release.
 - “Forgot password” by email link or request to the administrator
 - English and German interface
 - Setup page that creates the first administrator and stores the public address (`base_url`)
+- `VERSION` file with the version number, shown in the administration dashboard
 
 ### Security
 
