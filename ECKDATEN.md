@@ -91,7 +91,7 @@ gedenkseite/                    ← Webroot (gesamter Projektordner)
 ├── README.de.md                dieselbe Anleitung auf Deutsch
 ├── VERSION                     Versionsnummer (`app_version()`, Anzeige im Admin-Dashboard; muss zum neuesten CHANGELOG-Eintrag passen, per CI geprüft)
 ├── LICENSE                     GNU GPL v3.0
-├── CHANGELOG.md                Änderungsprotokoll (Keep a Changelog, Semantic Versioning; aktuell 0.0.1)
+├── CHANGELOG.md                Änderungsprotokoll (Keep a Changelog, Semantic Versioning)
 ├── SECURITY.md  CONTRIBUTING.md  CODE_OF_CONDUCT.md   Meldeweg für Sicherheitslücken, Beitragsregeln, Verhaltenskodex (Contributor Covenant 2.1, Kontakt support@eduard.de; englisch)
 ├── .github/                    CI (php -l, check-lang, Rauchtest für PHP 8.2–8.4), Issue-/PR-Vorlagen, Dependabot für Actions
 ├── THIRD-PARTY.md              Lizenzen der mitgelieferten Fremdkomponenten

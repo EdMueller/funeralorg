@@ -5,9 +5,17 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+## [0.0.2] - 2026-10-12
+
 ### Added
 
-- Access-details printing: label format 2 × 6 (99.1 × 42 mm, 12 labels per A4 sheet, with side margin)
+- Access-details printing: label format 2 × 6 (99.1 × 42 mm, 12 labels per A4 sheet, 8 mm left and 22 mm top margin,
+  no gap between labels)
+
+### Changed
+
+- Access-details printing: the length from which a username is printed in the smaller font now depends on the
+  label width
 
 ## [0.0.1] - 2026-10-12
 
@@ -42,5 +50,6 @@ First public release.
   `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `THIRD-PARTY.md`
 - GitHub Actions (syntax check, language files, smoke test on PHP 8.2 to 8.4) and issue/pull request templates
 
-[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.1...HEAD
+[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.2...HEAD
+[0.0.2]: https://github.com/EdMueller/funeralorg/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/EdMueller/funeralorg/releases/tag/v0.0.1

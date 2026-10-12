@@ -63,7 +63,8 @@ for r in home stations checklist contacts rsvp condolences gallery account admin
   check "$r" 200 "$BASE?r=$r"
 done
 
-if curl -s -b "$JAR" "$BASE?r=admin" | grep -q "Version $(tr -d '[:space:]' < "$ROOT/VERSION")"; then
+PAGE=$(curl -s -b "$JAR" "$BASE?r=admin")   # erst vollständig lesen: grep -q in einer Pipe bricht curl sonst zufällig ab
+if grep -q "Version $(tr -d '[:space:]' < "$ROOT/VERSION")" <<<"$PAGE"; then
   ok "Version im Dashboard"
 else
   fail "Version wird im Dashboard nicht angezeigt"
