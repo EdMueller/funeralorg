@@ -1,0 +1,8 @@
+/configs/config.php
+/data/*
+!/data/.htaccess
+!/data/.gitkeep
+/.idea/
+/vendor/
+*.tmp
+/CLAUDE.md

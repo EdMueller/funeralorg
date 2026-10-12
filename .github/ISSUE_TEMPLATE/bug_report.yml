@@ -1,0 +1,67 @@
+name: Bug report
+description: Something does not work as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Please **do not** post security vulnerabilities here, see `SECURITY.md` in the repository (use the private “Report a vulnerability” form on the Security tab).
+        Please also **do not** paste personal data (names, addresses, memorial texts, logs with real names).
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Log in as …
+        2. Open …
+        3. Click …
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: e.g. v1.0.0 or 3f2a1bc
+    validations:
+      required: true
+  - type: input
+    id: php
+    attributes:
+      label: PHP version
+      placeholder: e.g. 8.3.12
+    validations:
+      required: true
+  - type: dropdown
+    id: server
+    attributes:
+      label: Web server
+      options:
+        - Apache
+        - nginx
+        - PHP built-in server
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: layout
+    attributes:
+      label: Installation
+      options:
+        - Subdirectory of a website (option 1)
+        - Own website, data outside the web root (option 2)
+        - Custom path (option 3)
+        - Domain root
+        - Other
+  - type: textarea
+    id: logs
+    attributes:
+      label: PHP error log or screenshots
+      description: Remove any personal data first.
+      render: text

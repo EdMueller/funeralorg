@@ -1,0 +1,26 @@
+name: Feature request
+description: Suggest an improvement
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please keep the project's principles in mind: no database, no Composer, no framework, no CDN
+        (see `CONTRIBUTING.md` in the repository).
+  - type: textarea
+    id: problem
+    attributes:
+      label: Which problem should it solve?
+      description: Describe the situation, not only the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like to see?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered

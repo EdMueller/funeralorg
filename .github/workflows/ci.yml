@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.2', '8.3', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: gd, zip, mbstring, fileinfo, exif
+          coverage: none
+
+      - name: Syntax check (php -l)
+        run: |
+          errors=$(find . -name '*.php' -not -path './data/*' -exec php -l {} \; | grep -v 'No syntax errors detected' || true)
+          if [ -n "$errors" ]; then echo "$errors"; exit 1; fi
+
+      - name: Language files (de/en)
+        run: php bin/check-lang.php
+
+      - name: Smoke test
+        run: bin/smoke-test.sh

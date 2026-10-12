@@ -1,0 +1,33 @@
+# Apache-Regeln für das Webroot-Verzeichnis der Anwendung.
+# Sie funktionieren unabhängig davon, ob die Anwendung unter der Domainwurzel
+# oder in einem Unterverzeichnis (z. B. /beerdigung/) liegt.
+
+Options -Indexes
+DirectoryIndex index.php
+DirectorySlash On
+
+# Nur index.php darf ausgeführt werden (schützt u. a. configs/config.php)
+<FilesMatch "\.php$">
+  Require all denied
+</FilesMatch>
+<Files "index.php">
+  Require all granted
+</Files>
+
+# Dokumentation, Daten- und Hilfsdateien nicht ausliefern
+<FilesMatch "\.(md|json|jsonl|lock|sh|ini|yml|log)$">
+  Require all denied
+</FilesMatch>
+
+# Anwendungsverzeichnisse sperren, falls sie im selben Verzeichnis liegen
+RedirectMatch 404 (?i)/(app|bin|configs|data|docs)/
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^(app|bin|configs|data|docs)(/|$) - [F,L]
+</IfModule>
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.(css|js|woff2?)$">
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+</IfModule>
