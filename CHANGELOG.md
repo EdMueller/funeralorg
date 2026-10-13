@@ -9,6 +9,7 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 - Sender address (Admin → Sender, up to 5 lines) and printing of sender labels on a full sheet of the existing
   address label formats, with selectable start label
+- Address and sender labels: label format 2 × 6 (99.1 × 42 mm)
 
 ### Changed
 

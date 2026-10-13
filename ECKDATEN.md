@@ -19,7 +19,7 @@ Webanwendung, mit der eine Familie einen Trauerfall organisiert:
 | Kontakte | Postadresse, Festnetz/Mobil getrennt (`tel:`-Links), E-Mail, Status „angerufen" / „Brief versendet", vCard-Import |
 | Zu- und Absagen | Status je Kontakt, Erwachsene/Kinder, Live-Summen |
 | Kondolenzen | Karte, Blumen, Kranz, Spende (Betrag), Dankeskarte versendet |
-| Export | XLSX, CSV (Serienbrief), Adressetiketten und Absenderetiketten A4 (3×8, 2×7, Startetikett wählbar) |
+| Export | XLSX, CSV (Serienbrief), Adressetiketten und Absenderetiketten A4 (3×8, 2×7, 2×6, Startetikett wählbar) |
 | Verwaltung | Benutzer, Gruppen & Rechte, Freigabelinks, Statistik-Dashboard, Protokoll, Backup |
 
 Zielgruppe: Familie und Helfer, überwiegend auf dem Handy. Tonalität der Oberfläche: ruhig, sachlich, würdevoll, Du-Form.
@@ -482,7 +482,7 @@ Format je Zeile (`data/logs/JJJJ-MM.jsonl`):
 | `log_full_ip`, `log_retention_months` | false, 12 | |
 | `backup_keep_days` | 14 | Tages-Snapshots |
 | `upload_max_mb`, `thumb_size`, `medium_size`, `jpeg_quality`, `image_memory_limit` | 40, 480, 1800, 88, 768M | |
-| `label_formats` | 3x8, 2x7 | Etikettenmaße in mm |
+| `label_formats` | 3x8, 2x7, 2x6 | Etikettenmaße in mm |
 | `access_formats` | 2x6, 2x9 (`Access::FORMATS`) | Klebestreifen-Bögen in mm (wie `label_formats`); das erste Format ist der Standard: 2 × 6 à 99,1 × 42 mm |
 | `privacy_url` | leer | Optionaler Link zur Datenschutzerklärung auf den Seiten „Passwort vergessen“ |
 | `mail_from` | leer | Absender für „Passwort vergessen“; leer = `noreply@<Domain der Anwendung ohne www./Port>` (`Reset::fromAddress()`) |
