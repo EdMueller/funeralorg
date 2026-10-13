@@ -1,4 +1,5 @@
 <?php
+$sender = $sender ?? false;
 $perPage = $fmt['cols'] * $fmt['rows'];
 $cells = array_merge(array_fill(0, max(0, min($perPage - 1, $start - 1)), null), $list);
 $pages = array_chunk($cells, $perPage) ?: [[]];
@@ -27,14 +28,16 @@ $fmtMm = fn($v) => number_format((float)$v, 2, '.', '') . 'mm';
 </head>
 <body>
 <div class="hint">
-  <span><?= e(tn('labels.count', count($list), ['sheets' => count($pages)])) ?> <?= e(t('print.hint')) ?></span>
+  <span><?= e(tn($sender ? 'labels.sender_count' : 'labels.count', count($list), ['sheets' => count($pages)])) ?> <?= e(t('print.hint')) ?></span>
   <button type="button" id="printBtn"><?= e(t('print.print')) ?></button>
 </div>
 <?php foreach ($pages as $page): ?>
   <div class="sheet">
     <?php foreach ($page as $c): ?>
       <div class="label">
-        <?php if ($c): ?>
+        <?php if ($c && $sender): ?>
+          <?php foreach ($c as $i => $line): ?><div<?= $i === 0 ? ' class="name"' : '' ?>><?= e($line) ?></div><?php endforeach; ?>
+        <?php elseif ($c): ?>
           <?php if ($c['salutation']): ?><div><?= e($c['salutation']) ?></div><?php endif; ?>
           <div class="name"><?= e(Contacts::fullName($c)) ?></div>
           <div><?= e($c['street']) ?></div>

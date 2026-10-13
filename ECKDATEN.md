@@ -19,7 +19,7 @@ Webanwendung, mit der eine Familie einen Trauerfall organisiert:
 | Kontakte | Postadresse, Festnetz/Mobil getrennt (`tel:`-Links), E-Mail, Status „angerufen" / „Brief versendet", vCard-Import |
 | Zu- und Absagen | Status je Kontakt, Erwachsene/Kinder, Live-Summen |
 | Kondolenzen | Karte, Blumen, Kranz, Spende (Betrag), Dankeskarte versendet |
-| Export | XLSX, CSV (Serienbrief), Adressetiketten A4 (3×8, 2×7, Startetikett wählbar) |
+| Export | XLSX, CSV (Serienbrief), Adressetiketten und Absenderetiketten A4 (3×8, 2×7, Startetikett wählbar) |
 | Verwaltung | Benutzer, Gruppen & Rechte, Freigabelinks, Statistik-Dashboard, Protokoll, Backup |
 
 Zielgruppe: Familie und Helfer, überwiegend auf dem Handy. Tonalität der Oberfläche: ruhig, sachlich, würdevoll, Du-Form.
@@ -105,7 +105,7 @@ gedenkseite/                    ← Webroot (gesamter Projektordner)
 data/
 ├── users.json  groups.json  shares.json  contacts.json  checklist.json
 ├── memorial.json  gallery.json  stations.json  selections.json  ratelimit.json
-├── settings.json               Einstellungen aus der Ersteinrichtung: `base_url` (öffentliche Adresse, Basis für Reset-Mail-Links)
+├── settings.json               Einstellungen: `base_url` (öffentliche Adresse, Basis für Reset-Mail-Links, aus der Ersteinrichtung), `sender` (Absenderadresse, Zeilen-Array)
 ├── resets.json                 flüchtig: Reset-Tokens (Hash), Anfragen, Zähler – nicht in Snapshots/Backup-Download
 ├── *.lock                      Lock-Dateien (flock), dürfen gelöscht werden, wenn nichts läuft
 ├── logs/JJJJ-MM.jsonl          Ereignisprotokoll
@@ -186,7 +186,8 @@ in `.htaccess` gesetzt) und nginx leiten selbstständig um.
 | `contacts`, `rsvp`, `condolences` | – (`filter`, `rel`) | GET | jeweiliger Bereich R | Listen |
 | dito | `export` (`fmt`=csv/xlsx) | GET/POST | Bereich R | Export, Spalten je Bereich und Feldrechten; POST mit `ids[]` exportiert nur die Auswahl |
 | dito | `labels` (`format`, `start`) | GET/POST | Bereich R + Feld „Postadresse" | Etiketten-Druckansicht; POST mit `ids[]` nur für die Auswahl |
-| `contacts` | `access` (`mode`=new/reset; `ids[]`, `group_id`, `format`, `start`) | POST | A | Zugänge für die Auswahl anlegen bzw. Passwörter neu setzen; Antwort = Druckansicht „Klebestreifen“ (2 Spalten × Zeilen: Benutzername, Passwort, Adresse, QR-Code der Anmeldeseite; ohne Namen). **Klartext-Passwörter nur in dieser Antwort**, `Cache-Control: no-store`, nicht gespeichert; Kontakte mit bestehendem Zugang werden bei `new` übersprungen, ohne Zugang bei `reset` |
+| dito | `senderlabels` (`format`, `start`) | POST | Bereich R + Feld „Postadresse" | Druckansicht mit der Absenderadresse auf einem vollen Bogen (ab Startetikett); nur wenn eine Absenderadresse hinterlegt ist |
+| `contacts` | `access` (`mode`=new/reset; `ids[]`, `group_id`, `format`, `start`) | POST | A | Zugänge für die Auswahl anlegen bzw. Passwörter neu setzen; Antwort = Druckansicht „Klebestreifen“ (Formate 2×6 [Standard] und 2×9, 2 Spalten × Zeilen: Benutzername, Passwort, Adresse, QR-Code der Anmeldeseite; ohne Namen). **Klartext-Passwörter nur in dieser Antwort**, `Cache-Control: no-store`, nicht gespeichert; Kontakte mit bestehendem Zugang werden bei `new` übersprungen, ohne Zugang bei `reset` |
 | `forgot` | – (`a=help` für Weg 2) | GET/POST | öffentlich | Passwort vergessen: Benutzername → Link per Mail; `help`: Name + optionale Telefonnummer → Anfrage an den Admin. **Antwort immer gleich**, Mail wird nach dem Abschluss der Antwort gesendet |
 | `lang` | – (`lang`=de/en, `_back`) | POST | öffentlich | Sprache wählen: setzt Cookie `gdk_lang` (1 Jahr, Pfad = `base_path()`, SameSite=Lax) und speichert sie im Konto (nur bei Benutzern, nicht bei Freigabelinks); kein Protokolleintrag (keine Datenänderung); Rücksprung über `_back` |
 | `reset` | – (`t`=Token) | GET/POST | öffentlich | Neues Passwort per Link (≥ 10 Zeichen); Token 60 min, einmalig; danach Bestätigungsmail, alle Sitzungen des Kontos enden |
@@ -219,6 +220,7 @@ in `.htaccess` gesetzt) und nginx leiten selbstständig um.
 | `admin` | `impersonate` (`id`) | POST | A | „Als Benutzer anmelden“ (siehe unten) |
 | `admin` | `groups` / `groupsave` / `groupdelete` | GET/POST | A | Gruppen (Löschen nur ohne Mitglieder) |
 | `admin` | `shares` / `sharesave` / `sharerevoke` / `sharedelete` | GET/POST | A | Freigabelinks |
+| `admin` | `sender` / `sendersave` | GET/POST | A | Absenderadresse für Umschläge (bis 5 Zeilen à 60 Zeichen), gespeichert in `settings.json` → `sender` (Array), gelesen über `sender_lines()` |
 | `admin` | `log` (`days`, `act`, `usr`, `q`, `fmt`) | GET | A | Protokoll, Export CSV/XLSX |
 | `admin` | `backup` / `snapshot` / `download` (`full=1`) | GET/POST | A | Backup |
 
@@ -481,7 +483,7 @@ Format je Zeile (`data/logs/JJJJ-MM.jsonl`):
 | `backup_keep_days` | 14 | Tages-Snapshots |
 | `upload_max_mb`, `thumb_size`, `medium_size`, `jpeg_quality`, `image_memory_limit` | 40, 480, 1800, 88, 768M | |
 | `label_formats` | 3x8, 2x7 | Etikettenmaße in mm |
-| `access_formats` | 2x10, 2x9, 2x6 (`Access::FORMATS`) | Klebestreifen-Bögen in mm (wie `label_formats`); Standard 2 × 10 à 105 × 28 mm |
+| `access_formats` | 2x6, 2x9 (`Access::FORMATS`) | Klebestreifen-Bögen in mm (wie `label_formats`); das erste Format ist der Standard: 2 × 6 à 99,1 × 42 mm |
 | `privacy_url` | leer | Optionaler Link zur Datenschutzerklärung auf den Seiten „Passwort vergessen“ |
 | `mail_from` | leer | Absender für „Passwort vergessen“; leer = `noreply@<Domain der Anwendung ohne www./Port>` (`Reset::fromAddress()`) |
 | `image_max_pixels` | 50000000 | Obergrenze Breite × Höhe beim Upload (0 = unbegrenzt); Prüfung vor dem Dekodieren |
@@ -535,7 +537,7 @@ Format je Zeile (`data/logs/JJJJ-MM.jsonl`):
 - **Passwort vergessen (DSGVO):** Mailadresse nur über den verknüpften Kontakt (`users.contact_id` → `contacts.email`), kein eigenes Benutzerfeld. Konten ohne Kontakt/Mail (z. B. der erste Admin) können nur über Weg 2 oder durch einen anderen Admin zurückgesetzt werden. Tokens 256 Bit, nur als SHA-256 gespeichert, 60 min, einmalig; Limit 5 Anfragen/h je IP, 3/h je Benutzername; Anfragen nach 30 Tagen gelöscht (`Log::maintenance` → `Reset::purge`); `resets.json` bleibt aus Snapshots und Backup-Download; Passwortwechsel setzt `users.pw_changed` und beendet ältere Sitzungen (`$_SESSION['login_t']`). Links in Mails entstehen nur aus `configured_base_url()` (nie aus dem Host-Header); ohne Basis-URL entfällt der Versand. Mailversand über `mail()` (Zustellung hängt vom MTA des Servers ab: SPF/DKIM für die Absenderdomain). Datenschutzhinweis auf `forgot` (Mail/Hilfe) und `reset` über `app/views/_reset_privacy.php`; optionaler Link zur Datenschutzerklärung über `privacy_url`. Der Text beschreibt nur die tatsächliche Verarbeitung und ersetzt keine rechtliche Prüfung – bei Änderungen am Speicherverhalten anpassen.
 - Eigenes Passwort ändern über `r=account` (freiwillig, kein Änderungszwang). Zugangsdaten für Kontakte: Passwort-Klartext gibt es nur beim Anlegen/Zurücksetzen; verloren = „Passwort neu setzen und drucken“.
 - Keine Sortierung der Bilder per Drag & Drop; Reihenfolge = Upload-Reihenfolge.
-- Etiketten ohne Absenderzeile; bei Bedarf in `labels.php` ergänzen.
+- Adressetiketten ohne Absenderzeile; die Absenderadresse wird getrennt über „Absenderetiketten drucken“ auf eigene Bögen gedruckt (`labels.php` mit `$sender`).
 - Denkbar: Druckansicht „Gästeliste für das Gasthaus", Sitzplan, Kondolenzbuch für Gäste über Freigabelink (Schreibrecht nur für eigenen Eintrag).
 
 ## Als Benutzer anmelden („Run as user“)

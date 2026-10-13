@@ -30,6 +30,9 @@ if ($section === 'rsvp') {
       <?php if (Perm::field('address')): ?>
         <li><hr class="dropdown-divider"></li>
         <li><button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#labelModal"><?= e(t('tb.labels_menu')) ?></button></li>
+        <?php if (sender_lines()): ?>
+        <li><button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#senderModal"><?= e(t('tb.sender_menu')) ?></button></li>
+        <?php endif; ?>
       <?php endif; ?>
     </ul>
   </div>
@@ -56,4 +59,27 @@ if ($section === 'rsvp') {
     </form>
   </div>
 </div>
+<?php if (sender_lines()): ?>
+<div class="modal fade" id="senderModal" tabindex="-1" aria-labelledby="senderTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <form class="modal-content" method="post" action="<?= e(url($section, ['a' => 'senderlabels'])) ?>" target="_blank">
+      <?= Csrf::field() ?>
+      <div class="modal-header"><h2 class="modal-title h5" id="senderTitle"><?= e(t('tb.sender_title')) ?></h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= e(t('common.close')) ?>"></button></div>
+      <div class="modal-body">
+        <p class="small text-muted"><?= e(t('tb.sender_scope')) ?></p>
+        <pre class="small border rounded p-2 mb-3"><?= e(implode("\n", sender_lines())) ?></pre>
+        <label class="form-label" for="sd-f"><?= e(t('tb.labels_sheet')) ?></label>
+        <select class="form-select mb-3" id="sd-f" name="format">
+          <?php foreach ($formats as $k => $f): ?><option value="<?= e($k) ?>"><?= e($f['name']) ?></option><?php endforeach; ?>
+        </select>
+        <label class="form-label" for="sd-s"><?= e(t('tb.labels_start')) ?></label>
+        <input class="form-control" id="sd-s" type="number" name="start" value="1" min="1" max="40">
+        <div class="form-text"><?= e(t('tb.labels_hint')) ?></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-primary" type="submit"><?= e(t('tb.labels_open')) ?></button></div>
+    </form>
+  </div>
+</div>
+<?php endif; ?>
 <?php endif; ?>

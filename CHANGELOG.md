@@ -5,6 +5,15 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+### Added
+
+- Sender address (Admin → Sender, up to 5 lines) and printing of sender labels on a full sheet of the existing
+  address label formats, with selectable start label
+
+### Changed
+
+- Access-details printing: format 2 × 10 removed; 2 × 6 (99.1 × 42 mm) is now the default
+
 ## [0.0.2] - 2026-10-12
 
 ### Added

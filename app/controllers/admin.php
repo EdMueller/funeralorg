@@ -6,7 +6,7 @@ function ctrl_admin(string $r, string $a): void
     Perm::needAdmin();
     $isPost = $_SERVER['REQUEST_METHOD'] === 'POST';
     if (in_array($a, ['usersave', 'userdelete', 'groupsave', 'groupdelete', 'sharesave', 'sharerevoke',
-        'sharedelete', 'snapshot', 'requestdone', 'impersonate'], true) && !$isPost) {
+        'sharedelete', 'snapshot', 'requestdone', 'impersonate', 'sendersave'], true) && !$isPost) {
         abort(400);
     }
     $me = Auth::user();
@@ -267,6 +267,23 @@ function ctrl_admin(string $r, string $a): void
             $rows = array_slice($rows, 0, 500);
             view('admin_log', compact('rows', 'total', 'days', 'act', 'usr', 'q', 'users'));
             return;
+
+        /* ---------------------------------------------------------- Absender */
+        case 'sender':
+            view('admin_sender', ['sender' => sender_lines()]);
+            return;
+
+        case 'sendersave':
+            $lines = array_slice(array_values(array_filter(
+                array_map(fn($l) => mb_substr(trim($l), 0, 60), preg_split('/\R/u', (string)post('sender')) ?: []),
+                fn($l) => $l !== ''
+            )), 0, 5);
+            Store::update('settings', function (array &$s) use ($lines) {
+                $s['sender'] = $lines;
+            });
+            Log::add('admin', 'Absenderadresse ' . ($lines ? 'gespeichert' : 'entfernt'));
+            flash(t($lines ? 'sender.saved' : 'sender.removed'));
+            redirect('admin', ['a' => 'sender']);
 
         /* ---------------------------------------------------------- Backup */
         case 'backup':

@@ -330,3 +330,10 @@ function image_tip(array $img, array $albumNames): string
     }
     return implode("\n", $lines);
 }
+
+/** Absenderadresse für Briefumschläge: bis zu 5 Zeilen aus den Einstellungen (Admin → Absender). */
+function sender_lines(): array
+{
+    $l = Store::read('settings')['sender'] ?? [];
+    return is_array($l) ? array_values(array_filter(array_map('strval', $l), fn($x) => $x !== '')) : [];
+}

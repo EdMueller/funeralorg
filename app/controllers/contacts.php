@@ -324,6 +324,27 @@ function ctrl_contacts(string $r, string $a): void
                 'start' => max(1, (int)post('start', 1)), 'mode' => $mode, 'addr' => site_base_url()], null);
             return;
 
+        case 'senderlabels':
+            if (!$isPost) {
+                abort(400);
+            }
+            if (!Perm::field('address')) {
+                abort(403, t('contacts.labels_denied'));
+            }
+            $sender = sender_lines();
+            if (!$sender) {
+                flash(t('sender.missing'), 'warning');
+                redirect_back($r);
+            }
+            $formats = cfg('label_formats', []);
+            $fk = array_key_exists((string)post('format'), $formats) ? (string)post('format') : (string)array_key_first($formats);
+            $start = max(1, (int)post('start', 1));
+            $perPage = $formats[$fk]['cols'] * $formats[$fk]['rows'];
+            $list = array_fill(0, max(1, $perPage - min($perPage, $start) + 1), $sender);
+            Log::add('export', 'Absenderetiketten ' . $fk . ' (' . count($list) . ')');
+            view('labels', ['list' => $list, 'fmt' => $formats[$fk], 'start' => $start, 'sender' => true], null);
+            return;
+
         case 'labels':
             if (!Perm::field('address')) {
                 abort(403, t('contacts.labels_denied'));

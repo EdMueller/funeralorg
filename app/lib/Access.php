@@ -10,17 +10,15 @@ final class Access
     /** Passwortalphabet ohne verwechselbare Zeichen (kein i, l, o, 0, 1), nur Kleinbuchstaben und Ziffern. */
     private const ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
 
-    /** Druckformate für Klebestreifen (mm), überschreibbar über configs/config.php → access_formats. */
+    /** Druckformate für Klebestreifen (mm), überschreibbar über configs/config.php → access_formats; das erste Format ist der Standard. */
     public const FORMATS = [
-        '2x10' => ['name' => '2 × 10 (105 × 28 mm)', 'cols' => 2, 'rows' => 10, 'w' => 105.0, 'h' => 28.0,
-                   'top' => 8.5, 'left' => 0.0, 'gap_x' => 0.0, 'gap_y' => 0.0],
-        '2x9'  => ['name' => '2 × 9 (105 × 32 mm)',  'cols' => 2, 'rows' => 9,  'w' => 105.0, 'h' => 32.0,
-                   'top' => 4.5, 'left' => 0.0, 'gap_x' => 0.0, 'gap_y' => 0.0],
         // 12 Etiketten je Bogen, 42 mm hoch, mit seitlichem Rand und ohne Abstand: Rand links 8 mm, oben 22 mm.
         // Die Breite (99,1 mm) ist geschätzt – am Datenblatt prüfen und bei Abweichung über
         // configs/config.php → access_formats anpassen.
         '2x6'  => ['name' => '2 × 6 (99,1 × 42 mm)', 'cols' => 2, 'rows' => 6, 'w' => 99.1, 'h' => 42.0,
                    'top' => 22.0, 'left' => 8.0, 'gap_x' => 0.0, 'gap_y' => 0.0],
+        '2x9'  => ['name' => '2 × 9 (105 × 32 mm)',  'cols' => 2, 'rows' => 9,  'w' => 105.0, 'h' => 32.0,
+                   'top' => 4.5, 'left' => 0.0, 'gap_x' => 0.0, 'gap_y' => 0.0],
     ];
 
     public static function formats(): array

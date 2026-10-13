@@ -50,8 +50,8 @@ return [
 
     // Klebestreifen für Zugangsdaten (mm, A4); ohne Eintrag gelten die Standardformate aus app/lib/Access.php
     // 'access_formats' => [
-    //     '2x10' => ['name' => '2 × 10 (105 × 28 mm)', 'cols' => 2, 'rows' => 10, 'w' => 105.0, 'h' => 28.0,
-    //                'top' => 8.5, 'left' => 0.0, 'gap_x' => 0.0, 'gap_y' => 0.0],
+    //     '2x6' => ['name' => '2 × 6 (99,1 × 42 mm)', 'cols' => 2, 'rows' => 6, 'w' => 99.1, 'h' => 42.0,
+    //              'top' => 22.0, 'left' => 8.0, 'gap_x' => 0.0, 'gap_y' => 0.0],
     // ],
 
     // Etikettenformate (mm) für A4
