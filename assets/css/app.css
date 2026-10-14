@@ -68,7 +68,7 @@ h3 { font-size: 1.3rem; }
 /* ---------- Navigation ---------- */
 .app-nav { background: var(--schiefer); border-bottom: 1px solid var(--messing); }
 .app-nav .navbar-brand { font-family: var(--serif); font-size: 1.35rem; color: #fff; }
-.app-nav .nav-link { color: rgba(255,255,255,.72); padding: .5rem .8rem; }
+.app-nav .nav-link { color: rgba(255,255,255,.72); padding: .5rem .8rem; white-space: nowrap; }
 .app-nav .nav-link:hover, .app-nav .nav-link.active { color: #fff; }
 .app-nav .nav-link.active { box-shadow: inset 0 -2px 0 var(--messing); }
 .app-nav .navbar-toggler { border-color: rgba(255,255,255,.3); }
