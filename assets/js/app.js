@@ -211,7 +211,7 @@
     if (root) fd.set('show', root.dataset.show || 'all');
     var btns = $$('button', f);
     btns.forEach(function (b) { b.disabled = true; });
-    send((ev.submitter && ev.submitter.formAction) || f.action, fd).then(function (j) {
+    send((ev.submitter && ev.submitter.getAttribute('formaction')) || f.action, fd).then(function (j) {
       var modal = f.closest('.modal');
       if (modal && window.bootstrap) bootstrap.Modal.getOrCreateInstance(modal).hide();
       applyChecklist(j);
