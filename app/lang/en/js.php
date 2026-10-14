@@ -4,6 +4,7 @@ return [
     'js.err_response' => 'Unexpected response ({status})',
     'js.save_failed' => 'Saving failed. Please reload the page.',
     'js.copied' => 'Copied',
+    'js.close' => 'Close',
     'js.copy_prompt' => 'Copy link:',
     'js.done_info' => 'done by {by}, {at}',
     'js.task_edit_sub' => 'Edit subtask',

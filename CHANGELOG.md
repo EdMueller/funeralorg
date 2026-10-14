@@ -14,6 +14,9 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 ### Changed
 
 - Access-details printing: format 2 × 10 removed; 2 × 6 (99.1 × 42 mm) is now the default
+- Tasks: subtasks use a smaller font size and tighter line height
+- Tasks: adding, editing, moving and deleting categories, tasks and subtasks, and ticking tasks off, update the page
+  without a reload (JSON responses with server-rendered fragments; without JavaScript the redirect still works)
 
 ## [0.0.2] - 2026-10-12
 

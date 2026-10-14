@@ -4,6 +4,7 @@ return [
     'js.err_response' => 'Unerwartete Antwort ({status})',
     'js.save_failed' => 'Speichern fehlgeschlagen. Bitte Seite neu laden.',
     'js.copied' => 'Kopiert',
+    'js.close' => 'Schließen',
     'js.copy_prompt' => 'Link kopieren:',
     'js.done_info' => 'erledigt von {by}, {at}',
     'js.task_edit_sub' => 'Unteraufgabe bearbeiten',

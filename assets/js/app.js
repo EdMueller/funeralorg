@@ -103,17 +103,22 @@
   });
 
   /* ---------- Checklisten ---------- */
-  $$('[data-toggle-task]').forEach(function (b) {
-    b.addEventListener('click', function () {
-      var row = b.closest('.task');
-      b.disabled = true;
-      send(u('checklist', 'toggle'), { id: b.dataset.toggleTask }).then(function (j) {
-        row.classList.toggle('done', j.done);
-        b.setAttribute('aria-pressed', j.done ? 'true' : 'false');
-        var info = $('.done-info', row);
-        if (info) info.textContent = j.done ? tr('done_info', { by: j.by, at: j.at }) : '';
-      }).catch(fail).finally(function () { b.disabled = false; });
-    });
+  document.addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-toggle-task]');
+    if (!b || b.disabled) return;
+    var row = b.closest('.task');
+    b.disabled = true;
+    send(u('checklist', 'toggle'), { id: b.dataset.toggleTask }).then(function (j) {
+      row.classList.toggle('done', j.done);
+      b.setAttribute('aria-pressed', j.done ? 'true' : 'false');
+      var info = $('.done-info', row);
+      if (info) info.textContent = j.done ? tr('done_info', { by: j.by, at: j.at }) : '';
+      var cat = $('[data-cat-id="' + j.cat + '"] .cat-progress');
+      if (cat) cat.textContent = j.cat_progress;
+      var par = j.parent && $('.task[data-task-id="' + j.parent + '"] .sub-count');
+      if (par) par.textContent = j.parent_progress;
+      setLead(j.lead);
+    }).catch(fail).finally(function () { b.disabled = false; });
   });
 
   /* ---------- Unteraufgaben aufklappen (Zustand pro Browser) ---------- */
@@ -126,16 +131,91 @@
     box.classList.toggle('d-none', !open);
     btn.setAttribute('aria-expanded', open ? 'true' : 'false');
   }
-  $$('[data-sub-toggle]').forEach(function (b) {
-    var id = b.dataset.subToggle.replace(/^sub-/, '');
-    if (b.getAttribute('aria-expanded') !== 'true' && subOpen.indexOf(id) >= 0) setSub(b, true);
-    b.addEventListener('click', function () {
-      var open = b.getAttribute('aria-expanded') !== 'true';
-      setSub(b, open);
-      subOpen = subOpen.filter(function (x) { return x !== id; });
-      if (open) subOpen.push(id);
-      try { localStorage.setItem(subKey, JSON.stringify(subOpen)); } catch (e) { /* ohne Speicher */ }
+  function restoreSubs(scope) {
+    $$('[data-sub-toggle]', scope).forEach(function (b) {
+      var id = b.dataset.subToggle.replace(/^sub-/, '');
+      if (b.getAttribute('aria-expanded') !== 'true' && subOpen.indexOf(id) >= 0) setSub(b, true);
     });
+  }
+  restoreSubs(document);
+  document.addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-sub-toggle]');
+    if (!b) return;
+    var id = b.dataset.subToggle.replace(/^sub-/, '');
+    var open = b.getAttribute('aria-expanded') !== 'true';
+    setSub(b, open);
+    subOpen = subOpen.filter(function (x) { return x !== id; });
+    if (open) subOpen.push(id);
+    try { localStorage.setItem(subKey, JSON.stringify(subOpen)); } catch (e) { /* ohne Speicher */ }
+  });
+
+  /* ---------- Checkliste ohne Seitenreload: Formulare mit data-cl-form ---------- */
+  function setLead(text) {
+    var el = $('[data-cl-lead]');
+    if (el && text) el.textContent = text;
+  }
+  function clAlert(msg) {
+    $$('[data-cl-alert]').forEach(function (a) { a.remove(); });
+    if (!msg) return;
+    var box = document.createElement('div');
+    box.className = 'alert alert-success alert-dismissible fade show';
+    box.setAttribute('role', 'status');
+    box.setAttribute('data-cl-alert', '');
+    box.appendChild(document.createTextNode(msg));
+    var x = document.createElement('button');
+    x.type = 'button'; x.className = 'btn-close';
+    x.setAttribute('data-bs-dismiss', 'alert'); x.setAttribute('aria-label', tr('close'));
+    box.appendChild(x);
+    var main = $('main');
+    main.insertBefore(box, main.firstChild);
+  }
+  /** Kategorieblöcke ersetzen/einfügen/entfernen, Reihenfolge, Auswahlliste und Zähler angleichen. */
+  function applyChecklist(j) {
+    var root = $('#clRoot');
+    if (!root) return;
+    (j.cats || []).forEach(function (c) {
+      var old = $('[data-cat-id="' + c.id + '"]', root);
+      if (!c.html.trim()) { if (old) old.remove(); return; }
+      var tpl = document.createElement('template');
+      tpl.innerHTML = c.html.trim();
+      var fresh = tpl.content.firstElementChild;
+      if (old) old.replaceWith(fresh); else root.appendChild(fresh);
+      restoreSubs(fresh);
+    });
+    (j.order || []).forEach(function (id) {
+      var el = $('[data-cat-id="' + id + '"]', root);
+      if (el) root.appendChild(el);
+    });
+    var sel = $('#t-cat');
+    if (sel && j.options) {
+      var cur = sel.value;
+      sel.textContent = '';
+      j.options.forEach(function (o) {
+        var opt = document.createElement('option');
+        opt.value = o.id; opt.textContent = o.name;
+        sel.appendChild(opt);
+      });
+      sel.value = cur;
+    }
+    var empty = $('[data-cl-empty]');
+    if (empty) empty.hidden = !j.empty;
+    setLead(j.lead);
+    clAlert(j.msg);
+  }
+  document.addEventListener('submit', function (ev) {
+    var f = ev.target.closest('form[data-cl-form]');
+    if (!f || ev.defaultPrevented) return;
+    ev.preventDefault();
+    var root = $('#clRoot');
+    var fd = new FormData(f);
+    if (root) fd.set('show', root.dataset.show || 'all');
+    var btns = $$('button', f);
+    btns.forEach(function (b) { b.disabled = true; });
+    send((ev.submitter && ev.submitter.formAction) || f.action, fd).then(function (j) {
+      var modal = f.closest('.modal');
+      if (modal && window.bootstrap) bootstrap.Modal.getOrCreateInstance(modal).hide();
+      applyChecklist(j);
+    }).catch(fail).finally(function () { btns.forEach(function (b) { b.disabled = false; }); });
   });
 
   /* ---------- Ja/Nein-Umschalter (Kontakte, Kondolenzen) ---------- */

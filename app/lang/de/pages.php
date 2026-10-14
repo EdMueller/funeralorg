@@ -35,6 +35,7 @@ return [
     'cl.cat_name' => 'Name',
     'cl.save_cat' => 'Kategorie speichern',
     'cl.err_title' => 'Bitte einen Titel für die Aufgabe eingeben.',
+    'cl.err_cat_name' => 'Bitte einen Namen für die Kategorie eingeben.',
     'cl.err_notfound' => 'Die Aufgabe wurde nicht gefunden.',
     'cl.saved' => 'Aufgabe gespeichert.',
     'cl.created' => 'Aufgabe angelegt.',

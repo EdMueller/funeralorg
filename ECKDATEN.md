@@ -183,6 +183,8 @@ in `.htaccess` gesetzt) und nginx leiten selbstständig um.
 | `checklist` | `toggle` | POST | checklist C | Aufgabe erledigt/offen (AJAX) |
 | `checklist` | `save` / `delete` | POST | checklist E | Aufgabe/Unteraufgabe (`parent`) anlegen/ändern/löschen (Löschen entfernt Unteraufgaben) |
 | `checklist` | `catsave` / `catmove` / `catdelete` | POST | checklist E | Kategorien (Löschen entfernt enthaltene Aufgaben) |
+
+**Checkliste ohne Reload:** Alle schreibenden Aktionen (`toggle`, `save`, `delete`, `catsave`, `catmove`, `catdelete`) antworten bei AJAX (`X-Requested-With: fetch`) mit JSON: `msg`, `cats` (Liste `{id, html}` neu gerenderter Kategorieblöcke aus `_checklist_cat.php`/`_checklist_task.php`; leeres `html` = Block entfernen), `order` (Kategorie-Reihenfolge), `options` (Kategorie-Auswahl), `empty`, `lead`; `toggle` liefert stattdessen Zähler (`cat_progress`, `parent_progress`, `lead`). Der Filter `show` kommt als POST-Feld aus `#clRoot[data-show]`. Ohne JS gelten weiter Redirect und Flash.
 | `contacts`, `rsvp`, `condolences` | – (`filter`, `rel`) | GET | jeweiliger Bereich R | Listen |
 | dito | `export` (`fmt`=csv/xlsx) | GET/POST | Bereich R | Export, Spalten je Bereich und Feldrechten; POST mit `ids[]` exportiert nur die Auswahl |
 | dito | `labels` (`format`, `start`) | GET/POST | Bereich R + Feld „Postadresse" | Etiketten-Druckansicht; POST mit `ids[]` nur für die Auswahl |
@@ -455,6 +457,7 @@ Format je Zeile (`data/logs/JJJJ-MM.jsonl`):
 | `data-toggle-task="<id>"` | Aufgabe abhaken |
 | `data-station="<json>"` (an Modal-Buttons) | füllt den Stationen-Dialog (`fillModal`) |
 | `data-sub-toggle="sub-<id>"` | Unteraufgaben ein-/ausklappen (merkt Zustand in localStorage) |
+| `form[data-cl-form]` (+ `data-cl-modal`) | Checkliste: Formular per `send()` abschicken, Modal schließen, Kategorieblöcke/Zähler/Meldung aus der JSON-Antwort einsetzen (`applyChecklist`); `#clRoot` = Container, `[data-cl-lead]` = Zählzeile, `[data-cl-empty]` = Leerhinweis |
 | `data-flag="<feld>" data-id="<id>"` | Ja/Nein-Umschalter Kontakte/Kondolenzen |
 | `form[data-rsvp]` | Zu-/Absage automatisch speichern, Summen aktualisieren |
 | `data-task`, `data-cat`, `data-user`, `data-album` (JSON) | befüllen das jeweilige Bootstrap-Modal |

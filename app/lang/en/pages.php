@@ -35,6 +35,7 @@ return [
     'cl.cat_name' => 'Name',
     'cl.save_cat' => 'Save category',
     'cl.err_title' => 'Please enter a title for the task.',
+    'cl.err_cat_name' => 'Please enter a name for the category.',
     'cl.err_notfound' => 'The task was not found.',
     'cl.saved' => 'Task saved.',
     'cl.created' => 'Task created.',
