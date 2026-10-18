@@ -5,6 +5,8 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+## [0.0.6] - 2026-10-18
+
 ### Added
 
 - Gallery: pictures can be re-ordered per album (drag and drop, or arrow buttons on touch devices) or sorted by
@@ -93,7 +95,9 @@ First public release.
   `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `THIRD-PARTY.md`
 - GitHub Actions (syntax check, language files, smoke test on PHP 8.2 to 8.4) and issue/pull request templates
 
-[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.4...HEAD
+[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.6...HEAD
+[0.0.6]: https://github.com/EdMueller/funeralorg/compare/v0.0.5...v0.0.6
+[0.0.5]: https://github.com/EdMueller/funeralorg/compare/v0.0.4...v0.0.5
 [0.0.4]: https://github.com/EdMueller/funeralorg/compare/v0.0.3...v0.0.4
 [0.0.3]: https://github.com/EdMueller/funeralorg/compare/v0.0.2...v0.0.3
 [0.0.2]: https://github.com/EdMueller/funeralorg/compare/v0.0.1...v0.0.2
