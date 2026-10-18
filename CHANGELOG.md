@@ -5,6 +5,8 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+## [0.0.5] - 2026-10-18
+
 ### Added
 
 - Plugin system (Admin → Plugins): list, activate, deactivate, import (ZIP), export (ZIP) and delete plugins,
