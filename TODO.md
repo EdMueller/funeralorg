@@ -8,7 +8,6 @@ und Vorschläge aus der Code-Durchsicht (mit *Vorschlag* markiert). Reihenfolge 
 - [ ] Druckansicht „Gästeliste für das Gasthaus" (Zusagen mit Erwachsenen/Kindern, ohne Adressen)
 - [ ] Sitzplan
 - [ ] Kondolenzbuch für Gäste über Freigabelink (Schreibrecht nur für den eigenen Eintrag; Regel 7 bleibt: kein Zugriff auf Gedenkseite/Galerie)
-- [ ] Bilder per Drag & Drop sortieren (aktuell Reihenfolge = Upload-Reihenfolge)
 - [ ] Adressetiketten optional mit Absenderzeile (heute nur getrennt über Absenderetiketten)
 - [ ] Weitere Sprache(n) neben Deutsch/Englisch (`I18n::LANGS`, Pluralregel, ggf. RTL-CSS)
 - [ ] SQLite-Backend hinter `Store`, falls die Grenzen (einige Hundert Kontakte, einige Tausend Bilder) überschritten werden
