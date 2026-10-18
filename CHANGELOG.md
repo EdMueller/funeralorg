@@ -5,6 +5,11 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+### Added
+
+- Gallery: pictures can be re-ordered per album (drag and drop, or arrow buttons on touch devices) or sorted by
+  upload date, file name or caption. Admins and users with upload permission may do this; new uploads are appended.
+
 ## [0.0.5] - 2026-10-18
 
 ### Added

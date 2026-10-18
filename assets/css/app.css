@@ -257,6 +257,13 @@ main.app-main { max-width: 1120px; margin: 0 auto; padding: 1.5rem 1rem 5rem; }
 .g-item.picked .pick i { opacity: 1; }
 .g-item.picked { outline: 3px solid var(--efeu); outline-offset: -3px; }
 .g-item .tag { position: absolute; left: .4rem; bottom: .4rem; background: rgba(29,34,37,.7); color: #fff; font-size: .75rem; padding: .1rem .45rem; border-radius: .2rem; }
+.g-item .mv { display: none; position: absolute; left: .4rem; top: .4rem; gap: .25rem; }
+.g-item .mv button { width: 2rem; height: 2rem; border: 0; border-radius: 50%; background: rgba(29,34,37,.75); color: #fff; display: grid; place-items: center; padding: 0; }
+.gallery-grid.sorting .g-item { cursor: grab; outline: 2px dashed var(--efeu); outline-offset: -2px; }
+.gallery-grid.sorting .g-item .mv { display: flex; }
+.gallery-grid.sorting .g-item .pick { display: none; }
+.gallery-grid.sorting .g-item img { pointer-events: none; }
+.g-item.dragging { opacity: .35; }
 .cart-bar {
   position: fixed; left: 50%; transform: translateX(-50%); bottom: 1rem; z-index: 1030;
   background: var(--schiefer); color: #fff; border-radius: 2rem; padding: .45rem .5rem .45rem 1.1rem;

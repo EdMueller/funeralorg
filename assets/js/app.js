@@ -328,6 +328,64 @@
     });
   });
 
+  /* ---------- Galerie: Reihenfolge ändern (Ziehen oder Pfeile) ---------- */
+  var sortGrid = document.getElementById('galleryGrid');
+  var sortBtn = $('[data-sort-toggle]');
+  if (sortGrid && sortBtn) {
+    var dragEl = null;
+    var before = '';
+    var order = function () { return $$('.g-item', sortGrid).map(function (i) { return i.dataset.id; }); };
+    var saveOrder = function () {
+      var fd = new FormData();
+      fd.append('album', sortGrid.dataset.orderAlbum);
+      order().forEach(function (id) { fd.append('ids[]', id); });
+      send(u('gallery', 'imgorder'), fd).catch(fail);
+    };
+    sortBtn.addEventListener('click', function () {
+      if (sortGrid.classList.contains('sorting')) { window.location.reload(); return; } // Lightbox-Indizes neu aufbauen
+      sortGrid.classList.add('sorting');
+      sortBtn.classList.add('active');
+      $('[data-sort-label]', sortBtn).textContent = sortBtn.dataset.done;
+      $$('.g-item', sortGrid).forEach(function (it) { it.draggable = true; });
+    });
+    // im Sortiermodus weder Leuchtkasten öffnen noch Bild auswählen
+    sortGrid.addEventListener('click', function (ev) {
+      if (!sortGrid.classList.contains('sorting')) return;
+      var mv = ev.target.closest('[data-move]');
+      if (mv) {
+        var it = mv.closest('.g-item');
+        var dir = +mv.dataset.move;
+        var other = dir < 0 ? it.previousElementSibling : it.nextElementSibling;
+        if (other) { sortGrid.insertBefore(dir < 0 ? it : other, dir < 0 ? other : it); saveOrder(); mv.focus(); }
+      }
+      if (ev.target.closest('.open, .pick') || mv) { ev.stopPropagation(); ev.preventDefault(); }
+    }, true);
+    sortGrid.addEventListener('dragstart', function (ev) {
+      var it = ev.target.closest && ev.target.closest('.g-item');
+      if (!it || !sortGrid.classList.contains('sorting')) return;
+      dragEl = it; before = order().join();
+      ev.dataTransfer.effectAllowed = 'move';
+      ev.dataTransfer.setData('text/plain', it.dataset.id);
+      setTimeout(function () { it.classList.add('dragging'); }, 0);
+    });
+    sortGrid.addEventListener('dragover', function (ev) {
+      if (!dragEl) return;
+      ev.preventDefault();
+      var t = ev.target.closest('.g-item');
+      if (!t || t === dragEl) return;
+      var r = t.getBoundingClientRect();
+      var after = ev.clientX > r.left + r.width / 2;
+      sortGrid.insertBefore(dragEl, after ? t.nextSibling : t);
+    });
+    sortGrid.addEventListener('drop', function (ev) { if (dragEl) ev.preventDefault(); });
+    sortGrid.addEventListener('dragend', function () {
+      if (!dragEl) return;
+      dragEl.classList.remove('dragging');
+      dragEl = null;
+      if (order().join() !== before) saveOrder();
+    });
+  }
+
   /* ---------- Galerie: Auswahl ---------- */
   var cartCount = document.getElementById('cartCount');
   var cartBar = document.getElementById('cartBar');

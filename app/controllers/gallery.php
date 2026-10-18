@@ -238,6 +238,43 @@ function ctrl_gallery(string $r, string $a): void
             }
             redirect_back('gallery');
 
+        case 'imgorder':
+        case 'imgsortby':
+            if (!$isPost) {
+                abort(400);
+            }
+            if (!Perm::gallery('upload')) {
+                abort(403, t('gal.denied_order'));
+            }
+            $key = (string)post('album');
+            $g = Store::read('gallery');
+            if ($key !== '_none' && !find_by_id($g['albums'], $key)) {
+                abort(404);
+            }
+            $by = (string)post('by');
+            Store::update('gallery', function (array &$g) use ($a, $key, $by) {
+                if ($a === 'imgorder') {
+                    $ids = array_map('strval', (array)($_POST['ids'] ?? []));
+                } else {
+                    $scope = gallery_order_scope($g, $key);
+                    $label = fn($i) => (string)($i['caption'] ?: $i['orig_name']);
+                    usort($scope, match ($by) {
+                        'uploaded_desc' => fn($x, $y) => strcmp((string)$y['uploaded_at'], (string)$x['uploaded_at']),
+                        'name'          => fn($x, $y) => strnatcasecmp((string)$x['orig_name'], (string)$y['orig_name']),
+                        'caption'       => fn($x, $y) => strnatcasecmp($label($x), $label($y)),
+                        default         => fn($x, $y) => strcmp((string)$x['uploaded_at'], (string)$y['uploaded_at']),
+                    });
+                    $ids = array_column($scope, 'id');
+                }
+                gallery_apply_order($g, $key, $ids);
+            });
+            Log::change('gallery', $a === 'imgorder' ? 'Bildreihenfolge geändert' : 'Bilder sortiert (' . $by . ')', $key);
+            if ($a === 'imgorder') {
+                json_out(['ok' => true]);
+            }
+            flash(t('gal.sorted'));
+            redirect_back('gallery');
+
         case 'albumdelete':
             if (!$isPost) {
                 abort(400);
@@ -337,9 +374,9 @@ function ctrl_gallery(string $r, string $a): void
     // Raster: Bilder direkt in diesem Album; Diashow/Leuchtkasten: zusätzlich alle Unteralben (rekursiv)
     $images = $slides = $g['images'];
     if ($album === '_none') {
-        $images = $slides = array_values(array_filter($g['images'], fn($i) => $i['album'] === ''));
+        $images = $slides = Albums::sortIn(array_values(array_filter($g['images'], fn($i) => $i['album'] === '')), '_none');
     } elseif ($album !== '') {
-        $images = Albums::images($g['images'], [$album]);
+        $images = Albums::sortIn(Albums::images($g['images'], [$album]), $album);
         $slides = array_merge($images, array_values(array_filter(
             Albums::images($g['images'], Albums::subtree($g['albums'], $album)),
             fn($i) => !in_array($i['id'], array_column($images, 'id'), true))));
@@ -367,6 +404,28 @@ function ctrl_gallery(string $r, string $a): void
         'portrait'  => Store::read('memorial')['portrait'] ?? '',
         'play'      => get('play') === '1' && $album !== '',
     ]);
+}
+
+/** Bilder, die im Raster des Albums stehen (`_none` = ohne Album), in aktueller Reihenfolge. */
+function gallery_order_scope(array $g, string $key): array
+{
+    $scope = $key === '_none'
+        ? array_values(array_filter($g['images'], fn($i) => $i['album'] === ''))
+        : Albums::images($g['images'], [$key]);
+    return Albums::sortIn($scope, $key);
+}
+
+/** Speichert die Reihenfolge `$ids` für das Album; fehlende (z. B. parallel hochgeladene) Bilder folgen am Ende. */
+function gallery_apply_order(array &$g, string $key, array $ids): void
+{
+    $current = array_column(gallery_order_scope($g, $key), 'id');
+    $ids = array_values(array_unique(array_intersect($ids, $current)));
+    $pos = array_flip(array_merge($ids, array_diff($current, $ids)));
+    foreach ($g['images'] as &$i) {
+        if (isset($pos[$i['id']])) {
+            $i['ord'][$key] = $pos[$i['id']];
+        }
+    }
 }
 
 function gallery_serve(): never

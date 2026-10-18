@@ -216,6 +216,8 @@ in `.htaccess` gesetzt) und nginx leiten selbstständig um.
 | `gallery` | `move` (`album`) | POST | Galerie herunterladen | Verschiebt die Auswahl in ein Album; Admin alle, sonst nur eigene Bilder (Rest wird übersprungen), Auswahl bleibt |
 | `gallery` | `bulkdelete` | POST | A | Löscht die ausgewählten Bilder samt Dateien, Portrait-Verweis und Auswahleinträgen |
 | `gallery` | `zip` (`what`=selection/album/all) | GET | Galerie herunterladen | ZIP (unkomprimiert, Originale) |
+| `gallery` | `imgorder` | POST | Galerie hochladen | Bildreihenfolge eines Albums (`album`=ID oder `_none`, `ids[]` in neuer Reihenfolge), Antwort JSON |
+| `gallery` | `imgsortby` | POST | Galerie hochladen | Album sortieren (`by`=uploaded/uploaded_desc/name/caption) |
 | `gallery` | `edit` | POST | Admin oder Hochlader | Bildunterschrift, Album, `links[]` (weitere Alben), (Admin:) Anmeldeseite |
 | `gallery` | `albummove` (`dir`=up/down als Query) | POST | A | Album unter Geschwistern (gleiches `parent`) nach vorn/hinten, `sort` wird neu nummeriert |
 | `gallery` | `delete` / `albumsave` / `albumdelete` | POST | A | Löschen, Alben (`parent`, `links[]`; Album löschen behält Unteralben und Bilder) |
@@ -331,10 +333,13 @@ Lebensdaten sind **Freitext** (Formatfreiheit, z. B. nur Jahr).
   "images": [ { "id": "…", "ext": "jpg|png|gif|webp", "mime": "image/jpeg", "w": 1600, "h": 1200,
                 "size": 123456, "orig_name": "IMG_1234.jpg", "animated": false, "alpha": false,
                 "album": "<album-id>|''", "links": ["<album-id>", …], "caption": "", "login": false,
-                "uploaded_by": "Name", "uploaded_by_id": "<user-id>", "uploaded_at": "…" } ] }
+                "uploaded_by": "Name", "uploaded_by_id": "<user-id>", "uploaded_at": "…",
+                "ord": { "<album-id>|_none": 0 } } ] }
 ```
 
 **Album-Hierarchie** (`app/lib/Albums.php`, alle Durchläufe schleifensicher): `parent` = Heimat-Elternalbum (leer = oberste Ebene, fehlend = leer), `links` = zusätzliche Eltern (Album erscheint auch dort, wird nicht kopiert). Bild: `album` = Heimatalbum, `links` = weitere Alben, in denen es erscheint. Beim Speichern sind Eltern/Verweise im eigenen Teilbaum gesperrt (Server und Modal). Ansicht eines Albums: Raster = direkte Bilder, Diashow/Leuchtkasten und „Dieses Album als ZIP“ = rekursiv inkl. Unteralben (ZIP mit Unterordnern; ein Bild liegt im Ordner seines Heimatalbums, Verweise nur als Rückfall). „Alle“ zeigt alle Bilder, Chips = oberste Alben. Album löschen: Unteralben und Bilder rücken in das Elternalbum auf, Verweise darauf entfallen. Verschieben setzt nur das Heimatalbum (`links` auf das Ziel entfallen).
+
+**Bildreihenfolge:** `ord[<album-id>|_none]` = Position im Raster dieses Albums (`Albums::sortIn()`); Bilder ohne Eintrag folgen in Upload-Reihenfolge. Ändern per Ziehen/Pfeilen (`imgorder`) oder Sortier-Dropdown (`imgsortby`); in „Alle“ nicht möglich. Wirkt auf Raster, Leuchtkasten und Diashow, nicht auf ZIP.
 
 Bild-Tooltip: `title` am Vorschaubild, erzeugt von `image_tip()` (`app/helpers.php`) aus Unterschrift/Dateiname, Maßen, Größe, Typ, Album, Hochlader und Datum (EXIF wird beim Upload entfernt).
 

@@ -125,6 +125,16 @@ final class Albums
         return array_values(array_filter($images, fn($i) => array_intersect(self::ofImage($i), $ids) !== []));
     }
 
+    /**
+     * Bilder in der Reihenfolge dieses Albums (`$key` = Album-ID oder `_none`): erst die manuell geordneten
+     * (`ord[$key]`), danach die übrigen in bisheriger Reihenfolge (neue Uploads landen am Ende).
+     */
+    public static function sortIn(array $images, string $key): array
+    {
+        usort($images, fn($a, $b) => ($a['ord'][$key] ?? PHP_INT_MAX) <=> ($b['ord'][$key] ?? PHP_INT_MAX));
+        return $images;
+    }
+
     /** Verweisliste bereinigen: nur vorhandene Alben, ohne Duplikate, ohne `$exclude`. */
     public static function cleanLinks(array $albums, mixed $raw, array $exclude = []): array
     {
