@@ -13,14 +13,14 @@ Webanwendung, mit der eine Familie einen Trauerfall organisiert:
 |---|---|
 | Gedenken | Startseite mit ovalem Portrait, Lebensdaten, Spruch, Gedenktext, Status-Übersicht |
 | Anmeldeseite | Vollbild-Diashow ausgewählter Fotos, Portrait (auch animiertes GIF), Name, Spruch |
-| Stationen | Horizontaler Zeitstrahl (Geburt bis Tod) und Weltkarte; Hover zeigt Popup am Ort, Klick startet die Diashow des verknüpften Albums; Farbe/Kategorie je Album, Legende filtert |
+| Stationen (Plugin) | Horizontaler Zeitstrahl (Geburt bis Tod) und Weltkarte; Hover zeigt Popup am Ort, Klick startet die Diashow des verknüpften Albums; Farbe/Kategorie je Album, Legende filtert |
 | Bilder | Alben, Upload (Mehrfach, Drag & Drop, Fortschritt), Leuchtkasten, Diashow mit Überblendung, Auswahl („Warenkorb"), ZIP-Download |
 | Aufgaben | Checklisten in Kategorien, abhaken, Fälligkeit, Zuständigkeit, Notiz |
 | Kontakte | Postadresse, Festnetz/Mobil getrennt (`tel:`-Links), E-Mail, Status „angerufen" / „Brief versendet", vCard-Import |
 | Zu- und Absagen | Status je Kontakt, Erwachsene/Kinder, Live-Summen |
 | Kondolenzen | Karte, Blumen, Kranz, Spende (Betrag), Dankeskarte versendet |
 | Export | XLSX, CSV (Serienbrief), Adressetiketten und Absenderetiketten A4 (3×8, 2×7, 2×6, Startetikett wählbar) |
-| Verwaltung | Benutzer, Gruppen & Rechte, Freigabelinks, Statistik-Dashboard, Protokoll, Backup |
+| Verwaltung | Benutzer, Gruppen & Rechte, Freigabelinks, Plugins, Statistik-Dashboard, Protokoll, Backup |
 
 Zielgruppe: Familie und Helfer, überwiegend auf dem Handy. Tonalität der Oberfläche: ruhig, sachlich, würdevoll, Du-Form.
 
@@ -71,7 +71,8 @@ gedenkseite/                    ← Webroot (gesamter Projektordner)
 │   │   ├── Csrf.php            Token-Erzeugung/-Prüfung
 │   │   ├── Log.php             Ereignisprotokoll, Statistik mit Cache, Wartung
 │   │   ├── Contacts.php        Kontakt-Domäne: Felder, Filter, Summen, Export-Tabellen
-│   │   ├── Stations.php        Stationen: Freitext-Datum lesen, Geburt/Tod aus Gedenkseite, Zeitpunkt, Farbe/Kategorie vom Album
+│   │   ├── Plugins.php         Plugin-System: Entdecken, Manifest, Zustand, Laden, Import/Export/Löschen (§17)
+│   │   ├── PluginApi.php       Schnittstelle, die `plugin.php` erhält (route, nav, onActivate, onDeactivate)
 │   │   ├── Image.php           Upload, EXIF, Vorschaubilder, Auslieferung
 │   │   ├── Access.php          Zugänge für Kontakte: Benutzername/Passwort erzeugen, Massenanlage, Druckformate
 │   │   ├── Reset.php           „Passwort vergessen“: Tokens (nur Hash), Rate-Limit, Anfragen an den Admin, Mailversand über mail()
@@ -81,6 +82,7 @@ gedenkseite/                    ← Webroot (gesamter Projektordner)
 │   │   └── Setup.php           Ersteinrichtung: Verzeichnisse, Standardgruppen, Start-Checkliste, erster Admin
 │   ├── controllers/            je Datei eine Funktion ctrl_<name>(string $r, string $a)
 │   └── views/                  PHP-Templates; Präfix _ = Teil-View
+├── plugins/                    Plugins (`<slug>/plugin.json`, `plugin.php`, …), per .htaccess gesperrt; enthält `stations/` (§17)
 ├── bin/                        check-lang.php (Sprachdateien prüfen), smoke-test.sh (Rauchtest in temporärer Kopie), per .htaccess gesperrt
 ├── configs/                    Konfiguration, per .htaccess gesperrt
 │   ├── config.php               (nie ins Repo)
@@ -104,8 +106,9 @@ gedenkseite/                    ← Webroot (gesamter Projektordner)
 ```
 data/
 ├── users.json  groups.json  shares.json  contacts.json  checklist.json
-├── memorial.json  gallery.json  stations.json  selections.json  ratelimit.json
-├── settings.json               Einstellungen: `base_url` (öffentliche Adresse, Basis für Reset-Mail-Links, aus der Ersteinrichtung), `sender` (Absenderadresse, Zeilen-Array)
+├── memorial.json  gallery.json  selections.json  ratelimit.json
+├── stations.json               gehört dem Plugin „stations“ (Manifest `stores`); weitere Plugin-Dateien analog
+├── settings.json               Einstellungen: `base_url` (öffentliche Adresse, Basis für Reset-Mail-Links, aus der Ersteinrichtung), `sender` (Absenderadresse, Zeilen-Array), `plugins` (`<slug>` → `{active, changed}`)
 ├── resets.json                 flüchtig: Reset-Tokens (Hash), Anfragen, Zähler – nicht in Snapshots/Backup-Download
 ├── *.lock                      Lock-Dateien (flock), dürfen gelöscht werden, wenn nichts läuft
 ├── logs/JJJJ-MM.jsonl          Ereignisprotokoll
@@ -124,7 +127,7 @@ data/
 3. `dispatch()`:
    - startet die Session (`start_session()`: Cookie-Flags, Idle-Timeout)
    - sendet Security-Header (CSP, `X-Frame-Options`, `nosniff`, `noindex`)
-   - bildet `r` auf einen Controller ab (Tabelle `$routes`)
+   - lädt die aktiven Plugins (`Plugins::boot()`), bildet `r` auf einen Controller ab (Tabelle `$routes`, danach Plugin-Routen)
    - öffentliche Routen: `setup`, `login`, `s`, `pubimg` – alle anderen verlangen `Auth::check()`
    - bei **jedem POST** `Csrf::check()` (Feld `_csrf` oder Header `X-CSRF-Token`)
    - ruft `ctrl_<controller>($r, $a)` auf
@@ -177,8 +180,8 @@ in `.htaccess` gesetzt) und nginx leiten selbstständig um.
 | `pubimg` | – (`id`, `s`=thumb/medium) | GET | öffentlich | nur Portrait und als „Anmeldeseite" markierte Bilder |
 | `home` | – | GET | Benutzer (kein Link) | Gedenkseite |
 | `home` | `edit` | GET/POST | A | Gedenkseite bearbeiten |
-| `stations` | – | GET | Benutzer (kein Link) | Zeitstrahl + Weltkarte; Bild/Diashow-Link nur mit Galerie-Recht |
-| `stations` | `save` / `delete` | POST | A | Station anlegen/ändern/löschen (Geburt/Tod sind fest, nicht löschbar) |
+| `stations` (Plugin) | – | GET | Benutzer (kein Link) | Zeitstrahl + Weltkarte; Bild/Diashow-Link nur mit Galerie-Recht |
+| `stations` (Plugin) | `save` / `delete` | POST | A | Station anlegen/ändern/löschen (Geburt/Tod sind fest, nicht löschbar) |
 | `checklist` | – (`show=open`) | GET | checklist R | Übersicht |
 | `checklist` | `toggle` | POST | checklist C | Aufgabe erledigt/offen (AJAX) |
 | `checklist` | `save` / `delete` | POST | checklist E | Aufgabe/Unteraufgabe (`parent`) anlegen/ändern/löschen (Löschen entfernt Unteraufgaben) |
@@ -225,6 +228,8 @@ in `.htaccess` gesetzt) und nginx leiten selbstständig um.
 | `admin` | `sender` / `sendersave` | GET/POST | A | Absenderadresse für Umschläge (bis 5 Zeilen à 60 Zeichen), gespeichert in `settings.json` → `sender` (Array), gelesen über `sender_lines()` |
 | `admin` | `log` (`days`, `act`, `usr`, `q`, `fmt`) | GET | A | Protokoll, Export CSV/XLSX |
 | `admin` | `backup` / `snapshot` / `download` (`full=1`) | GET/POST | A | Backup |
+| `admin` | `plugins` / `pluginset` (`slug`, `state`=on/off) / `pluginimport` (`plugin_zip`, multipart) / `pluginexport` (`p`, GET) / `plugindelete` (`slug`, `delete_data`) | GET/POST | A | Plugin-Verwaltung (§17) |
+| `pluginasset` | – (`p`, `f`, `v`) | GET | Benutzer | Datei aus `assets/` eines **aktiven** Plugins (Whitelist der Endungen, Pfadprüfung, ETag) |
 
 Regel: **Jede zustandsändernde Aktion ist POST** (CSRF-geschützt). GET-Aktionen verändern nur Protokoll/Cache.
 
@@ -333,7 +338,7 @@ Lebensdaten sind **Freitext** (Formatfreiheit, z. B. nur Jahr).
 
 Bild-Tooltip: `title` am Vorschaubild, erzeugt von `image_tip()` (`app/helpers.php`) aus Unterschrift/Dateiname, Maßen, Größe, Typ, Album, Hochlader und Datum (EXIF wird beim Upload entfernt).
 
-### stations.json
+### stations.json (Datendatei des Plugins „stations“)
 ```json
 [ { "id": "…|birth|death", "type": "''|birth|death", "title": "Lehre in Hamburg",
     "date": "JJJJ-MM-TT|JJJJ-MM|JJJJ", "place": "Hamburg", "lat": 53.55, "lon": 9.99,
@@ -344,7 +349,7 @@ Bild-Tooltip: `title` am Vorschaubild, erzeugt von `image_tip()` (`app/helpers.p
 - **Farbe und Kategorie** kommen vom Album (`color` aus `Stations::COLORS`, `cat` frei; leere Werte werden vom nächsten Heimat-Vorfahren geerbt, Fallback Albumname; ohne Album grau „Ohne Album“). Die Diashow der Station umfasst auch Unteralben. Die Legende filtert Zeitstrahl und Karte.
 - Ohne `lat`/`lon` erscheint die Station nur im Zeitstrahl. Ohne Datum nur auf der Karte (Geburt/Tod mit nicht lesbarem Freitext).
 - Karte: `assets/vendor/worldmap/world.svg` (Natural Earth 110m, gemeinfrei; Equirectangular 84°N–58°S, viewBox 360×142). Pins in Prozent: `x = (lon+180)/360`, `y = (84−lat)/142`. Kein Kachelserver, keine externen Anfragen.
-- Popup/Zeitstrahl: `assets/js/stations.js` (Daten aus `<script type="application/json" id="stationsData">`). Klick (Maus) bzw. zweiter Tipp (Touch) öffnet `gallery&album=<id>&play=1`, ohne Album das einzelne Bild per `gallery&open=<bild-id>`.
+- Popup/Zeitstrahl: `plugins/stations/assets/js/stations.js` (Auslieferung über `pluginasset`; füllt auch den Dialog „Station“) (Daten aus `<script type="application/json" id="stationsData">`). Klick (Maus) bzw. zweiter Tipp (Touch) öffnet `gallery&album=<id>&play=1`, ohne Album das einzelne Bild per `gallery&open=<bild-id>`.
 
 ### selections.json
 `{ "<user-id>": ["<bild-id>", …] }` – Auswahl bleibt über Sitzungen erhalten; ungültige IDs werden beim nächsten Schreiben bereinigt.
@@ -455,7 +460,7 @@ Format je Zeile (`data/logs/JJJJ-MM.jsonl`):
 | `data-confirm-count="<js-Schlüssel>"` (am Formular) | Bestätigung mit Plural über `#cartCount` (Text `js.<Schlüssel>`, `{n}` = Anzahl) |
 | `.lang-switch` (Formular, `_lang.php`) | Sprachumschalter DE/EN in Navigation und auf Seiten ohne Anmeldung |
 | `data-toggle-task="<id>"` | Aufgabe abhaken |
-| `data-station="<json>"` (an Modal-Buttons) | füllt den Stationen-Dialog (`fillModal`) |
+| `data-station="<json>"` (an Modal-Buttons) | füllt den Stationen-Dialog (in `plugins/stations/assets/js/stations.js`) |
 | `data-sub-toggle="sub-<id>"` | Unteraufgaben ein-/ausklappen (merkt Zustand in localStorage) |
 | `form[data-cl-form]` (+ `data-cl-modal`) | Checkliste: Formular per `send()` abschicken, Modal schließen, Kategorieblöcke/Zähler/Meldung aus der JSON-Antwort einsetzen (`applyChecklist`); `#clRoot` = Container, `[data-cl-lead]` = Zählzeile, `[data-cl-empty]` = Leerhinweis |
 | `data-flag="<feld>" data-id="<id>"` | Ja/Nein-Umschalter Kontakte/Kondolenzen |
@@ -490,6 +495,7 @@ Format je Zeile (`data/logs/JJJJ-MM.jsonl`):
 | `privacy_url` | leer | Optionaler Link zur Datenschutzerklärung auf den Seiten „Passwort vergessen“ |
 | `mail_from` | leer | Absender für „Passwort vergessen“; leer = `noreply@<Domain der Anwendung ohne www./Port>` (`Reset::fromAddress()`) |
 | `image_max_pixels` | 50000000 | Obergrenze Breite × Höhe beim Upload (0 = unbegrenzt); Prüfung vor dem Dekodieren |
+| `plugins_safe_mode` | false | `true`: kein Plugin-Code wird ausgeführt (Notausgang, falls ein Plugin die Anwendung blockiert) |
 
 ---
 
@@ -497,8 +503,8 @@ Format je Zeile (`data/logs/JJJJ-MM.jsonl`):
 
 - PSR-12-Stil, 4 Leerzeichen, `declare(strict_types=1)`, Typdeklarationen überall.
 - Oberflächentexte **nie fest im Code**, sondern über `t('bereich.schlüssel', ['name' => …])` bzw. `tn('…', $n)` (Plural, `{n}` = formatierte Zahl) aus `app/lang/<sprache>/*.php`; in Views `e(t(…))`. Deutsch ist Basis und Rückfall, Englisch muss dieselben Schlüssel und Platzhalter haben (`php bin/check-lang.php`). Deutsch: Du-Form, Satzschreibung; Englisch: sachlich, Satzschreibung. Buttons nennen die Aktion („Kontakt speichern", nicht „Absenden").
-- Konstanten mit Beschriftungen (`Perm`, `Log`, `Contacts`, `Stations`) halten nur Schlüssel; die Beschriftung liefern `Perm::levels()/modules()/fields()`, `Log::actions()`, `Contacts::rsvpLabels()/filterLabels()` bzw. `t('cf.<feld>')`, `Stations::colorName()`.
-- JS-Texte: Schlüssel `js.*` in den Sprachdateien; das Layout liefert sie als `<script type="application/json" id="i18n">`, `app.js`/`stations.js` lesen sie mit `tr(key, params, n)`.
+- Konstanten mit Beschriftungen (`Perm`, `Log`, `Contacts`, `Albums`) halten nur Schlüssel; die Beschriftung liefern `Perm::levels()/modules()/fields()`, `Log::actions()`, `Contacts::rsvpLabels()/filterLabels()` bzw. `t('cf.<feld>')`, `Albums::colorName()`.
+- JS-Texte: Schlüssel `js.*` in den Sprachdateien (auch die der Plugins); das Layout liefert sie als `<script type="application/json" id="i18n">`, `app.js`/`stations.js` lesen sie mit `tr(key, params, n)`.
 - Datum/Zahlen: `fmt_ts()`, `fmt_date()`, `fmt_money()`, `fmt_bytes()`, `lang_dec()`/`lang_thou()` – Deutsch `31.12.2026` und `1.234,50`, Englisch ISO `2026-12-31` und `1,234.50`.
 - Ausgabe in Views **immer** über `e()`; JSON in Attributen `e(json_encode(…))`, in `<script type="application/json">` mit `JSON_HEX_TAG`.
 - Rechte **im Controller** prüfen, Views blenden nur zusätzlich aus.
@@ -542,6 +548,37 @@ Format je Zeile (`data/logs/JJJJ-MM.jsonl`):
 - Keine Sortierung der Bilder per Drag & Drop; Reihenfolge = Upload-Reihenfolge.
 - Adressetiketten ohne Absenderzeile; die Absenderadresse wird getrennt über „Absenderetiketten drucken“ auf eigene Bögen gedruckt (`labels.php` mit `$sender`).
 - Denkbar: Druckansicht „Gästeliste für das Gasthaus", Sitzplan, Kondolenzbuch für Gäste über Freigabelink (Schreibrecht nur für eigenen Eintrag).
+
+## 17. Plugins
+
+Entwicklerleitfaden: `docs/plugin-development.md`. Hier die Festlegungen der Anwendung.
+
+- **Ordner** `plugins/<slug>/` mit Pflichtdateien `plugin.json` (Manifest, `Plugins::parseManifest`) und `plugin.php`
+  (`return function (PluginApi $p): void`). Der Slug ist die Ordnerkennung (`^[a-z][a-z0-9-]{1,39}$`).
+- **Zustand**: `settings.json → plugins.<slug>.active`; fehlt der Eintrag, gilt `default_active` des Manifests.
+  `Plugins::boot()` (in `dispatch()`, vor dem Routing) lädt alle aktiven Plugins in Abhängigkeitsreihenfolge (`requires`),
+  prüft `requires_app` und fängt Ausnahmen aus `plugin.php` ab (das Plugin gilt dann als „nicht geladen“, Grund in der Verwaltung).
+  `plugins_safe_mode` überspringt das Laden.
+- **Automatisch aus der Ordnerstruktur** (nur aktive Plugins): `lib/` → Autoload (nach dem Kern); `lang/<sprache>/*.php` → zu den
+  Sprachdateien ergänzt (Kern hat Vorrang; `I18n::reset()` nach dem Laden); Manifest-`stores` → `Store::extend()` mit Standardinhalt;
+  `views/` → `view('@slug/name')`; `assets/` → `plugin_asset('slug', 'pfad')` über Route `pluginasset`.
+- **PluginApi**: `route()` (Datei wird erst beim Aufruf per `require_once` geladen, Pfad auf den Plugin-Ordner geprüft; Kernrouten
+  haben Vorrang; immer Anmeldung nötig), `nav()` (Callback für Sichtbarkeit, Einfügeposition über `after`; `Plugins::applyNav()` im Layout),
+  `onActivate()`, `onDeactivate()`. Bewusst klein gehalten; weitere Erweiterungspunkte (Rechtebereiche, Admin-Seiten, Filter/Hooks in Views) erst bei Bedarf.
+- **Verwaltung** (`admin&a=plugins`, nur Admin, POST + CSRF + Protokoll `Log::add('admin', …)`):
+  - *Aktivieren*: prüft Mindestversion, Abhängigkeiten, Kollision der Datendateien; lädt das Plugin sofort, ruft `onActivate`; bei Fehler Rückgängig.
+  - *Deaktivieren*: verweigert, solange ein aktives Plugin dieses benötigt; ruft `onDeactivate`. Daten bleiben unverändert.
+  - *Import* (immer verfügbar für Admins): ZIP ≤ 10 MB / entpackt ≤ 20 MB / ≤ 300 Dateien, Pfad- und Verknüpfungsprüfung, Dateityp-Whitelist
+    (php, json, js, css, svg, png, jpg, jpeg, gif, webp, woff, woff2, txt, md; keine Punktdateien), PHP-Syntaxprüfung per `token_get_all(TOKEN_PARSE)`,
+    Schreiben in `plugins/.tmp-*` und Umbenennen. Ein vorhandener Slug wird nie überschrieben. Das Plugin ist danach **inaktiv**.
+  - *Export*: ZIP des Plugin-Ordners (`<slug>/…`, ohne Nutzdaten), temporär in `data/tmp/`.
+  - *Löschen*: nur inaktive, nicht `core`-Plugins. Checkbox „Daten ebenfalls löschen“ entfernt die `stores`-Dateien (vorher Snapshot `Store::dailyBackup(true)`);
+    ohne Haken bleiben die Daten und sind nach erneutem Import wieder da.
+- **Sicherheit**: Plugin-Code ist vertrauenswürdiger Code ohne Sandbox. `plugins/` ist per `.htaccess` gesperrt (nginx: wie `app/`); ausgeliefert wird nur
+  `assets/` über `pluginasset` (angemeldet, aktives Plugin, Endungs-Whitelist, `realpath`-Prüfung). Backup-Download enthält `plugins/` nicht – der Ordner gehört zur Installation.
+- **Stationen** ist das vorinstallierte Kern-Plugin (`core: true`, `default_active: true`): Route `stations`, Menüpunkt hinter „Gedenken“,
+  Datendatei `stations.json`. Albumfarben/-kategorie (`Albums::COLORS`, `Albums::colorName()`, Album-Felder `color`/`cat`) gehören dem Kern und bleiben auch ohne das Plugin bestehen.
+  Ist das Plugin deaktiviert, liefert `r=stations` 404 und der Menüpunkt entfällt.
 
 ## Als Benutzer anmelden („Run as user“)
 

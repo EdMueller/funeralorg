@@ -15,10 +15,6 @@ return [
     'js.task_delete' => 'Delete task?',
     'js.cat_rename' => 'Rename category',
     'js.cat_new' => 'New category',
-    'js.st_birth' => 'Birth station',
-    'js.st_death' => 'Death station',
-    'js.st_edit' => 'Edit station',
-    'js.st_new' => 'New station',
     'js.user_edit' => 'Edit user',
     'js.user_new' => 'New user',
     'js.album_edit' => 'Edit album',
@@ -47,6 +43,4 @@ return [
     'js.ct_cols_aria' => 'Choose columns',
     'js.ct_cols_title' => 'Show columns',
     'js.ct_cols_reset' => 'Restore defaults',
-    'js.cta_slideshow' => ['one' => '▶ Start slideshow ({n} picture)', 'other' => '▶ Start slideshow ({n} pictures)'],
-    'js.cta_view' => 'View picture',
 ];

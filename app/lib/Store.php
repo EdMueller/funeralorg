@@ -19,13 +19,23 @@ final class Store
         'memorial'   => ['name' => '', 'born' => '', 'died' => '', 'quote' => '', 'text' => '', 'portrait' => ''],
         'gallery'    => ['albums' => [], 'images' => []],
         'selections' => [],
-        'stations'   => [],
         'ratelimit'  => [],
         'settings'   => [],
         'resets'     => ['tokens' => [], 'requests' => [], 'rl' => []],
     ];
 
+    /** Von Plugins ergänzte Datendateien (Name => Standardinhalt). */
+    private static array $extra = [];
+
     private static array $cache = [];
+
+    /** Meldet eine Plugin-Datendatei an (Standardinhalt, solange die Datei fehlt). */
+    public static function extend(string $name, array $default): void
+    {
+        if (!isset(self::DEFAULTS[$name])) {
+            self::$extra[$name] = $default;
+        }
+    }
 
     public static function file(string $name): string
     {
@@ -69,7 +79,7 @@ final class Store
     {
         $f = self::file($name);
         if (!is_file($f)) {
-            return self::DEFAULTS[$name] ?? [];
+            return self::DEFAULTS[$name] ?? self::$extra[$name] ?? [];
         }
         $raw = file_get_contents($f);
         $data = json_decode($raw === false ? '' : $raw, true);

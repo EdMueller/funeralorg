@@ -20,7 +20,8 @@ Die Screenshots zeigen erfundene Beispieldaten. Die Oberfläche ist für das Han
 ## Funktionen
 
 - **Gedenkseite** mit Portrait, Lebensdaten, Spruch und Text; Anmeldeseite mit Diashow ausgewählter Fotos
-- **Stationen:** Zeitstrahl und Weltkarte, verknüpft mit Alben
+- **Stationen:** Zeitstrahl und Weltkarte, verknüpft mit Alben (vorinstalliertes Plugin)
+- **Plugins:** Erweiterungen verwalten, importieren, aktivieren, exportieren und löschen (Verwaltung → Plugins, Entwicklung: `docs/plugin-development.md`)
 - **Bilder:** Alben, Mehrfach-Upload, Leuchtkasten, Diashow, Auswahl und ZIP-Download
 - **Aufgaben:** Checklisten mit Fälligkeit, Zuständigkeit und Notizen; Start-Checkliste bei der Einrichtung
 - **Kontakte:** Adressen, Telefon, Anruf-/Briefstatus, vCard-Import, Export als XLSX/CSV, Adressetiketten
@@ -57,7 +58,7 @@ oder unter `https://example.com/gedenkseite/` ist ohne Änderung möglich.
 
 ### Variante 1 – Unterverzeichnis einer bestehenden Website (Apache)
 
-Alles liegt in einem Ordner unterhalb des Webroots, `app/`, `bin/`, `data/` und `docs/`
+Alles liegt in einem Ordner unterhalb des Webroots, `app/`, `bin/`, `data/`, `docs/` und `plugins/`
 werden per `.htaccess` gesperrt. Voraussetzung: `AllowOverride All` (Standard bei Apache).
 
 ```bash
@@ -66,7 +67,7 @@ cd /tmp/gs/gedenkseite
 WEB=/var/www/clients/client1/web1/web/gedenkseite
 mkdir -p "$WEB"
 
-# Gesamten Projektordner kopieren (inkl. .htaccess, die app/, bin/, configs/, data/, docs/ sperrt)
+# Gesamten Projektordner kopieren (inkl. .htaccess, die app/, bin/, configs/, data/, docs/, plugins/ sperrt)
 rsync -a --exclude .git ./ "$WEB/"
 
 chown -R web1:client1 "$WEB"
@@ -93,7 +94,7 @@ Die Verwaltungsebene legt je Website `web/` (Webroot) und `private/` an:
 ```bash
 cd /var/www/clients/client1/web1
 mkdir -p private/gedenkseite
-cp -a /tmp/gs/gedenkseite/{app,bin,configs,data,docs,VERSION} private/gedenkseite/
+cp -a /tmp/gs/gedenkseite/{app,bin,configs,data,docs,plugins,VERSION} private/gedenkseite/
 cp -a /tmp/gs/gedenkseite/{index.php,.htaccess,assets} web/
 rm -f web/index.html                             # ISPConfig-Platzhalter (vorher prüfen)
 

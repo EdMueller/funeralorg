@@ -6,7 +6,8 @@ function ctrl_admin(string $r, string $a): void
     Perm::needAdmin();
     $isPost = $_SERVER['REQUEST_METHOD'] === 'POST';
     if (in_array($a, ['usersave', 'userdelete', 'groupsave', 'groupdelete', 'sharesave', 'sharerevoke',
-        'sharedelete', 'snapshot', 'requestdone', 'impersonate', 'sendersave'], true) && !$isPost) {
+        'sharedelete', 'snapshot', 'requestdone', 'impersonate', 'sendersave', 'pluginset', 'pluginimport',
+        'plugindelete'], true) && !$isPost) {
         abort(400);
     }
     $me = Auth::user();
@@ -284,6 +285,82 @@ function ctrl_admin(string $r, string $a): void
             Log::add('admin', 'Absenderadresse ' . ($lines ? 'gespeichert' : 'entfernt'));
             flash(t($lines ? 'sender.saved' : 'sender.removed'));
             redirect('admin', ['a' => 'sender']);
+
+        /* ---------------------------------------------------------- Plugins */
+        case 'plugins':
+            $rows = [];
+            foreach (Plugins::all() as $slug => $p) {
+                $active = $p['ok'] && Plugins::isActive($slug);
+                $rows[$slug] = $p + [
+                    'active'     => $active,
+                    'loaded'     => Plugins::isLoaded($slug),
+                    'problem'    => $active ? Plugins::problem($slug) : '',
+                    'dependents' => Plugins::dependents($slug),
+                    'data'       => Plugins::dataFiles($slug),
+                ];
+            }
+            view('admin_plugins', ['plugins' => $rows, 'maxMb' => Plugins::MAX_ZIP / 1048576]);
+            return;
+
+        case 'pluginset':
+            $slug = (string)post('slug');
+            $on = post('state') === 'on';
+            $err = Plugins::setActive($slug, $on);
+            if ($err !== null) {
+                flash($err, 'warning');
+            } else {
+                $name = Plugins::all()[$slug]['m']['name'] ?? $slug;
+                Log::add('admin', ($on ? 'Plugin aktiviert: ' : 'Plugin deaktiviert: ') . $name);
+                flash(t($on ? 'plugins.activated' : 'plugins.deactivated', ['name' => $name]));
+            }
+            redirect('admin', ['a' => 'plugins']);
+
+        case 'pluginimport':
+            $up = $_FILES['plugin_zip'] ?? null;
+            if (!is_array($up) || ($up['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file((string)$up['tmp_name'])) {
+                flash(t('plugins.err_upload'), 'warning');
+                redirect('admin', ['a' => 'plugins']);
+            }
+            [$slug, $err] = Plugins::install((string)$up['tmp_name']);
+            if ($slug === null) {
+                flash($err, 'warning');
+            } else {
+                $m = Plugins::all()[$slug]['m'];
+                Log::add('admin', 'Plugin importiert: ' . $m['name'] . ' ' . $m['version']);
+                flash(t('plugins.imported', ['name' => $m['name']]));
+            }
+            redirect('admin', ['a' => 'plugins']);
+
+        case 'pluginexport':
+            $slug = (string)get('p');
+            [$tmp, $fileName] = Plugins::export($slug);
+            if ($tmp === null) {
+                abort(404);
+            }
+            Log::add('export', 'Plugin ' . $slug);
+            header('Content-Type: application/zip');
+            header('Content-Disposition: attachment; filename="' . slug($fileName) . '"');
+            header('Content-Length: ' . filesize($tmp));
+            header('Cache-Control: no-store');
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+            readfile($tmp);
+            @unlink($tmp);
+            exit;
+
+        case 'plugindelete':
+            $slug = (string)post('slug');
+            $withData = !empty($_POST['delete_data']);
+            $name = Plugins::all()[$slug]['m']['name'] ?? $slug;
+            $err = Plugins::delete($slug, $withData);
+            if ($err !== null) {
+                flash($err, 'warning');
+            } else {
+                Log::add('admin', 'Plugin gelöscht: ' . $name . ($withData ? ' (mit Daten)' : ''));
+                flash(t($withData ? 'plugins.deleted_data' : 'plugins.deleted', ['name' => $name]));
+            }
+            redirect('admin', ['a' => 'plugins']);
 
         /* ---------------------------------------------------------- Backup */
         case 'backup':

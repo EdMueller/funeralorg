@@ -314,4 +314,32 @@
       if (marker.hidden) picker.world(false);
     });
   }
+  /* ---------- Dialog „Station“ füllen (Auslöser trägt data-station="<json>") ---------- */
+  var stModal = document.getElementById('stationModal');
+  if (stModal) {
+    stModal.addEventListener('show.bs.modal', function (ev) {
+      var t = ev.relatedTarget;
+      if (!t || !t.dataset.station) return;
+      var d = {};
+      try { d = JSON.parse(t.dataset.station); } catch (e) { d = {}; }
+      var f = $('form', stModal);
+      f.reset();
+      Array.prototype.forEach.call(f.elements, function (el) {
+        if (!el.name || el.name.charAt(0) === '_') return;
+        if (el.type === 'checkbox') el.checked = !!d[el.name];
+        else if (d[el.name] !== undefined && d[el.name] !== null) el.value = d[el.name];
+        else if (el.tagName !== 'SELECT') el.value = '';
+      });
+      var fixed = d.type === 'birth' || d.type === 'death';
+      $$('[data-st-fixed]', stModal).forEach(function (c) { c.hidden = fixed; });
+      $('[name=title]', stModal).required = !fixed;
+      var del = $('[data-delete-station]', stModal);
+      if (del) del.hidden = !d.id || fixed;
+      $('.modal-title', stModal).textContent = fixed ? tr(d.type === 'birth' ? 'st_birth' : 'st_death') : tr(d.id ? 'st_edit' : 'st_new');
+    });
+    stModal.addEventListener('shown.bs.modal', function () {
+      var first = $('input:not([type=hidden]):not([type=checkbox]), select', stModal);
+      if (first) first.focus();
+    });
+  }
 })();

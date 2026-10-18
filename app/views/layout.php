@@ -6,7 +6,6 @@ $title = ($pageTitle ?? '') !== '' ? $pageTitle . ' – ' : '';
 $nav = [];
 if (Perm::memorial()) {
     $nav['home'] = [t('nav.memorial'), 'bi-flower1'];
-    $nav['stations'] = [t('nav.stations'), 'bi-geo-alt'];
 }
 if (Perm::gallery()) {
     $nav['gallery'] = [t('nav.gallery'), 'bi-images'];
@@ -23,6 +22,7 @@ if (Perm::can('rsvp')) {
 if (Perm::can('condolences')) {
     $nav['condolences'] = [t('nav.condolences'), 'bi-envelope-heart'];
 }
+$nav = Plugins::applyNav($nav);
 ?><!doctype html>
 <html lang="<?= e(I18n::lang()) ?>">
 <head>
@@ -34,6 +34,9 @@ if (Perm::can('condolences')) {
 <link rel="stylesheet" href="<?= e(asset('vendor/bootstrap/bootstrap.min.css')) ?>">
 <link rel="stylesheet" href="<?= e(asset('vendor/bootstrap/bootstrap-icons.min.css')) ?>">
 <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
+<?php foreach (($styles ?? []) as $href): ?>
+<link rel="stylesheet" href="<?= e($href) ?>">
+<?php endforeach; ?>
 </head>
 <body>
 <?php if (Auth::isShare()): ?>

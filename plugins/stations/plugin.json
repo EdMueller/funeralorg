@@ -1,0 +1,13 @@
+{
+    "slug": "stations",
+    "name": "Stationen",
+    "version": "1.0.0",
+    "description": "Zeitstrahl und Weltkarte mit den Lebensstationen. Ein Klick startet die Diashow des verknüpften Albums.",
+    "author": "Data Dienste",
+    "requires_app": "0.0.4",
+    "core": true,
+    "default_active": true,
+    "stores": {
+        "stations": []
+    }
+}

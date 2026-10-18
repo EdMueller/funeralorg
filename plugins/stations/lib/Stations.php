@@ -9,13 +9,6 @@ declare(strict_types=1);
  */
 final class Stations
 {
-    /** Auswählbare Farben für Alben (Hex-Wert; Name: t('color.<hex ohne #>')). */
-    public const COLORS = ['#4a5d4f', '#9c8558', '#2f6f9f', '#b0443a', '#7a4f9a', '#c27a2c', '#1f8a8a', '#6b7174'];
-
-    public static function colorName(string $hex): string
-    {
-        return t('color.' . ltrim($hex, '#'));
-    }
     public const NEUTRAL = '#6b7174';
 
     /**
@@ -144,7 +137,7 @@ final class Stations
     {
         $al = $s['album'] !== '' ? find_by_id($albums, $s['album']) : null;
         $color = $al ? Albums::inherit($albums, $al['id'], 'color') : '';
-        if (!in_array($color, self::COLORS, true)) {
+        if (!in_array($color, Albums::COLORS, true)) {
             $color = self::NEUTRAL;
         }
         $cat = $al ? (Albums::inherit($albums, $al['id'], 'cat') ?: $al['name']) : t('gal.no_album');

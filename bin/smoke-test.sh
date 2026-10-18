@@ -70,6 +70,48 @@ else
   fail "Version wird im Dashboard nicht angezeigt"
 fi
 
+echo "Plugins"
+check "Plugin-Verwaltung" 200 "$BASE?r=admin&a=plugins"
+check "Plugin-Asset (Stationen)" 200 "$BASE?r=pluginasset&p=stations&f=css/stations.css"
+check "Plugin-Asset: Pfadtrick wird abgelehnt" 404 "$BASE?r=pluginasset&p=stations&f=../plugin.php"
+check "Plugin-Asset: PHP-Datei wird abgelehnt" 404 "$BASE?r=pluginasset&p=stations&f=js/../../plugin.php"
+check "Plugin-Export" 200 "$BASE?r=admin&a=pluginexport&p=stations"
+C=$(csrf "admin&a=plugins")
+check "Kern-Plugin löschen wird abgelehnt" 302 -d "_csrf=$C&slug=stations&delete_data=1" "$BASE?r=admin&a=plugindelete"
+check "Stationen nach Löschversuch weiter vorhanden" 200 "$BASE?r=stations"
+check "Stationen deaktivieren" 302 -d "_csrf=$C&slug=stations&state=off" "$BASE?r=admin&a=pluginset"
+check "Deaktiviert: Route nicht mehr da" 404 "$BASE?r=stations"
+check "Deaktiviert: Asset nicht mehr da" 404 "$BASE?r=pluginasset&p=stations&f=css/stations.css"
+check "Stationen aktivieren" 302 -d "_csrf=$C&slug=stations&state=on" "$BASE?r=admin&a=pluginset"
+check "Aktiviert: Route wieder da" 200 "$BASE?r=stations"
+
+mkdir -p "$TMP/zip/ok" "$TMP/zip/bad"
+php -r '
+  $mk = function (string $f, array $files) { $z = new ZipArchive(); $z->open($f, ZipArchive::CREATE); foreach ($files as $n => $c) { $z->addFromString($n, $c); } $z->close(); };
+  $mk($argv[1] . "/ok/smoke.zip", [
+    "smoke-plug/plugin.json" => json_encode(["slug" => "smoke-plug", "name" => "Smoke", "version" => "1.0.0", "stores" => ["smoke_data" => []]]),
+    "smoke-plug/plugin.php" => "<?php\nreturn function (PluginApi \$p): void { \$p->route(\"smokeplug\", \"c.php\", \"ctrl_smokeplug\"); };\n",
+    "smoke-plug/c.php" => "<?php\nfunction ctrl_smokeplug(string \$r, string \$a): void { Store::update(\"smoke_data\", function (array &\$d) { \$d[] = 1; }); echo \"smoke-ok\"; }\n",
+  ]);
+  $mk($argv[1] . "/bad/traversal.zip", ["plugin.json" => json_encode(["slug" => "evil", "name" => "E", "version" => "1.0.0"]), "plugin.php" => "<?php\n", "../evil.php" => "<?php\n"]);
+  $mk($argv[1] . "/bad/type.zip", ["plugin.json" => json_encode(["slug" => "evil2", "name" => "E", "version" => "1.0.0"]), "plugin.php" => "<?php\n", ".htaccess" => "x"]);
+  $mk($argv[1] . "/bad/syntax.zip", ["plugin.json" => json_encode(["slug" => "evil3", "name" => "E", "version" => "1.0.0"]), "plugin.php" => "<?php\nreturn function ( {\n"]);
+' "$TMP/zip"
+C=$(csrf "admin&a=plugins")
+for z in traversal type syntax; do
+  check "Import abgelehnt: $z" 302 -F "_csrf=$C" -F "plugin_zip=@$TMP/zip/bad/$z.zip" "$BASE?r=admin&a=pluginimport"
+done
+if ls "$TMP/app/plugins" | grep -q '^evil'; then fail "Unzulässiges Plugin wurde installiert"; else ok "Unzulässige Plugins nicht installiert"; fi
+check "Import" 302 -F "_csrf=$C" -F "plugin_zip=@$TMP/zip/ok/smoke.zip" "$BASE?r=admin&a=pluginimport"
+check "Importiertes Plugin ist inaktiv (404)" 404 "$BASE?r=smokeplug"
+check "Importiertes Plugin aktivieren" 302 -d "_csrf=$C&slug=smoke-plug&state=on" "$BASE?r=admin&a=pluginset"
+if [ "$(curl -s -b "$JAR" "$BASE?r=smokeplug")" = "smoke-ok" ]; then ok "Plugin-Route antwortet"; else fail "Plugin-Route antwortet nicht"; fi
+check "Aktives Plugin löschen wird abgelehnt" 302 -d "_csrf=$C&slug=smoke-plug" "$BASE?r=admin&a=plugindelete"
+[ -d "$TMP/app/plugins/smoke-plug" ] && ok "Aktives Plugin bleibt" || fail "Aktives Plugin wurde gelöscht"
+check "Plugin deaktivieren" 302 -d "_csrf=$C&slug=smoke-plug&state=off" "$BASE?r=admin&a=pluginset"
+check "Plugin mit Daten löschen" 302 -d "_csrf=$C&slug=smoke-plug&delete_data=1" "$BASE?r=admin&a=plugindelete"
+if [ -d "$TMP/app/plugins/smoke-plug" ] || [ -f "$TMP/app/data/smoke_data.json" ]; then fail "Plugin oder Daten sind noch vorhanden"; else ok "Plugin und Daten entfernt"; fi
+
 echo "Benutzer anlegen und als Benutzer anmelden"
 GROUP=$(php -r '$g = json_decode(file_get_contents($argv[1]), true); echo $g[0]["id"] ?? "";' "$TMP/app/data/groups.json")
 C=$(csrf "admin&a=users")

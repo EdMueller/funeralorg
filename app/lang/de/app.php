@@ -10,7 +10,6 @@ return [
     'common.never' => 'noch nie',
     'common.none' => 'Keine',
     'nav.memorial' => 'Gedenken',
-    'nav.stations' => 'Stationen',
     'nav.gallery' => 'Bilder',
     'nav.checklist' => 'Aufgaben',
     'nav.contacts' => 'Kontakte',

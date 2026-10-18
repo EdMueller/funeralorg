@@ -100,6 +100,13 @@ function asset(string $path): string
     return 'assets/' . $path . '?v=' . $v;
 }
 
+/** URL einer Datei aus `assets/` eines Plugins (Route `pluginasset`, mit Versionsparameter für den Browser-Cache). */
+function plugin_asset(string $slug, string $path): string
+{
+    $f = Plugins::assetFile($slug, $path);
+    return url('pluginasset', ['p' => $slug, 'f' => $path, 'v' => $f ? substr((string)filemtime($f), -6) : '0']);
+}
+
 function redirect(string $r, array $params = []): never
 {
     header('Location: ' . url($r, $params));
@@ -151,8 +158,9 @@ function json_out(array $data, int $code = 200): never
 function view(string $tpl, array $vars = [], ?string $layout = 'layout'): void
 {
     extract($vars, EXTR_SKIP);
+    $file = str_starts_with($tpl, '@') ? Plugins::viewFile($tpl) : APP_DIR . '/views/' . $tpl . '.php';
     ob_start();
-    require APP_DIR . '/views/' . $tpl . '.php';
+    require $file;
     $content = ob_get_clean();
     if ($layout === null) {
         echo $content;

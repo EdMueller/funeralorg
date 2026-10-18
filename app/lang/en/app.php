@@ -10,7 +10,6 @@ return [
     'common.never' => 'never',
     'common.none' => 'None',
     'nav.memorial' => 'Memorial',
-    'nav.stations' => 'Stations',
     'nav.gallery' => 'Pictures',
     'nav.checklist' => 'Tasks',
     'nav.contacts' => 'Contacts',

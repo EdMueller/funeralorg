@@ -15,10 +15,6 @@ return [
     'js.task_delete' => 'Aufgabe löschen?',
     'js.cat_rename' => 'Kategorie umbenennen',
     'js.cat_new' => 'Neue Kategorie',
-    'js.st_birth' => 'Station Geburt',
-    'js.st_death' => 'Station Tod',
-    'js.st_edit' => 'Station bearbeiten',
-    'js.st_new' => 'Neue Station',
     'js.user_edit' => 'Benutzer bearbeiten',
     'js.user_new' => 'Neuer Benutzer',
     'js.album_edit' => 'Album bearbeiten',
@@ -47,6 +43,4 @@ return [
     'js.ct_cols_aria' => 'Spalten auswählen',
     'js.ct_cols_title' => 'Spalten anzeigen',
     'js.ct_cols_reset' => 'Standard wiederherstellen',
-    'js.cta_slideshow' => ['one' => '▶ Diashow starten ({n} Bild)', 'other' => '▶ Diashow starten ({n} Bilder)'],
-    'js.cta_view' => 'Bild ansehen',
 ];

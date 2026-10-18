@@ -8,6 +8,14 @@ declare(strict_types=1);
  */
 final class Albums
 {
+    /** Auswählbare Farben für Alben (Hex-Wert; Name: t('color.<hex ohne #>')). */
+    public const COLORS = ['#4a5d4f', '#9c8558', '#2f6f9f', '#b0443a', '#7a4f9a', '#c27a2c', '#1f8a8a', '#6b7174'];
+
+    public static function colorName(string $hex): string
+    {
+        return t('color.' . ltrim($hex, '#'));
+    }
+
     /** Direkte Unteralben (Heimat und Verweise), nach `sort`. */
     public static function children(array $albums, string $id): array
     {

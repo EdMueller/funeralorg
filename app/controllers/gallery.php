@@ -176,7 +176,7 @@ function ctrl_gallery(string $r, string $a): void
             $id = (string)post('id');
             $name = mb_substr((string)post('name'), 0, 100);
             $cat = mb_substr((string)post('cat'), 0, 40);
-            $color = in_array((string)post('color'), Stations::COLORS, true) ? (string)post('color') : '';
+            $color = in_array((string)post('color'), Albums::COLORS, true) ? (string)post('color') : '';
             if ($name !== '') {
                 $parent = (string)post('parent');
                 $links = $_POST['links'] ?? [];

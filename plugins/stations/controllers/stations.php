@@ -133,7 +133,7 @@ function ctrl_stations(string $r, string $a): void
             ] : null,
         ];
     }
-    view('stations', [
+    view('@stations/stations', [
         'items'   => $items,
         'albums'  => $albums,
         'images'  => $isAdmin ? $images : [],

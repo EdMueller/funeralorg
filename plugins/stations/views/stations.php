@@ -2,6 +2,7 @@
 /** @var array $items @var array $albums @var array $images @var bool $isAdmin */
 $pageTitle = t('st.title');
 $wide = true;
+$styles = [plugin_asset('stations', 'css/stations.css')];
 
 // Zeitachse: erster bis letzter datierter Punkt, mit Rand
 $stamps = array_values(array_filter(array_column($items, 'ts'), fn($t) => $t !== null));
@@ -164,4 +165,4 @@ $json = array_map(function ($it) {
 <?php endif; ?>
 
 <script type="application/json" id="stationsData"><?= json_encode(['items' => $json], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?></script>
-<script src="<?= e(asset('js/stations.js')) ?>" defer></script>
+<script src="<?= e(plugin_asset('stations', 'js/stations.js')) ?>" defer></script>

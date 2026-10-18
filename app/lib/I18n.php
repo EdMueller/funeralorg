@@ -43,6 +43,12 @@ final class I18n
         return self::$lang = $best;
     }
 
+    /** Verwirft die geladenen Texte (nach dem Laden von Plugins). */
+    public static function reset(): void
+    {
+        self::$cache = [];
+    }
+
     /** Sprache setzen und im Browser merken (Cookie, 1 Jahr). */
     public static function set(string $lang): void
     {
@@ -151,6 +157,9 @@ final class I18n
         if (!isset(self::$cache[$lang])) {
             $all = [];
             foreach (glob(APP_DIR . '/lang/' . $lang . '/*.php') ?: [] as $f) {
+                $all += require $f;
+            }
+            foreach (Plugins::langFiles($lang) as $f) {
                 $all += require $f;
             }
             self::$cache[$lang] = $all;

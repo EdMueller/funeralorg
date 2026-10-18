@@ -8,10 +8,12 @@ declare(strict_types=1);
  */
 $root = dirname(__DIR__);
 $langs = array_map('basename', glob($root . '/app/lang/*', GLOB_ONLYDIR) ?: []);
+// Plugins (plugins/<slug>/lang/<sprache>/) werden mitgeprüft
 $msgs = [];
 foreach ($langs as $l) {
     $msgs[$l] = [];
-    foreach (glob($root . '/app/lang/' . $l . '/*.php') ?: [] as $f) {
+    $files = array_merge(glob($root . '/app/lang/' . $l . '/*.php') ?: [], glob($root . '/plugins/*/lang/' . $l . '/*.php') ?: []);
+    foreach ($files as $f) {
         foreach (require $f as $k => $v) {
             if (isset($msgs[$l][$k])) {
                 echo "doppelt in $l: $k\n";
@@ -64,19 +66,24 @@ foreach ($base as $k => $v) {
 }
 // feste Schlüssel im Code
 $used = [];
-$it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/app', FilesystemIterator::SKIP_DOTS));
-foreach ($it as $f) {
-    if ($f->getExtension() !== 'php' || str_contains($f->getPathname(), '/app/lang/')) {
+foreach ([$root . '/app', $root . '/plugins'] as $dir) {
+    if (!is_dir($dir)) {
         continue;
     }
-    $src = file_get_contents($f->getPathname());
-    if (preg_match_all('/\b(?:t|tn)\(\s*\'([a-z0-9_.]+)\'/', $src, $m)) {
-        foreach ($m[1] as $k) {
-            $used[$k] = $f->getPathname();
+    $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS));
+    foreach ($it as $f) {
+        if ($f->getExtension() !== 'php' || str_contains($f->getPathname(), '/lang/')) {
+            continue;
+        }
+        $src = file_get_contents($f->getPathname());
+        if (preg_match_all('/\b(?:t|tn)\(\s*\'([a-z0-9_.]+)\'/', $src, $m)) {
+            foreach ($m[1] as $k) {
+                $used[$k] = $f->getPathname();
+            }
         }
     }
 }
-foreach (glob($root . '/assets/js/*.js') ?: [] as $f) {
+foreach (array_merge(glob($root . '/assets/js/*.js') ?: [], glob($root . '/plugins/*/assets/js/*.js') ?: []) as $f) {
     if (preg_match_all('/\btr\(\s*\'([a-z0-9_]+)\'/', file_get_contents($f), $m)) {
         foreach ($m[1] as $k) {
             $used['js.' . $k] = $f;

@@ -25,10 +25,10 @@ DirectorySlash On
 </FilesMatch>
 
 # Anwendungsverzeichnisse sperren, falls sie im selben Verzeichnis liegen
-RedirectMatch 404 (?i)/(app|bin|configs|data|docs)/
+RedirectMatch 404 (?i)/(app|bin|configs|data|docs|plugins)/
 <IfModule mod_rewrite.c>
   RewriteEngine On
-  RewriteRule ^(app|bin|configs|data|docs)(/|$) - [F,L]
+  RewriteRule ^(app|bin|configs|data|docs|plugins)(/|$) - [F,L]
 </IfModule>
 
 <IfModule mod_headers.c>

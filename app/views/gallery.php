@@ -240,7 +240,7 @@ foreach ($slides as $img) {
           <div class="form-text"><?= e(t('gal.cat_hint')) ?></div>
           <label class="form-label mt-3" for="al-color"><?= e(t('gal.color')) ?></label>
           <select class="form-select" id="al-color" name="color"><option value=""><?= e(t('gal.color_none')) ?></option>
-            <?php foreach (Stations::COLORS as $hex): ?><option value="<?= e($hex) ?>"><?= e(Stations::colorName($hex)) ?></option><?php endforeach; ?></select></div>
+            <?php foreach (Albums::COLORS as $hex): ?><option value="<?= e($hex) ?>"><?= e(Albums::colorName($hex)) ?></option><?php endforeach; ?></select></div>
         <div class="col-md-6" id="al-links"><span class="form-label d-block"><?= e(t('gal.also_under')) ?></span>
           <div class="border rounded p-2" style="max-height:19rem;overflow:auto"><?= $linkBoxes($flat) ?></div>
           <div class="form-text"><?= e(t('gal.also_under_hint')) ?></div></div>

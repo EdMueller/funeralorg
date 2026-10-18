@@ -57,7 +57,7 @@ The application knows neither the domain nor the installation path: all links an
 
 ### Option 1 – subdirectory of an existing website (Apache)
 
-Everything lives in one folder below the web root; `app/`, `bin/`, `configs/`, `data/` and `docs/` are
+Everything lives in one folder below the web root; `app/`, `bin/`, `configs/`, `data/`, `docs/` and `plugins/` are
 blocked by the bundled `.htaccess`. Requires `AllowOverride All`.
 
 ```bash
@@ -85,7 +85,7 @@ curl -sI https://example.com/gedenkseite/app/bootstrap.php   | head -1
 ```bash
 cd /var/www/example.com
 mkdir -p private/gedenkseite
-cp -a /path/to/gedenkseite/{app,bin,configs,data,docs,VERSION} private/gedenkseite/
+cp -a /path/to/gedenkseite/{app,bin,configs,data,docs,plugins,VERSION} private/gedenkseite/
 cp -a /path/to/gedenkseite/{index.php,.htaccess,assets} web/
 chown -R www-data:www-data private/gedenkseite web
 chmod -R o-rwx private/gedenkseite

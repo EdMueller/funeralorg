@@ -23,7 +23,9 @@ spl_autoload_register(static function (string $class): void {
     $f = APP_DIR . '/lib/' . $class . '.php';
     if (is_file($f)) {
         require $f;
+        return;
     }
+    Plugins::autoload($class);
 });
 
 require APP_DIR . '/helpers.php';
@@ -63,6 +65,7 @@ function dispatch(): void
 {
     start_session();
     send_security_headers();
+    Plugins::boot();
 
     $r = preg_replace('/[^a-z]/', '', (string)($_GET['r'] ?? 'home'));
     $routes = [
@@ -78,7 +81,7 @@ function dispatch(): void
         'pubimg'      => 'gallery',   // Login-Bilder (öffentlich)
         'home'        => 'memorial',
         'memorial'    => 'memorial',
-        'stations'    => 'stations',
+        'pluginasset' => 'plugins',   // Assets aktiver Plugins
         'checklist'   => 'checklist',
         'contacts'    => 'contacts',
         'rsvp'        => 'contacts',
@@ -89,7 +92,8 @@ function dispatch(): void
     ];
     $public = ['login', 's', 'pubimg', 'setup', 'forgot', 'reset', 'lang'];
 
-    if (!isset($routes[$r])) {
+    $pluginRoute = !isset($routes[$r]) && Plugins::hasRoute($r);
+    if (!isset($routes[$r]) && !$pluginRoute) {
         abort(404);
     }
     $needSetup = Setup::needed();
@@ -113,6 +117,10 @@ function dispatch(): void
         Csrf::check();
     }
 
+    if ($pluginRoute) {
+        Plugins::call($r, (string)($_GET['a'] ?? 'index'));
+        return;
+    }
     require APP_DIR . '/controllers/' . $routes[$r] . '.php';
     $fn = 'ctrl_' . $routes[$r];
     $fn($r, (string)($_GET['a'] ?? 'index'));

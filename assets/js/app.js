@@ -307,14 +307,6 @@
   fillModal('catModal', 'cat', function (m, d) {
     $('.modal-title', m).textContent = tr(d.id ? 'cat_rename' : 'cat_new');
   });
-  fillModal('stationModal', 'station', function (m, d) {
-    var fixed = d.type === 'birth' || d.type === 'death';
-    $$('[data-st-fixed]', m).forEach(function (c) { c.hidden = fixed; });
-    $('[name=title]', m).required = !fixed;
-    var del = $('[data-delete-station]', m);
-    if (del) del.hidden = !d.id || fixed;
-    $('.modal-title', m).textContent = fixed ? tr(d.type === 'birth' ? 'st_birth' : 'st_death') : tr(d.id ? 'st_edit' : 'st_new');
-  });
   fillModal('userModal', 'user', function (m, d) {
     $('[name=password]', m).required = !d.id;
     $('.modal-title', m).textContent = tr(d.id ? 'user_edit' : 'user_new');

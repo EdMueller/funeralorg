@@ -5,6 +5,20 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+### Added
+
+- Plugin system (Admin → Plugins): list, activate, deactivate, import (ZIP), export (ZIP) and delete plugins,
+  optionally including their data. A plugin is a folder `plugins/<slug>/` with `plugin.json` and `plugin.php`;
+  it can register routes, menu items, data files, language files, classes, views and assets
+  (see `docs/plugin-development.md`)
+- `plugins_safe_mode` in `configs/config.php` starts the application without running any plugin code
+
+### Changed
+
+- Stations (timeline and map) is now a pre-installed plugin (`plugins/stations/`, can be deactivated but not deleted);
+  data in `stations.json` is unchanged
+- Album colours (`Albums::COLORS`, `Albums::colorName()`) moved from the stations code into the core
+
 ## [0.0.4] - 2026-10-14
 
 ### Fixed
