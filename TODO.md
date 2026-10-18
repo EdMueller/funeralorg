@@ -47,7 +47,6 @@ und Vorschläge aus der Code-Durchsicht (mit *Vorschlag* markiert). Reihenfolge 
 
 ### Dokumentation
 - [ ] Screenshots im README nach den letzten Änderungen (Aufgaben ohne Reload, Etiketten) aktualisieren
-- [ ] ECKDATEN.md-Versionsstand (0.0.10) mit `VERSION` und `CHANGELOG.md` (letzter Eintrag 0.0.4) abgleichen
 
 ## Bewusst nicht geplant
 
