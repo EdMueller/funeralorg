@@ -1,13 +1,22 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Sortierung innerhalb einer Liste: offen vor erledigt; manuell einsortierte (`sort`) vor den übrigen,
+ * diese nach Fälligkeit und Anlagedatum.
+ */
+function cl_cmp(array $x, array $y): int
+{
+    $key = fn($i) => [(int)$i['done'], isset($i['sort']) ? 0 : 1, (int)($i['sort'] ?? 0), $i['due'] ?: '9999', $i['created']];
+    return $key($x) <=> $key($y);
+}
+
 /** Kategorien, Hauptaufgaben je Kategorie und Unteraufgaben je Hauptaufgabe (sortiert). */
 function cl_data(): array
 {
     $d = Store::read('checklist');
     usort($d['categories'], fn($x, $y) => $x['sort'] <=> $y['sort']);
-    $cmp = fn($x, $y) => [(int)$x['done'], $x['due'] ?: '9999', $x['created']]
-        <=> [(int)$y['done'], $y['due'] ?: '9999', $y['created']];
+    $cmp = 'cl_cmp';
     $byCat = [];
     $subs = [];
     foreach ($d['items'] as $i) {
@@ -204,6 +213,73 @@ function ctrl_checklist(string $r, string $a): void
             }
             Log::change('checklist', $id ? 'Aufgabe bearbeitet' : 'Aufgabe angelegt', $title);
             cl_respond(t($id ? 'cl.saved' : 'cl.created'), $res['cats']);
+
+        case 'move':
+            if (!$isPost) {
+                abort(400);
+            }
+            Perm::need('checklist', Perm::EDIT);
+            $id = (string)post('id');
+            $cat = (string)post('cat');
+            $parent = (string)post('parent');
+            $ids = array_map('strval', (array)($_POST['ids'] ?? []));
+            $res = Store::update('checklist', function (array &$d) use ($id, $cat, $parent, $ids) {
+                $k = array_search($id, array_column($d['items'], 'id'), true);
+                if ($k === false) {
+                    return ['err' => 'cl.err_notfound'];
+                }
+                $it = &$d['items'][$k];
+                $from = [$it['cat'], $it['parent'] ?? ''];
+                $hasSubs = (bool)array_filter($d['items'], fn($x) => ($x['parent'] ?? '') === $id);
+                if ($parent !== '') {
+                    $p = find_by_id($d['items'], $parent);
+                    if (!$p || !empty($p['parent']) || $parent === $id) {
+                        return ['err' => 'cl.err_notfound'];
+                    }
+                    if ($hasSubs) {
+                        return ['err' => 'cl.err_move_subs'];
+                    }
+                    $it['parent'] = $parent;
+                    $it['cat'] = $cat = $p['cat'];
+                } else {
+                    if (!find_by_id($d['categories'], $cat)) {
+                        return ['err' => 'cl.err_notfound'];
+                    }
+                    $it['parent'] = '';
+                    $it['cat'] = $cat;
+                    foreach ($d['items'] as &$sub) {
+                        if (($sub['parent'] ?? '') === $id) {
+                            $sub['cat'] = $cat;
+                        }
+                    }
+                    unset($sub);
+                }
+                unset($it);
+                // Zielliste: übermittelte Reihenfolge, danach nicht übermittelte (z. B. im Filter ausgeblendete) wie bisher
+                $list = array_values(array_filter($d['items'],
+                    fn($x) => ($parent !== '' ? ($x['parent'] ?? '') === $parent : empty($x['parent']) && $x['cat'] === $cat)));
+                usort($list, 'cl_cmp');
+                $have = array_column($list, 'id');
+                $ids = array_values(array_unique(array_intersect($ids, $have)));
+                $pos = array_flip(array_merge($ids, array_diff($have, $ids)));
+                foreach ($d['items'] as &$x) {
+                    if (isset($pos[$x['id']])) {
+                        $x['sort'] = $pos[$x['id']];
+                    }
+                }
+                unset($x);
+                $item = find_by_id($d['items'], $id);
+                return ['title' => $item['title'], 'moved' => $from !== [$cat, $parent], 'cats' => [$from[0], $cat]];
+            });
+            if (isset($res['err'])) {
+                if (is_ajax()) {
+                    json_out(['ok' => false, 'error' => t($res['err'])], 422);
+                }
+                flash(t($res['err']), 'warning');
+                redirect_back('checklist');
+            }
+            Log::change('checklist', $res['moved'] ? 'Aufgabe verschoben' : 'Aufgabenreihenfolge geändert', $res['title']);
+            cl_respond('', $res['cats']);
 
         case 'delete':
             if (!$isPost) {

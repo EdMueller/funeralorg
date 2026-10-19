@@ -185,6 +185,7 @@ in `.htaccess` gesetzt) und nginx leiten selbstständig um.
 | `checklist` | – (`show=open`) | GET | checklist R | Übersicht |
 | `checklist` | `toggle` | POST | checklist C | Aufgabe erledigt/offen (AJAX) |
 | `checklist` | `save` / `delete` | POST | checklist E | Aufgabe/Unteraufgabe (`parent`) anlegen/ändern/löschen (Löschen entfernt Unteraufgaben) |
+| `checklist` | `move` | POST | checklist E | Aufgabe verschieben/umsortieren (`id`, Ziel `cat`, `parent` (leer = Hauptaufgabe), `ids[]` = Reihenfolge der Zielliste); Hauptaufgabe mit Unteraufgaben kann keine Unteraufgabe werden |
 | `checklist` | `catsave` / `catmove` / `catdelete` | POST | checklist E | Kategorien (Löschen entfernt enthaltene Aufgaben) |
 
 **Checkliste ohne Reload:** Alle schreibenden Aktionen (`toggle`, `save`, `delete`, `catsave`, `catmove`, `catdelete`) antworten bei AJAX (`X-Requested-With: fetch`) mit JSON: `msg`, `cats` (Liste `{id, html}` neu gerenderter Kategorieblöcke aus `_checklist_cat.php`/`_checklist_task.php`; leeres `html` = Block entfernen), `order` (Kategorie-Reihenfolge), `options` (Kategorie-Auswahl), `empty`, `lead`; `toggle` liefert stattdessen Zähler (`cat_progress`, `parent_progress`, `lead`). Der Filter `show` kommt als POST-Feld aus `#clRoot[data-show]`. Ohne JS gelten weiter Redirect und Flash.
@@ -313,9 +314,9 @@ Token: `bin2hex(random_bytes(24))`, Vergleich mit `hash_equals`.
 ```json
 { "categories": [ { "id": "…", "name": "Sofort", "sort": 0 } ],
   "items": [ { "id": "…", "cat": "<category-id>", "title": "…", "done": false,
-               "parent": "<aufgaben-id>|''", "done_by": "", "done_at": "", "due": "YYYY-MM-DD|''", "who": "", "note": "", "created": "…" } ] }
+               "parent": "<aufgaben-id>|''", "sort": 0, "done_by": "", "done_at": "", "due": "YYYY-MM-DD|''", "who": "", "note": "", "created": "…" } ] }
 ```
-Sortierung in der Ansicht: offen vor erledigt, dann Fälligkeit, dann Anlagedatum.
+Sortierung in der Ansicht (`cl_cmp()`): offen vor erledigt; Aufgaben mit manuellem `sort` (Position in ihrer Liste, gesetzt per Ziehen/Pfeilen über `move`) vor den übrigen, diese nach Fälligkeit, dann Anlagedatum.
 **Unteraufgaben:** genau eine Ebene. `parent` verweist auf eine Hauptaufgabe (`parent = ''`); `cat` wird von der Hauptaufgabe übernommen und beim Kategoriewechsel mitgezogen. Löschen einer Hauptaufgabe löscht ihre Unteraufgaben mit. Aufklapp-Zustand pro Browser in `localStorage` (`funeralorg.subtasks.open`). Dashboard- und Kategoriezähler zählen Unteraufgaben mit.
 
 ### memorial.json

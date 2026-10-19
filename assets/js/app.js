@@ -218,6 +218,115 @@
     }).catch(fail).finally(function () { btns.forEach(function (b) { b.disabled = false; }); });
   });
 
+  /* ---------- Checkliste: Reihenfolge und Zuordnung per Ziehen oder Pfeile ---------- */
+  var clRoot = $('#clRoot');
+  if (clRoot) {
+    var clDrag = null;
+    /** IDs der Aufgabenzeilen einer Liste (Hauptaufgaben einer Kategorie bzw. Unteraufgaben einer Hauptaufgabe). */
+    var clIds = function (cat, parent) {
+      var box = parent ? document.getElementById('sub-' + parent) : $('.cat-block[data-cat-id="' + cat + '"]', clRoot);
+      if (!box) return [];
+      return $$(':scope > .task', box).map(function (r) { return r.dataset.taskId; });
+    };
+    var clPost = function (cat, parent, ids, id, then) {
+      var fd = new FormData();
+      fd.append('id', id); fd.append('cat', cat); fd.append('parent', parent);
+      fd.append('show', clRoot.dataset.show || 'all');
+      ids.forEach(function (x) { fd.append('ids[]', x); });
+      send(u('checklist', 'move'), fd).then(function (j) { applyChecklist(j); if (then) then(); }).catch(fail);
+    };
+    var clMark = function (el, cls) {
+      $$('.drop-before, .drop-after, .drop-into, .drop-end', clRoot).forEach(function (x) {
+        x.classList.remove('drop-before', 'drop-after', 'drop-into', 'drop-end');
+      });
+      if (el) el.classList.add(cls);
+    };
+    /** Ziel unter dem Zeiger: { cat, parent, ids, el, cls } oder null, wenn dort nicht abgelegt werden darf. */
+    var clTarget = function (ev) {
+      var row = ev.target.closest('.task');
+      var block = ev.target.closest('.cat-block');
+      if (!block) return null;
+      var cat = block.dataset.catId;
+      if (!row) {
+        return { cat: cat, parent: '', ids: clIds(cat, '').filter(function (x) { return x !== clDrag.id; }).concat(clDrag.id), el: block, cls: 'drop-end' };
+      }
+      var rid = row.dataset.taskId;
+      var box = row.closest('.subtasks');
+      if (rid === clDrag.id || (box && box.dataset.subId === clDrag.id)) return null;
+      var r = row.getBoundingClientRect();
+      var y = (ev.clientY - r.top) / r.height;
+      var parent = box ? box.dataset.subId : '';
+      var mode = y < 0.5 ? 'before' : 'after';
+      if (!box && !clDrag.hasSubs && y >= 0.3 && y <= 0.7) mode = 'into';
+      if (mode === 'into') {
+        return { cat: cat, parent: rid, ids: clIds(cat, rid).filter(function (x) { return x !== clDrag.id; }).concat(clDrag.id), el: row, cls: 'drop-into', into: rid };
+      }
+      var ids = clIds(cat, parent).filter(function (x) { return x !== clDrag.id; });
+      ids.splice(ids.indexOf(rid) + (mode === 'after' ? 1 : 0), 0, clDrag.id);
+      return { cat: cat, parent: parent, ids: ids, el: row, cls: mode === 'after' ? 'drop-after' : 'drop-before' };
+    };
+    clRoot.addEventListener('dragstart', function (ev) {
+      var h = ev.target.closest && ev.target.closest('[data-drag-task]');
+      if (!h) return;
+      var row = h.closest('.task');
+      var edit = $('[data-subs]', row);
+      clDrag = { id: row.dataset.taskId, row: row, isSub: row.classList.contains('subtask'), hasSubs: !!edit && +edit.dataset.subs > 0, t: null };
+      ev.dataTransfer.effectAllowed = 'move';
+      ev.dataTransfer.setData('text/plain', clDrag.id);
+      ev.dataTransfer.setDragImage(row, 20, 20);
+      setTimeout(function () { row.classList.add('dragging'); }, 0);
+    });
+    clRoot.addEventListener('dragover', function (ev) {
+      if (!clDrag) return;
+      clDrag.t = clTarget(ev);
+      if (!clDrag.t) { clMark(null); return; }
+      ev.preventDefault();
+      ev.dataTransfer.dropEffect = 'move';
+      clMark(clDrag.t.el, clDrag.t.cls);
+    });
+    clRoot.addEventListener('drop', function (ev) {
+      if (!clDrag || !clDrag.t) return;
+      ev.preventDefault();
+      var t = clDrag.t;
+      clMark(null);
+      clPost(t.cat, t.parent, t.ids, clDrag.id, function () {
+        if (t.into && subOpen.indexOf(t.into) < 0) { // Ziel aufklappen, damit die Aufgabe sichtbar bleibt
+          subOpen.push(t.into);
+          try { localStorage.setItem(subKey, JSON.stringify(subOpen)); } catch (e) { /* ohne Speicher */ }
+          var b = $('[data-sub-toggle="sub-' + t.into + '"]', clRoot);
+          if (b) setSub(b, true);
+        }
+      });
+    });
+    clRoot.addEventListener('dragend', function () {
+      if (!clDrag) return;
+      clDrag.row.classList.remove('dragging');
+      clMark(null);
+      clDrag = null;
+    });
+    // Pfeile: eine Position innerhalb der eigenen Liste
+    clRoot.addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-task-move]');
+      if (!b) return;
+      var row = b.closest('.task');
+      var id = row.dataset.taskId;
+      var box = row.closest('.subtasks');
+      var parent = box ? box.dataset.subId : '';
+      var cat = row.closest('.cat-block').dataset.catId;
+      var ids = clIds(cat, parent);
+      var i = ids.indexOf(id);
+      var j = i + (+b.dataset.taskMove);
+      if (i < 0 || j < 0 || j >= ids.length) return;
+      ids.splice(i, 1);
+      ids.splice(j, 0, id);
+      var dir = b.dataset.taskMove;
+      clPost(cat, parent, ids, id, function () {
+        var again = $('.task[data-task-id="' + id + '"] [data-task-move="' + dir + '"]', clRoot);
+        if (again) again.focus();
+      });
+    });
+  }
+
   /* ---------- Ja/Nein-Umschalter (Kontakte, Kondolenzen) ---------- */
   var condFields = ['card', 'flowers', 'wreath', 'donation', 'thanks'];
   $$('[data-flag]').forEach(function (b) {

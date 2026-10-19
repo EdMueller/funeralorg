@@ -1,6 +1,6 @@
 # TODO – Funktionen und Verbesserungen
 
-Stand: 16.10.2026. Quellen: ECKDATEN.md §16 („Grenzen und mögliche Erweiterungen"), §2 („bewusst nicht umgesetzt")
+Stand: 19.10.2026. Quellen: ECKDATEN.md §16 („Grenzen und mögliche Erweiterungen"), §2 („bewusst nicht umgesetzt")
 und Vorschläge aus der Code-Durchsicht (mit *Vorschlag* markiert). Reihenfolge innerhalb der Abschnitte = grobe Priorität.
 
 ## Angedacht (aus ECKDATEN.md)
@@ -31,7 +31,6 @@ und Vorschläge aus der Code-Durchsicht (mit *Vorschlag* markiert). Reihenfolge 
 - [ ] CSV-/XLSX-Import (neben vCard)
 
 ### Aufgaben
-- [ ] Sortierung per Drag & Drop (Aufgaben, Unteraufgaben)
 - [ ] Filter „Meine Aufgaben" / nach Zuständigkeit und überfällig
 - [ ] Wiederverwendbare Vorlagen für Checklisten (Neustart mit Standardliste)
 

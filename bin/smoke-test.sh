@@ -112,6 +112,23 @@ check "Plugin deaktivieren" 302 -d "_csrf=$C&slug=smoke-plug&state=off" "$BASE?r
 check "Plugin mit Daten löschen" 302 -d "_csrf=$C&slug=smoke-plug&delete_data=1" "$BASE?r=admin&a=plugindelete"
 if [ -d "$TMP/app/plugins/smoke-plug" ] || [ -f "$TMP/app/data/smoke_data.json" ]; then fail "Plugin oder Daten sind noch vorhanden"; else ok "Plugin und Daten entfernt"; fi
 
+echo "Checkliste: Verschieben und Sortieren"
+CL="$TMP/app/data/checklist.json"
+clq() { php -r '$d = json_decode(file_get_contents($argv[1]), true); eval($argv[2]);' "$CL" "$1"; }
+C=$(csrf checklist)
+CAT1=$(clq 'echo $d["categories"][0]["id"];'); CAT2=$(clq 'echo $d["categories"][1]["id"];')
+IDS=$(clq '$n = 0; foreach ($d["items"] as $i) { if ($i["cat"] === $d["categories"][0]["id"] && empty($i["parent"]) && $n++ < 3) echo $i["id"], " "; }')
+read -r A B D <<<"$IDS"
+check "Reihenfolge ändern" 200 -H 'X-Requested-With: fetch' -d "_csrf=$C&id=$B&cat=$CAT1&parent=&ids[]=$B&ids[]=$A&ids[]=$D" "$BASE?r=checklist&a=move"
+[ "$(clq '$o = array_column($d["items"], "sort", "id"); echo $o["'$B'"] < $o["'$A'"] ? "ok" : "no";')" = ok ] && ok "Reihenfolge gespeichert" || fail "Reihenfolge nicht gespeichert"
+check "In andere Kategorie verschieben" 200 -H 'X-Requested-With: fetch' -d "_csrf=$C&id=$D&cat=$CAT2&parent=&ids[]=$D" "$BASE?r=checklist&a=move"
+[ "$(clq '$i = array_column($d["items"], null, "id")["'$D'"]; echo $i["cat"] === "'$CAT2'" ? "ok" : "no";')" = ok ] && ok "Kategorie gewechselt" || fail "Kategorie nicht gewechselt"
+check "Unter Hauptaufgabe ziehen" 200 -H 'X-Requested-With: fetch' -d "_csrf=$C&id=$B&cat=$CAT1&parent=$A&ids[]=$B" "$BASE?r=checklist&a=move"
+[ "$(clq '$i = array_column($d["items"], null, "id")["'$B'"]; echo $i["parent"] === "'$A'" ? "ok" : "no";')" = ok ] && ok "Wurde Unteraufgabe" || fail "Unteraufgabe nicht gesetzt"
+check "Aufgabe mit Unteraufgaben wird nicht Unteraufgabe" 422 -H 'X-Requested-With: fetch' -d "_csrf=$C&id=$A&cat=$CAT1&parent=$D&ids[]=$A" "$BASE?r=checklist&a=move"
+check "Unbekannte Kategorie wird abgelehnt" 422 -H 'X-Requested-With: fetch' -d "_csrf=$C&id=$A&cat=gibtesnicht&parent=&ids[]=$A" "$BASE?r=checklist&a=move"
+check "Zurück auf oberste Ebene" 200 -H 'X-Requested-With: fetch' -d "_csrf=$C&id=$B&cat=$CAT2&parent=&ids[]=$B" "$BASE?r=checklist&a=move"
+
 echo "Benutzer anlegen und als Benutzer anmelden"
 GROUP=$(php -r '$g = json_decode(file_get_contents($argv[1]), true); echo $g[0]["id"] ?? "";' "$TMP/app/data/groups.json")
 C=$(csrf "admin&a=users")

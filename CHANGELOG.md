@@ -5,6 +5,11 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+### Added
+
+- Checklist: tasks can be reordered by drag and drop (handle) or with arrow buttons, and moved to another category
+  or under another task (and back). Manually ordered tasks come first; open tasks stay before completed ones.
+
 ## [0.0.6] - 2026-10-18
 
 ### Added

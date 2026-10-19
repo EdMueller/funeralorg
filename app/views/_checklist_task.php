@@ -7,6 +7,9 @@ $kidsDone = count(array_filter($children, fn($c) => !empty($c['done'])));
 $cid = 'sub-' . $t['id'];
 ?>
       <div class="task<?= !empty($t['done']) ? ' done' : '' ?><?= $isSub ? ' subtask' : '' ?>" data-task-id="<?= e($t['id']) ?>">
+        <?php if ($canEdit): ?>
+          <span class="drag-handle" draggable="true" data-drag-task title="<?= e(t('cl.drag')) ?>" aria-hidden="true"><i class="bi bi-grip-vertical"></i></span>
+        <?php endif; ?>
         <?php if (!$isSub): ?>
           <?php if ($children): ?>
             <button class="btn btn-sm btn-link text-muted sub-toggle" type="button" data-sub-toggle="<?= e($cid) ?>"
@@ -27,6 +30,10 @@ $cid = 'sub-' . $t['id'];
           <?php if ($t['note']): ?><div class="task-note"><?= e($t['note']) ?></div><?php endif; ?>
         </div>
         <?php if ($canEdit): ?>
+          <span class="task-arrows">
+            <button class="btn btn-sm btn-link text-muted" type="button" data-task-move="-1" aria-label="<?= e(t('cl.task_up', ['title' => $t['title']])) ?>"><i class="bi bi-chevron-up"></i></button>
+            <button class="btn btn-sm btn-link text-muted" type="button" data-task-move="1" aria-label="<?= e(t('cl.task_down', ['title' => $t['title']])) ?>"><i class="bi bi-chevron-down"></i></button>
+          </span>
           <?php if (!$isSub): ?>
             <button class="btn btn-sm btn-link text-muted" data-bs-toggle="modal" data-bs-target="#taskModal"
                     data-task="<?= e(json_encode(['parent' => $t['id'], 'cat' => $t['cat']])) ?>" aria-label="<?= e(t('cl.add_sub')) ?>"><i class="bi bi-node-plus"></i></button>

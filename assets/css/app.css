@@ -172,6 +172,20 @@ main.app-main { max-width: 1120px; margin: 0 auto; padding: 1.5rem 1rem 5rem; }
 .task.done .task-title { color: var(--grau); text-decoration: line-through; text-decoration-color: #b7bcb8; }
 .task-meta { font-size: .88rem; color: var(--grau); display: flex; flex-wrap: wrap; gap: .25rem 1rem; margin-top: .15rem; }
 .task-meta .overdue { color: #9a3b2e; }
+.drag-handle { flex: none; color: var(--grau); cursor: grab; padding: .1rem 0; margin: 0 -.35rem 0 -.2rem; opacity: .55; }
+.task:hover .drag-handle { opacity: 1; }
+.subtask .drag-handle { margin-right: -.25rem; }
+.task-arrows { display: flex; flex: none; }
+.task-arrows .btn { padding: .1rem .3rem; }
+@media (hover: hover) and (pointer: fine) {
+  .task-arrows { visibility: hidden; }
+  .task:hover .task-arrows, .task:focus-within .task-arrows { visibility: visible; }
+}
+.task.dragging { opacity: .4; }
+.task.drop-before { box-shadow: 0 -3px 0 var(--efeu); }
+.task.drop-after { box-shadow: 0 3px 0 var(--efeu); }
+.task.drop-into { background: var(--efeu-hell); outline: 2px dashed var(--efeu); outline-offset: -2px; }
+.cat-block.drop-end { box-shadow: inset 0 -3px 0 var(--efeu); }
 .sub-toggle { padding: .1rem .3rem; margin: -.1rem 0 0 -.4rem; }
 .sub-toggle i { display: inline-block; transition: transform .15s; }
 .sub-toggle[aria-expanded="true"] i { transform: rotate(90deg); }
