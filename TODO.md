@@ -50,6 +50,39 @@ und Vorschläge aus der Code-Durchsicht (mit *Vorschlag* markiert). Reihenfolge 
 ### Dokumentation
 - [ ] Screenshots im README nach den letzten Änderungen (Aufgaben ohne Reload, Etiketten) aktualisieren
 
+## Ideen (Produkt und Geschäft)
+
+Aufgenommen am 19.10.2026. Bereits an anderer Stelle der Liste: Trauerfeier-Programm (Druckansicht der Gedenkseite), Checklisten-Vorlagen, Snapshot-Wiederherstellung, Passkeys, SSO, Newsletter, Premium-Plugins mit Abo. Aufwand grob: S klein, M mittel, L groß.
+
+### Gedenken und Trauerfeier
+- [ ] **QR-Code für die Grabstein-Anbringung** (S): Link auf eine öffentliche Gedenkseite als QR-Code (`app/lib/Qr.php` besteht), Druckvorlage mit Maßen für Plakette oder Aufkleber, hohe Fehlerkorrektur und Mindestgröße für den Außeneinsatz, Download als SVG/PNG/PDF. Setzt die öffentliche Gedenkseite voraus
+- [ ] **Öffentliche Gedenkseite per Link** (M): optional, nur ausgewählte Inhalte (kein Zugriff auf Kontakte/Galerie-Verwaltung; Regel 7 sinngemäß), Moderation, Spam-Schutz, Abschaltbar, Hinweis auf Datenschutz
+- [ ] **Virtuelle Kerzen und Erinnerungen von Gästen** (M): Gäste zünden eine Kerze an oder schreiben eine Erinnerung; Einträge werden moderiert (Spam-Schutz, Rate-Limit)
+- [ ] **Livestream- und Aufzeichnungs-Link** zur Trauerfeier (S): Link samt Hinweis/Zeit auf der Seite für Gäste, die nicht anreisen können (nur Verweis, kein Streaming in der Anwendung)
+- [ ] **Spenden statt Blumen** (S): Textseite mit Spendenzweck und IBAN, ohne Zahlungsabwicklung
+- [ ] **Mehrere Verstorbene / Familienseiten** (L): mehrere Gedenkseiten in einer Installation, Zuordnung von Kontakten und Galerie
+
+### Organisation
+- [ ] **Terminübersicht mit iCal-Export** (M): Fristen und Termine zentral, Export für den Kalender (heute unter „Bewusst nicht geplant“, vorher entscheiden)
+- [ ] **Erinnerungen zu Aufgaben per E-Mail** (M): braucht einen verlässlichen Mailversand (heute nur „Passwort vergessen“ über `mail()`), SMTP-Option und Abmeldemöglichkeit
+- [ ] **Dokumentenablage** (L): Urkunden, Verträge, Rechnungen als Anhänge je Aufgabe oder Kontakt; eigenes Recht, Größenlimits, Ablage außerhalb des Webroots, Auslieferung nur über Controller, Export/Import berücksichtigen
+- [ ] **Zugriffsprotokoll für API und MCP** (S): eigene Ansicht, wer wann was über Token gelesen oder geändert hat (Plugin „api“)
+
+### Erinnerung und Inhalte
+- [ ] **Lebenslauf und Zeitleiste als Druck/PDF** (M): automatisch aus Stationen und Gedenkseite
+- [ ] **Erinnerungs-Buch als PDF oder Druck** (L): Galerie, Texte und Kondolenzen zu einem Buch zusammengestellt; guter erster Premium-Kandidat
+- [ ] **Audio- und Videoerinnerungen von Gästen** (L): Kurzbeiträge hochladen; Größen- und Formatlimits, evtl. Transkodierung (braucht externe Programme, Regel 1 beachten), Moderation
+
+### KI-Funktionen (nur zuschaltbar, nie vorab aktiv)
+Alle KI-Funktionen brauchen einen externen Dienst. Das widerspricht Regel 1 (keine externen Anfragen) und die Daten sind höchst persönlich: nur als **zuschaltbares (Premium-)Plugin** mit ausdrücklichem Datenschutzhinweis, Auswahl des Anbieters, Protokoll der Aufrufe und Freigabe nur durch Admins.
+- [ ] **KI-Bildverbesserung** (M): Restaurieren, Schärfen, Kolorieren alter Fotos. Das Original bleibt unverändert, das Ergebnis wird als eigene Variante abgelegt und als „bearbeitet“ gekennzeichnet
+- [ ] **Sanfte Foto-Animation ohne Sprache** (M): z. B. Ken-Burns-Effekt, leichte Bewegung; deutlich unkritischer als Gesichts- und Stimmnachbildung
+- [ ] **Animierte Gesichtsveränderungen und Stimmnachahmung des Verstorbenen** (L, **erst nach rechtlicher Prüfung**): Persönlichkeitsrecht wirkt nach dem Tod fort (Einwilligung zu Lebzeiten, Rechte der Angehörigen), die EU-KI-Verordnung verlangt Kennzeichnung synthetischer Inhalte; emotionale Risiken für Trauernde und Missbrauchsgefahr (Fälschungen). Wenn überhaupt: eigenes Plugin, schriftliche Einwilligungsabfrage, sichtbare Kennzeichnung „KI-erzeugt“, nur Admins, nie vorab aktiv, keine erfundenen Aussagen in der Stimme des Verstorbenen
+
+### Geschäftsmodell und Betrieb
+- [ ] **Service-Betrieb mit Whitelabeling** (L): Mandantentrennung (`data_dir` je Mandant oder Mandanten-ID), eigene Domains, Logo, Farben (Design-Tokens in `app.css`), konfigurierbarer Name statt „In Erinnerung“, E-Mail-Absender je Mandant, Abrechnung. Gehört mit Premium-Plugins/Abo und signierten Paketen zu einem Block; Betreiberseitiger Shop und Lizenzserver sind eigene Dienste
+- [ ] **Automatische Sicherung auf externen Speicher** (M): SFTP oder S3, mit Verschlüsselung, ergänzt Export und Import; Konflikt mit Regel 1 beachten (nur zuschaltbar)
+
 ## Bewusst nicht geplant
 
 PWA/Offline, Zwei-Faktor-Anmeldung, Kosten-/Belegmodul, Fristen-/Vertragsmodul mit iCal-Export, Versand von
