@@ -5,6 +5,8 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+## [0.0.9] - 2026-10-19
+
 ### Added
 
 - Plugin "api" (inactive by default): REST API and MCP server (Streamable HTTP, plus a stdio bridge) for memorial
@@ -121,7 +123,8 @@ First public release.
   `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `THIRD-PARTY.md`
 - GitHub Actions (syntax check, language files, smoke test on PHP 8.2 to 8.4) and issue/pull request templates
 
-[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.8...HEAD
+[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.9...HEAD
+[0.0.9]: https://github.com/EdMueller/funeralorg/compare/v0.0.8...v0.0.9
 [0.0.8]: https://github.com/EdMueller/funeralorg/compare/v0.0.7...v0.0.8
 [0.0.7]: https://github.com/EdMueller/funeralorg/compare/v0.0.6...v0.0.7
 [0.0.6]: https://github.com/EdMueller/funeralorg/compare/v0.0.5...v0.0.6
