@@ -142,7 +142,7 @@ function abort(int $code, string $msg = ''): never
 
 function is_ajax(): bool
 {
-    return ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'fetch';
+    return ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'fetch' || defined('API_REQUEST');
 }
 
 function json_out(array $data, int $code = 200): never

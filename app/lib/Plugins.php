@@ -186,7 +186,7 @@ final class Plugins
 
     /* ------------------------------------------------------------ Registrierung (PluginApi) */
 
-    public static function registerRoute(string $slug, string $dir, string $route, string $file, string $fn): void
+    public static function registerRoute(string $slug, string $dir, string $route, string $file, string $fn, bool $api = false): void
     {
         if (!preg_match('/^[a-z]{2,24}$/', $route) || !preg_match('~^[A-Za-z0-9_/.-]+\.php$~', $file)
             || str_contains($file, '..') || !preg_match('/^[a-z][a-z0-9_]*$/', $fn)) {
@@ -195,7 +195,7 @@ final class Plugins
         if (isset(self::$routes[$route])) {
             throw new InvalidArgumentException('Route bereits vergeben: ' . $route);
         }
-        self::$routes[$route] = ['slug' => $slug, 'dir' => $dir, 'file' => $file, 'fn' => $fn];
+        self::$routes[$route] = ['slug' => $slug, 'dir' => $dir, 'file' => $file, 'fn' => $fn, 'api' => $api];
     }
 
     public static function registerNav(string $slug, string $route, string $label, string $icon, ?callable $visible, string $after): void
@@ -223,6 +223,12 @@ final class Plugins
     public static function hasRoute(string $r): bool
     {
         return isset(self::$routes[$r]);
+    }
+
+    /** API-Route: ohne Sitzung und CSRF-Token; der Controller prüft die Anmeldung selbst (siehe PluginApi::apiRoute). */
+    public static function isApiRoute(string $r): bool
+    {
+        return !empty(self::$routes[$r]['api']);
     }
 
     public static function call(string $r, string $a): void

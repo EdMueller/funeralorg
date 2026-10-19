@@ -12,8 +12,12 @@ und Vorschläge aus der Code-Durchsicht (mit *Vorschlag* markiert). Reihenfolge 
 - [ ] Weitere Sprache(n) neben Deutsch/Englisch (`I18n::LANGS`, Pluralregel, ggf. RTL-CSS)
 - [ ] SQLite-Backend hinter `Store`, falls die Grenzen (einige Hundert Kontakte, einige Tausend Bilder) überschritten werden
 
-- [ ] Weltkarte nach Art von Google Earth (Zoomen, Verschieben, ggf. Globus/Satellitenbild). Konflikt mit Regel 1 (kein CDN, keine externen Anfragen): nur mit lokal ausgelieferten Karten- bzw. Kachel­daten unter `assets/vendor/` oder nach Rücksprache; Datenschutz (Kachelserver) klären
+- [ ] Bessere Weltkarte (Stationen-Plugin): Zoomen und Verschieben, ggf. Globus/Satellitenbild, Clustering nahe beieinanderliegender Stationen, Routen zwischen Stationen. Konflikt mit Regel 1 (kein CDN, keine externen Anfragen): nur mit lokal ausgelieferten Karten- bzw. Kacheldaten unter `assets/vendor/` oder nach Rücksprache; Datenschutz (Kachelserver) klären
+- [ ] Koordinaten automatisch aus dem Ortsnamen übernehmen (Stationen: `place` → `lat`/`lon`, manuelle Korrektur bleibt möglich). Konflikt mit Regel 1 bei externen Geocodern (Nominatim u. a.; Ortsnamen verlassen den Server): Alternativen sind ein lokaler Ortsindex (z. B. GeoNames-Auszug als Datei, durchsuchbar ohne Fremdaufruf) oder ein ausdrücklich zuschaltbarer serverseitiger Abruf mit Hinweis
 - [ ] Passkeys-Login (WebAuthn) als Alternative zum Passwort; Verifikation serverseitig ohne Composer, Zuordnung je Benutzer in `users.json`, Registrierung unter `r=account`, Passwort-Login bleibt als Rückfall
+- [ ] SSO (OpenID Connect, Authorization-Code-Flow mit PKCE) als Anmelde-Alternative, z. B. als Plugin; JWT-Prüfung (RS256) mit `openssl_verify` ohne Composer, Zuordnung per `sub`/E-Mail zu vorhandenen Benutzern (keine automatische Anlage ohne Freigabe), Einstellungen für Issuer/Client-ID/Secret, Passwort-Login bleibt als Rückfall. Braucht einen Erweiterungspunkt im Login
+- [ ] Newsletter-/Rundschreibenverwaltung (Empfängerlisten aus Kontakten, Vorlagen, Versand per Mail mit Abmeldelink, Versandprotokoll). Widerspricht dem bisherigen Ausschluss „Versand von Rundschreiben per E-Mail“ (ECKDATEN.md §2); vorher klären: Einwilligung/DSGVO, Versandweg (`mail()` vs. SMTP), Zustellbarkeit (SPF/DKIM), Umfang als Plugin
+- [ ] Premium-Plugins mit Bezahloption (Abo): Plugin-Katalog, Lizenzschlüssel bzw. Abo-Status je Installation, Zahlungsanbieter (z. B. Mollie/Stripe/PayPal), Prüfung und Verlängerung, Verhalten bei Ablauf (Plugin deaktivieren, Daten behalten). Plugin-Code läuft ohne Sandbox: Pakete sollten signiert sein (Signaturprüfung vor Import/Update). Betreiberseitiger Shop und Lizenzserver sind eigene Dienste außerhalb dieser Anwendung; Konflikt mit Regel 1 (Fremdaufrufe) und Datenschutz klären
 - [ ] Bilder-Upload für Benutzer: Hochladen durch Benutzer ohne eigene Gruppenrechte-Pflege klären und umsetzen (Upload besteht bereits über das Galerie-Recht „hochladen“ der Gruppe; Umfang der Erweiterung noch zu präzisieren, z. B. Upload per Freigabelink oder eigene Bilder verwalten)
 
 ## Vorschläge
@@ -49,4 +53,4 @@ und Vorschläge aus der Code-Durchsicht (mit *Vorschlag* markiert). Reihenfolge 
 ## Bewusst nicht geplant
 
 PWA/Offline, Zwei-Faktor-Anmeldung, Kosten-/Belegmodul, Fristen-/Vertragsmodul mit iCal-Export, Versand von
-Einladungen oder Rundschreiben per E-Mail (siehe ECKDATEN.md §2).
+Einladungen per E-Mail (siehe ECKDATEN.md §2). Rundschreiben/Newsletter stehen inzwischen unter „Angedacht“.

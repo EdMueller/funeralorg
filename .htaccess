@@ -19,6 +19,13 @@ DirectorySlash On
   Require all denied
 </Files>
 
+# Authorization-Header (Bearer-Token der Web-API) an PHP durchreichen, auch unter CGI/FastCGI
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTP:Authorization} .
+  RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+</IfModule>
+
 # Dokumentation, Daten- und Hilfsdateien nicht ausliefern
 <FilesMatch "\.(md|json|jsonl|lock|sh|ini|yml|log)$">
   Require all denied

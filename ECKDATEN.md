@@ -505,6 +505,7 @@ Format je Zeile (`data/logs/JJJJ-MM.jsonl`):
 | `privacy_url` | leer | Optionaler Link zur Datenschutzerklärung auf den Seiten „Passwort vergessen“ |
 | `mail_from` | leer | Absender für „Passwort vergessen“; leer = `noreply@<Domain der Anwendung ohne www./Port>` (`Reset::fromAddress()`) |
 | `image_max_pixels` | 50000000 | Obergrenze Breite × Höhe beim Upload (0 = unbegrenzt); Prüfung vor dem Dekodieren |
+| `api_allow_http` | false | Plugin „api“: Token-Zugriff auch über unverschlüsseltes HTTP erlauben (sonst nur HTTPS bzw. Loopback) |
 | `plugins_safe_mode` | false | `true`: kein Plugin-Code wird ausgeführt (Notausgang, falls ein Plugin die Anwendung blockiert) |
 
 ---
@@ -574,6 +575,7 @@ Entwicklerleitfaden: `docs/plugin-development.md`. Hier die Festlegungen der Anw
   `views/` → `view('@slug/name')`; `assets/` → `plugin_asset('slug', 'pfad')` über Route `pluginasset`.
 - **PluginApi**: `route()` (Datei wird erst beim Aufruf per `require_once` geladen, Pfad auf den Plugin-Ordner geprüft; Kernrouten
   haben Vorrang; immer Anmeldung nötig), `nav()` (Callback für Sichtbarkeit, Einfügeposition über `after`; `Plugins::applyNav()` im Layout),
+  `apiRoute()` (wie `route()`, aber ohne Sitzungsanmeldung und CSRF-Prüfung; der Controller muss sich selbst authentifizieren und danach `Auth::actAs()` aufrufen; `dispatch()` überspringt dafür Login- und CSRF-Prüfung, `Plugins::isApiRoute()`),
   `onActivate()`, `onDeactivate()`. Bewusst klein gehalten; weitere Erweiterungspunkte (Rechtebereiche, Admin-Seiten, Filter/Hooks in Views) erst bei Bedarf.
 - **Verwaltung** (`admin&a=plugins`, nur Admin, POST + CSRF + Protokoll `Log::add('admin', …)`):
   - *Aktivieren*: prüft Mindestversion, Abhängigkeiten, Kollision der Datendateien; lädt das Plugin sofort, ruft `onActivate`; bei Fehler Rückgängig.
@@ -586,6 +588,7 @@ Entwicklerleitfaden: `docs/plugin-development.md`. Hier die Festlegungen der Anw
     ohne Haken bleiben die Daten und sind nach erneutem Import wieder da.
 - **Sicherheit**: Plugin-Code ist vertrauenswürdiger Code ohne Sandbox. `plugins/` ist per `.htaccess` gesperrt (nginx: wie `app/`); ausgeliefert wird nur
   `assets/` über `pluginasset` (angemeldet, aktives Plugin, Endungs-Whitelist, `realpath`-Prüfung). Backup-Download enthält `plugins/` nicht – der Ordner gehört zur Installation.
+- **Web-API und MCP** (`plugins/api/`, standardmäßig inaktiv): REST-API (`r=api&p=/pfad`), MCP-Server (`r=mcp`), Token-Verwaltung (`r=apitokens`). Persönliche Zugriffstoken (SHA-256-Hash in `data/api_tokens.json`), Bereich `read`/`write`, Rechte des Besitzers inkl. Feldrechte. Ausführlich: `docs/api.md`.
 - **Stationen** ist das vorinstallierte Kern-Plugin (`core: true`, `default_active: true`): Route `stations`, Menüpunkt hinter „Gedenken“,
   Datendatei `stations.json`. Albumfarben/-kategorie (`Albums::COLORS`, `Albums::colorName()`, Album-Felder `color`/`cat`) gehören dem Kern und bleiben auch ohne das Plugin bestehen.
   Ist das Plugin deaktiviert, liefert `r=stations` 404 und der Menüpunkt entfällt.

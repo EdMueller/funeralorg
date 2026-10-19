@@ -129,6 +129,24 @@ final class Auth
         return true;
     }
 
+    /**
+     * Führt die Anfrage als dieser Benutzer aus (API-Zugriff per Token, ohne Sitzung). Die Anmeldung hat der Aufrufer
+     * bereits geprüft; Rechte ergeben sich wie bei einer Sitzung aus Rolle und Gruppe.
+     */
+    public static function actAs(array $u): void
+    {
+        self::$resolved = true;
+        self::$ctx = [
+            'kind'     => 'user',
+            'id'       => $u['id'],
+            'name'     => $u['name'] ?: $u['username'],
+            'username' => $u['username'],
+            'role'     => $u['role'],
+            'group_id' => $u['group_id'] ?? '',
+            'via'      => 'API',
+        ];
+    }
+
     public static function reset(): void
     {
         self::$ctx = null;

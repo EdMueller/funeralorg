@@ -168,6 +168,118 @@ check "Nach Benutzerimport: Anmeldung nötig" 302 "$BASE?r=admin"
 C=$(csrf login)
 check "Erneute Anmeldung" 302 -d "_csrf=$C&username=smoke&password=smoketest-1234" "$BASE?r=login"
 
+echo "Web-API und MCP"
+C=$(csrf admin\&a=plugins)
+check "API-Plugin ist standardmäßig inaktiv (404)" 404 "$BASE?r=api&p=/me"
+check "API-Plugin aktivieren" 302 -d "_csrf=$C&slug=api&state=on" "$BASE?r=admin&a=pluginset"
+mktoken() { # <Bereich> <Bezeichnung>
+  local c; c=$(csrf apitokens)
+  curl -s -o /dev/null -b "$JAR" -c "$JAR" -d "_csrf=$c&label=$2&scope=$1&days=30" "$BASE?r=apitokens&a=create"
+  curl -s -b "$JAR" -c "$JAR" "$BASE?r=apitokens" | sed -n 's/.*id="newToken"[^>]*value="\(fo_[a-f0-9]*\)".*/\1/p;s/.*value="\(fo_[a-f0-9]*\)" id="newToken".*/\1/p' | head -1
+}
+check "Token-Verwaltung" 200 "$BASE?r=apitokens"
+TR=$(mktoken read smoke-read); TW=$(mktoken write smoke-write)
+[ -n "$TR" ] && [ -n "$TW" ] && ok "Token erstellt" || fail "Token wurden nicht angezeigt"
+! grep -qF -e "$TR" -e "$TW" "$TMP/app/data/api_tokens.json" && ok "Klartext-Token wird nicht gespeichert" || fail "Klartext-Token in der Datei"
+api() { local t=$1; shift; curl -s -o "$TMP/api.out" -w '%{http_code}' -H "Authorization: Bearer $t" "$@"; }
+apicheck() { # <Beschreibung> <Status> <Token> <curl-Argumente>
+  local what=$1 want=$2 t=$3; shift 3
+  local got; got=$(api "$t" "$@")
+  if [ "$got" = "$want" ]; then ok "$what ($got)"; else fail "$what: erwartet $want, erhalten $got ($(head -c 200 "$TMP/api.out"))"; fi
+}
+jq_() { php -r '$d = json_decode(file_get_contents($argv[1]), true); eval("echo " . $argv[2] . ";");' "$TMP/api.out" "$1"; }
+check "Ohne Token: 401" 401 -H 'Cookie:' "$BASE?r=api&p=/me"
+check "Mit Sitzungscookie aber ohne Token: 401" 401 "$BASE?r=api&p=/me"
+apicheck "Falsches Token: 401" 401 fo_0000 "$BASE?r=api&p=/me"
+apicheck "/me" 200 "$TR" "$BASE?r=api&p=/me"
+[ "$(jq_ '$d["data"]["scope"] . $d["data"]["role"]')" = readadmin ] && ok "/me liefert Bereich und Rolle" || fail "/me: unerwartete Antwort"
+apicheck "OpenAPI (ohne Token)" 200 x "$BASE?r=api&p=/openapi.json"
+apicheck "Unbekannter Pfad" 404 "$TR" "$BASE?r=api&p=/gibtesnicht"
+apicheck "Falsche Methode" 405 "$TR" -X DELETE "$BASE?r=api&p=/me"
+apicheck "Lesetoken darf nicht schreiben" 403 "$TR" -H 'Content-Type: application/json' -d '{"first":"Anna","last":"API"}' "$BASE?r=api&p=/contacts"
+apicheck "Kontakt anlegen" 200 "$TW" -H 'Content-Type: application/json' -d '{"first":"Anna","last":"API","city":"Detmold","rsvp":"yes","adults":2}' "$BASE?r=api&p=/contacts"
+CID=$(jq_ '$d["data"]["id"]')
+apicheck "Kontakt ohne Namen: 422" 422 "$TW" -H 'Content-Type: application/json' -d '{"city":"x"}' "$BASE?r=api&p=/contacts"
+apicheck "Kontakt ändern" 200 "$TW" -X PATCH -H 'Content-Type: application/json' -d '{"called":true,"rsvp":"no"}' "$BASE?r=api&p=/contacts/$CID"
+[ "$(jq_ '($d["data"]["called"] ? "1" : "0") . $d["data"]["rsvp"] . $d["data"]["city"]')" = "1noDetmold" ] && ok "Änderung übernommen, übrige Felder bleiben" || fail "Kontakt nach Änderung unerwartet"
+apicheck "Ungültiger RSVP-Wert: 422" 422 "$TW" -X PATCH -H 'Content-Type: application/json' -d '{"rsvp":"vielleicht"}' "$BASE?r=api&p=/contacts/$CID"
+apicheck "Kontaktliste mit Filter" 200 "$TR" "$BASE?r=api&p=/contacts&filter=rsvp_no&q=anna"
+[ "$(jq_ '$d["data"]["total"]')" = 1 ] && ok "Filter und Suche" || fail "Kontaktliste unerwartet: $(head -c 200 "$TMP/api.out")"
+apicheck "Ungültiges JSON: 400" 400 "$TW" -H 'Content-Type: application/json' -d '{kaputt' "$BASE?r=api&p=/contacts"
+apicheck "Rückmeldesummen" 200 "$TR" "$BASE?r=api&p=/rsvp/summary"
+apicheck "Zusammenfassung" 200 "$TR" "$BASE?r=api&p=/summary"
+apicheck "Kategorie anlegen" 200 "$TW" -H 'Content-Type: application/json' -d '{"name":"API-Test"}' "$BASE?r=api&p=/checklist/categories"
+KID=$(jq_ '$d["data"]["id"]')
+apicheck "Aufgabe anlegen" 200 "$TW" -H 'Content-Type: application/json' -d "{\"title\":\"Blumen bestellen\",\"cat\":\"$KID\",\"due\":\"2026-12-01\"}" "$BASE?r=api&p=/checklist/tasks"
+AID=$(jq_ '$d["data"]["id"]')
+apicheck "Unteraufgabe anlegen" 200 "$TW" -H 'Content-Type: application/json' -d "{\"title\":\"Angebot einholen\",\"parent\":\"$AID\"}" "$BASE?r=api&p=/checklist/tasks"
+SID=$(jq_ '$d["data"]["id"]')
+apicheck "Aufgabe abhaken" 200 "$TW" -X PATCH -H 'Content-Type: application/json' -d '{"done":true}' "$BASE?r=api&p=/checklist/tasks/$AID"
+[ "$(jq_ '$d["data"]["done"] ? "1" : "0"')" = 1 ] && ok "Aufgabe erledigt" || fail "Aufgabe nicht erledigt"
+apicheck "Unteraufgabe nach oben verschieben" 200 "$TW" -H 'Content-Type: application/json' -d "{\"cat\":\"$KID\",\"parent\":\"\",\"position\":0}" "$BASE?r=api&p=/checklist/tasks/$SID/move"
+[ "$(jq_ '$d["data"]["parent"] === "" ? "ok" : "no"')" = ok ] && ok "Verschoben auf oberste Ebene" || fail "Verschieben fehlgeschlagen"
+apicheck "Zweite Unteraufgabe anlegen" 200 "$TW" -H 'Content-Type: application/json' -d "{\"title\":\"Rechnung prüfen\",\"parent\":\"$AID\"}" "$BASE?r=api&p=/checklist/tasks"
+apicheck "Aufgabe mit Unteraufgaben wird nicht Unteraufgabe" 422 "$TW" -H 'Content-Type: application/json' -d "{\"parent\":\"$SID\"}" "$BASE?r=api&p=/checklist/tasks/$AID/move"
+apicheck "Checkliste lesen" 200 "$TR" "$BASE?r=api&p=/checklist&show=open"
+apicheck "Aufgabe löschen" 200 "$TW" -X DELETE "$BASE?r=api&p=/checklist/tasks/$AID"
+apicheck "Kategorie löschen" 200 "$TW" -X DELETE "$BASE?r=api&p=/checklist/categories/$KID"
+apicheck "Gedenkseite ändern" 200 "$TW" -X PATCH -H 'Content-Type: application/json' -d '{"name":"Maria Muster","born":"1941"}' "$BASE?r=api&p=/memorial"
+apicheck "Gedenkseite lesen" 200 "$TR" "$BASE?r=api&p=/memorial"
+[ "$(jq_ '$d["data"]["name"]')" = "Maria Muster" ] && ok "Gedenkseite aktualisiert" || fail "Gedenkseite unerwartet"
+apicheck "Album anlegen" 200 "$TW" -H 'Content-Type: application/json' -d '{"name":"Kindheit"}' "$BASE?r=api&p=/gallery/albums"
+apicheck "Alben lesen" 200 "$TR" "$BASE?r=api&p=/gallery/albums"
+apicheck "Bilder lesen" 200 "$TR" "$BASE?r=api&p=/gallery/images"
+apicheck "Stationen lesen" 200 "$TR" "$BASE?r=api&p=/stations"
+apicheck "Kontakt löschen" 200 "$TW" -X DELETE "$BASE?r=api&p=/contacts/$CID"
+apicheck "Gelöschter Kontakt: 404" 404 "$TR" "$BASE?r=api&p=/contacts/$CID"
+
+mcp() { api "$1" -H 'Content-Type: application/json' -d "$2" "$BASE?r=mcp"; }
+[ "$(mcp "$TR" '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"smoke","version":"1"}}}')" = 200 ] && ok "MCP initialize (200)" || fail "MCP initialize"
+[ "$(jq_ '$d["result"]["protocolVersion"] . $d["result"]["serverInfo"]["name"]')" = "2025-06-18funeralorg" ] && ok "MCP Protokollversion und Servername" || fail "MCP initialize unerwartet"
+[ "$(mcp "$TR" '{"jsonrpc":"2.0","method":"notifications/initialized"}')" = 202 ] && ok "MCP Notification (202)" || fail "MCP Notification"
+[ "$(mcp "$TR" '{"jsonrpc":"2.0","id":2,"method":"tools/list"}')" = 200 ] && ok "MCP tools/list (200)" || fail "MCP tools/list"
+READ_TOOLS=$(jq_ 'count($d["result"]["tools"])'); [ "$READ_TOOLS" -gt 10 ] && ok "MCP Lesetoken sieht $READ_TOOLS Tools" || fail "MCP Tools: $READ_TOOLS"
+grep -q 'contacts_create' "$TMP/api.out" && fail "Lesetoken sieht Schreib-Tools" || ok "Lesetoken sieht keine Schreib-Tools"
+mcp "$TW" '{"jsonrpc":"2.0","id":3,"method":"tools/list"}' >/dev/null; grep -q 'contacts_create' "$TMP/api.out" && ok "Schreibtoken sieht Schreib-Tools" || fail "Schreibtoken sieht keine Schreib-Tools"
+mcp "$TR" '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"contacts_create","arguments":{"first":"X"}}}' >/dev/null
+[ "$(jq_ '$d["result"]["isError"] ? "err" : "ok"')" = err ] && ok "MCP: Schreib-Tool mit Lesetoken wird abgelehnt" || fail "MCP: Schreib-Tool lief mit Lesetoken"
+mcp "$TW" '{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"contacts_create","arguments":{"first":"Mcp","last":"Test"}}}' >/dev/null
+[ "$(jq_ '$d["result"]["isError"] ? "err" : "ok"')" = ok ] && ok "MCP: Kontakt angelegt" || fail "MCP: Kontakt nicht angelegt ($(head -c 200 "$TMP/api.out"))"
+mcp "$TR" '{"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"contacts_list","arguments":{"q":"mcp"}}}' >/dev/null
+grep -q 'Mcp' "$TMP/api.out" && ok "MCP: Kontakt gefunden" || fail "MCP: Kontakt nicht gefunden"
+mcp "$TR" '{"jsonrpc":"2.0","id":7,"method":"gibtes/nicht"}' >/dev/null
+[ "$(jq_ '$d["error"]["code"]')" = -32601 ] && ok "MCP: unbekannte Methode (-32601)" || fail "MCP: Fehlercode"
+[ "$(api "$TR" "$BASE?r=mcp")" = 405 ] && ok "MCP: GET wird abgelehnt (405)" || fail "MCP: GET"
+[ "$(api x -H 'Content-Type: application/json' -d '{}' "$BASE?r=mcp")" = 401 ] && ok "MCP ohne gültiges Token (401)" || fail "MCP ohne Token"
+[ "$(api "$TR" -H 'Origin: https://boese.example' -H 'Content-Type: application/json' -d '{}' "$BASE?r=mcp")" = 403 ] && ok "MCP: fremder Origin (403)" || fail "MCP: Origin-Prüfung"
+
+# Bilder: Upload, Metadaten, Datei, Reihenfolge, MCP-Bildansicht
+php -r '$im = imagecreatetruecolor(40, 30); imagejpeg($im, $argv[1]);' "$TMP/pic.jpg"
+apicheck "Lesetoken darf nicht hochladen" 403 "$TR" -F "files[]=@$TMP/pic.jpg" "$BASE?r=api&p=/gallery/images"
+apicheck "Bild hochladen" 200 "$TW" -F "files[]=@$TMP/pic.jpg" "$BASE?r=api&p=/gallery/images"
+[ "$(jq_ '$d["uploaded"]')" = 1 ] && ok "Ein Bild hochgeladen" || fail "Upload: $(head -c 200 "$TMP/api.out")"
+apicheck "Bilderliste" 200 "$TW" "$BASE?r=api&p=/gallery/images"
+IID=$(jq_ '$d["data"]["items"][0]["id"]')
+apicheck "Bildbeschreibung ändern" 200 "$TW" -X PATCH -H 'Content-Type: application/json' -d '{"caption":"Am See"}' "$BASE?r=api&p=/gallery/images/$IID"
+apicheck "Bilddatei (Vorschau)" 200 "$TW" "$BASE?r=api&p=/gallery/images/$IID/file&size=thumb"
+head -c 3 "$TMP/api.out" | grep -q $'\xff\xd8\xff' && ok "Bilddatei ist ein JPEG" || fail "Bilddatei ist kein JPEG"
+apicheck "Reihenfolge setzen" 200 "$TW" -X PUT -H 'Content-Type: application/json' -d "{\"ids\":[\"$IID\"]}" "$BASE?r=api&p=/gallery/albums/_none/order"
+mcp "$TW" "{\"jsonrpc\":\"2.0\",\"id\":8,\"method\":\"tools/call\",\"params\":{\"name\":\"gallery_image_view\",\"arguments\":{\"id\":\"$IID\",\"size\":\"thumb\"}}}" >/dev/null
+[ "$(jq_ '$d["result"]["content"][0]["type"] . $d["result"]["content"][0]["mimeType"]')" = "imageimage/jpeg" ] && ok "MCP: Bild als Bildinhalt" || fail "MCP: Bildansicht: $(head -c 200 "$TMP/api.out")"
+apicheck "Bild löschen" 200 "$TW" -X DELETE "$BASE?r=api&p=/gallery/images/$IID"
+
+# Widerruf
+TID=$(php -r '$d = json_decode(file_get_contents($argv[1]), true); foreach ($d["tokens"] as $t) { if ($t["label"] === "smoke-read") echo $t["id"]; }' "$TMP/app/data/api_tokens.json")
+C=$(csrf apitokens)
+check "Token widerrufen" 302 -d "_csrf=$C&id=$TID" "$BASE?r=apitokens&a=revoke"
+apicheck "Widerrufenes Token: 401" 401 "$TR" "$BASE?r=api&p=/me"
+# deaktivierter Benutzer / Passwortwechsel machen Token ungültig
+php -r '$f = $argv[1]; $d = json_decode(file_get_contents($f), true); $d[0]["pw_changed"] = time() + 5; file_put_contents($f, json_encode($d));' "$TMP/app/data/users.json"
+apicheck "Nach Passwortwechsel: 401" 401 "$TW" "$BASE?r=api&p=/me"
+php -r '$f = $argv[1]; $d = json_decode(file_get_contents($f), true); unset($d[0]["pw_changed"]); file_put_contents($f, json_encode($d));' "$TMP/app/data/users.json"
+check "Plugin deaktivieren" 302 -d "_csrf=$C&slug=api&state=off" "$BASE?r=admin&a=pluginset"
+apicheck "Deaktiviertes Plugin: 404" 404 "$TW" "$BASE?r=api&p=/me"
+
 echo "Benutzer anlegen und als Benutzer anmelden"
 GROUP=$(php -r '$g = json_decode(file_get_contents($argv[1]), true); echo $g[0]["id"] ?? "";' "$TMP/app/data/groups.json")
 C=$(csrf "admin&a=users")

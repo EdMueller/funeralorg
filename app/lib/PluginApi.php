@@ -34,6 +34,16 @@ final class PluginApi
     }
 
     /**
+     * Route für Maschinenzugriff (Web-API, MCP): wie `route()`, aber ohne Sitzungsanmeldung und ohne CSRF-Prüfung.
+     * Der Controller MUSS sich selbst authentifizieren (z. B. per Token) und danach `Auth::actAs()` aufrufen. Er darf
+     * die Sitzung (Cookie) nie als Anmeldung akzeptieren, sonst entsteht ein CSRF-Loch.
+     */
+    public function apiRoute(string $route, string $file, string $fn): void
+    {
+        Plugins::registerRoute($this->slug, $this->dir, $route, $file, $fn, true);
+    }
+
+    /**
      * Menüpunkt in der Hauptnavigation.
      * @param string        $label   Sprachschlüssel
      * @param callable|null $visible liefert true, wenn der Punkt für den aktuellen Benutzer erscheint (Standard: immer)

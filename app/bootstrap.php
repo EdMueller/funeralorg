@@ -96,6 +96,7 @@ function dispatch(): void
     if (!isset($routes[$r]) && !$pluginRoute) {
         abort(404);
     }
+    $apiRoute = $pluginRoute && Plugins::isApiRoute($r);
     $needSetup = Setup::needed();
     if ($needSetup && $r !== 'setup') {
         redirect('setup');
@@ -103,7 +104,7 @@ function dispatch(): void
     if (!$needSetup && $r === 'setup') {
         abort(404);
     }
-    if (!in_array($r, $public, true) && !Auth::check()) {
+    if (!$apiRoute && !in_array($r, $public, true) && !Auth::check()) {
         if ($r === 'home') {
             redirect('login');
         }
@@ -113,7 +114,7 @@ function dispatch(): void
         redirect('login');
     }
 
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$apiRoute) {
         Csrf::check();
     }
 

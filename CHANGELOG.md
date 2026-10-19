@@ -5,6 +5,15 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+### Added
+
+- Plugin "api" (inactive by default): REST API and MCP server (Streamable HTTP, plus a stdio bridge) for memorial
+  page, contacts (RSVPs, condolences), checklist, gallery and stations. Personal access tokens with read/write scope
+  that act with the permissions (including field permissions) of their owner; tokens expire, can be revoked and stop
+  working after a password change. OpenAPI description at `index.php?r=api&p=/openapi.json`, documentation in
+  `docs/api.md`.
+- Plugin API: `PluginApi::apiRoute()` for routes without session login and CSRF check, `Auth::actAs()`.
+
 ## [0.0.8] - 2026-10-19
 
 ### Added

@@ -40,6 +40,7 @@ return [
     'medium_size'          => 1800,          // längste Kante Großansicht / Diashow
     'jpeg_quality'         => 88,
     'image_max_pixels'     => 50000000,      // größere Bilder werden abgelehnt (0 = unbegrenzt)
+    'api_allow_http'       => false,         // Plugin „api“: Token-Zugriff auch ohne HTTPS erlauben (nur für Tests im internen Netz)
     'plugins_safe_mode'    => false,         // true: kein Plugin-Code wird ausgeführt (Notausgang, siehe docs/plugin-development.md)
     'image_memory_limit'   => '768M',        // GD braucht bei großen Fotos viel RAM
 

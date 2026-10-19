@@ -62,6 +62,7 @@ return function (PluginApi $p): void {
 | Aufruf | Wirkung |
 |---|---|
 | `route($route, $datei, $funktion)` | `index.php?r=<route>` (`[a-z]{2,24}`). Die Datei wird erst bei Aufruf geladen und enthält `function ctrl_xyz(string $r, string $a): void`. Routen verlangen immer eine Anmeldung; **Rechte prüft der Controller** (`Perm::…`). Kernrouten haben Vorrang, doppelte Plugin-Routen lassen das später geladene Plugin scheitern |
+| `apiRoute($route, $datei, $funktion)` | Wie `route()`, aber **ohne** Sitzungsanmeldung und CSRF-Prüfung, für Maschinenzugriff (Web-API, MCP). Der Controller muss selbst authentifizieren (z. B. Token) und danach `Auth::actAs($benutzer)` aufrufen; Sitzungs-Cookies dürfen dort nie als Anmeldung gelten. Vorbild: `plugins/api/` |
 | `nav($route, $sprachschluessel, $icon, ?$sichtbar, $nach)` | Menüpunkt (Bootstrap-Icon `bi-…`); `$sichtbar` ist ein Callback `fn(): bool`, `$nach` eine Route, hinter der der Punkt erscheint |
 | `onActivate($fn)` / `onDeactivate($fn)` | einmalig beim Aktivieren bzw. vor dem Deaktivieren durch einen Admin |
 

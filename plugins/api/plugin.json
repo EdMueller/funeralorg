@@ -1,0 +1,13 @@
+{
+    "slug": "api",
+    "name": "Web-API und MCP",
+    "version": "1.0.0",
+    "description": "REST-API und MCP-Server (Model Context Protocol) mit persönlichen Zugriffstoken, Bereichen (lesen/schreiben) und den Rechten des jeweiligen Benutzers.",
+    "author": "Data Dienste",
+    "requires_app": "0.0.8",
+    "core": false,
+    "default_active": false,
+    "stores": {
+        "api_tokens": { "tokens": [], "user_tokens": false }
+    }
+}

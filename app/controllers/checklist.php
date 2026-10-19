@@ -102,6 +102,62 @@ function cl_respond(string $msg, array $catIds): never
     redirect_back('checklist');
 }
 
+/**
+ * Verschiebt eine Aufgabe in eine Kategorie bzw. unter eine Hauptaufgabe und setzt die Reihenfolge der Zielliste.
+ * @return array{err?: string, title?: string, moved?: bool, cats?: array}
+ */
+function cl_move(string $id, string $cat, string $parent, array $ids): array
+{
+    return Store::update('checklist', function (array &$d) use ($id, $cat, $parent, $ids) {
+        $k = array_search($id, array_column($d['items'], 'id'), true);
+        if ($k === false) {
+            return ['err' => 'cl.err_notfound'];
+        }
+        $it = &$d['items'][$k];
+        $from = [$it['cat'], $it['parent'] ?? ''];
+        $hasSubs = (bool)array_filter($d['items'], fn($x) => ($x['parent'] ?? '') === $id);
+        if ($parent !== '') {
+            $p = find_by_id($d['items'], $parent);
+            if (!$p || !empty($p['parent']) || $parent === $id) {
+                return ['err' => 'cl.err_notfound'];
+            }
+            if ($hasSubs) {
+                return ['err' => 'cl.err_move_subs'];
+            }
+            $it['parent'] = $parent;
+            $it['cat'] = $cat = $p['cat'];
+        } else {
+            if (!find_by_id($d['categories'], $cat)) {
+                return ['err' => 'cl.err_notfound'];
+            }
+            $it['parent'] = '';
+            $it['cat'] = $cat;
+            foreach ($d['items'] as &$sub) {
+                if (($sub['parent'] ?? '') === $id) {
+                    $sub['cat'] = $cat;
+                }
+            }
+            unset($sub);
+        }
+        unset($it);
+        // Zielliste: übermittelte Reihenfolge, danach nicht übermittelte (z. B. im Filter ausgeblendete) wie bisher
+        $list = array_values(array_filter($d['items'],
+            fn($x) => ($parent !== '' ? ($x['parent'] ?? '') === $parent : empty($x['parent']) && $x['cat'] === $cat)));
+        usort($list, 'cl_cmp');
+        $have = array_column($list, 'id');
+        $ids = array_values(array_unique(array_intersect($ids, $have)));
+        $pos = array_flip(array_merge($ids, array_diff($have, $ids)));
+        foreach ($d['items'] as &$x) {
+            if (isset($pos[$x['id']])) {
+                $x['sort'] = $pos[$x['id']];
+            }
+        }
+        unset($x);
+        $item = find_by_id($d['items'], $id);
+        return ['title' => $item['title'], 'moved' => $from !== [$cat, $parent], 'cats' => [$from[0], $cat]];
+    });
+}
+
 function ctrl_checklist(string $r, string $a): void
 {
     Perm::need('checklist', Perm::READ);
@@ -223,54 +279,7 @@ function ctrl_checklist(string $r, string $a): void
             $cat = (string)post('cat');
             $parent = (string)post('parent');
             $ids = array_map('strval', (array)($_POST['ids'] ?? []));
-            $res = Store::update('checklist', function (array &$d) use ($id, $cat, $parent, $ids) {
-                $k = array_search($id, array_column($d['items'], 'id'), true);
-                if ($k === false) {
-                    return ['err' => 'cl.err_notfound'];
-                }
-                $it = &$d['items'][$k];
-                $from = [$it['cat'], $it['parent'] ?? ''];
-                $hasSubs = (bool)array_filter($d['items'], fn($x) => ($x['parent'] ?? '') === $id);
-                if ($parent !== '') {
-                    $p = find_by_id($d['items'], $parent);
-                    if (!$p || !empty($p['parent']) || $parent === $id) {
-                        return ['err' => 'cl.err_notfound'];
-                    }
-                    if ($hasSubs) {
-                        return ['err' => 'cl.err_move_subs'];
-                    }
-                    $it['parent'] = $parent;
-                    $it['cat'] = $cat = $p['cat'];
-                } else {
-                    if (!find_by_id($d['categories'], $cat)) {
-                        return ['err' => 'cl.err_notfound'];
-                    }
-                    $it['parent'] = '';
-                    $it['cat'] = $cat;
-                    foreach ($d['items'] as &$sub) {
-                        if (($sub['parent'] ?? '') === $id) {
-                            $sub['cat'] = $cat;
-                        }
-                    }
-                    unset($sub);
-                }
-                unset($it);
-                // Zielliste: übermittelte Reihenfolge, danach nicht übermittelte (z. B. im Filter ausgeblendete) wie bisher
-                $list = array_values(array_filter($d['items'],
-                    fn($x) => ($parent !== '' ? ($x['parent'] ?? '') === $parent : empty($x['parent']) && $x['cat'] === $cat)));
-                usort($list, 'cl_cmp');
-                $have = array_column($list, 'id');
-                $ids = array_values(array_unique(array_intersect($ids, $have)));
-                $pos = array_flip(array_merge($ids, array_diff($have, $ids)));
-                foreach ($d['items'] as &$x) {
-                    if (isset($pos[$x['id']])) {
-                        $x['sort'] = $pos[$x['id']];
-                    }
-                }
-                unset($x);
-                $item = find_by_id($d['items'], $id);
-                return ['title' => $item['title'], 'moved' => $from !== [$cat, $parent], 'cats' => [$from[0], $cat]];
-            });
+            $res = cl_move($id, $cat, $parent, $ids);
             if (isset($res['err'])) {
                 if (is_ajax()) {
                     json_out(['ok' => false, 'error' => t($res['err'])], 422);
