@@ -66,7 +66,6 @@ Aufgenommen am 19.10.2026. Bereits an anderer Stelle der Liste: Trauerfeier-Prog
 - [ ] **Terminübersicht mit iCal-Export** (M): Fristen und Termine zentral, Export für den Kalender (heute unter „Bewusst nicht geplant“, vorher entscheiden)
 - [ ] **Erinnerungen zu Aufgaben per E-Mail** (M): braucht einen verlässlichen Mailversand (heute nur „Passwort vergessen“ über `mail()`), SMTP-Option und Abmeldemöglichkeit
 - [ ] **Dokumentenablage** (L): Urkunden, Verträge, Rechnungen als Anhänge je Aufgabe oder Kontakt; eigenes Recht, Größenlimits, Ablage außerhalb des Webroots, Auslieferung nur über Controller, Export/Import berücksichtigen
-- [ ] **Zugriffsprotokoll für API und MCP** (S): eigene Ansicht, wer wann was über Token gelesen oder geändert hat (Plugin „api“)
 
 ### Erinnerung und Inhalte
 - [ ] **Lebenslauf und Zeitleiste als Druck/PDF** (M): automatisch aus Stationen und Gedenkseite

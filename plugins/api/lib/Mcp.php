@@ -10,6 +10,12 @@ final class Mcp
 {
     public const PROTOCOLS = ['2025-06-18', '2025-03-26', '2024-11-05'];
 
+    /** Authentifizierung der laufenden Anfrage (für das Zugriffsprotokoll), vom Controller gesetzt. */
+    public static ?array $auth = null;
+
+    /** Operation des letzten Tool-Aufrufs: [Name, schreibend]. */
+    private static array $last = ['unknown', false];
+
     public static function toolName(array $op): string
     {
         return str_replace('.', '_', $op['id']);
@@ -79,6 +85,7 @@ final class Mcp
         $p = is_array($m['params'] ?? null) ? $m['params'] : [];
         switch ($method) {
             case 'initialize':
+                self::$auth && ApiLog::mcp(self::$auth, 'initialize', false, true);
                 $want = (string)($p['protocolVersion'] ?? '');
                 return self::result($id, [
                     'protocolVersion' => in_array($want, self::PROTOCOLS, true) ? $want : self::PROTOCOLS[0],
@@ -92,7 +99,11 @@ final class Mcp
             case 'tools/list':
                 return self::result($id, ['tools' => self::tools($scope)]);
             case 'tools/call':
-                return self::result($id, self::call((string)($p['name'] ?? ''), is_array($p['arguments'] ?? null) ? $p['arguments'] : [], $scope));
+                $args = is_array($p['arguments'] ?? null) ? $p['arguments'] : [];
+                self::$last = ['unknown', false];
+                $res = self::call((string)($p['name'] ?? ''), $args, $scope);
+                self::$auth && ApiLog::mcp(self::$auth, self::$last[0], self::$last[1], empty($res['isError']), array_keys($args));
+                return self::result($id, $res);
         }
         return self::error($id, -32601, 'Method not found');
     }
@@ -101,6 +112,7 @@ final class Mcp
     {
         try {
             if ($name === 'gallery_image_view') {
+                self::$last = ['gallery.image.view', false];
                 $img = ApiService::imageBinary((string)($args['id'] ?? ''), (string)($args['size'] ?? 'medium'));
                 return ['content' => [['type' => 'image', 'data' => $img[1], 'mimeType' => $img[0]]], 'isError' => false];
             }
@@ -108,6 +120,7 @@ final class Mcp
                 if ($op['raw'] || self::toolName($op) !== $name) {
                     continue;
                 }
+                self::$last = [$op['id'], $op['write']];
                 if ($op['write'] && $scope !== 'write') {
                     return self::text(t('api.err_scope'), true);
                 }

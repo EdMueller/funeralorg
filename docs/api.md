@@ -17,6 +17,15 @@ Das Plugin `plugins/api/` stellt eine REST-API und einen MCP-Server (Model Conte
 - **Datenschutz:** Ein KI-Assistent überträgt abgerufene Daten an den Modellanbieter. Vergib Token sparsam und möglichst nur zum Lesen.
 - Export/Import (Admin → Backup) nimmt die Token-Datei als „Plugin-Daten“ mit (nur Hashes).
 
+## Zugriffsprotokoll
+
+Administratoren sehen unter **API-Zugang → Zugriffsprotokoll** (`r=apilog`), wer wann über Token zugegriffen hat: Übersicht je Token
+(Aufrufe, schreibende, Fehler, zuletzt) und die Einzeleinträge, filterbar nach Zeitraum, Token, Protokoll (REST/MCP) und „nur schreibende“/„nur Fehler“.
+Gespeichert wird in `data/logs/api/JJJJ-MM.jsonl` je REST-Aufruf und je MCP-`initialize`/`tools/call`: Zeit, Token (ID, Bezeichnung), Benutzer,
+Operation, Pfad, HTTP-Status, **Namen** der Parameter, gekürzte IP (`Log::ip()`), Client-Kennung. **Nie** Parameterwerte oder Token.
+Fehlgeschlagene Anmeldungen stehen höchstens einmal pro IP und Minute darin. Aufbewahrung wie das übrige Protokoll (`log_retention_months`);
+Export/Import (Admin → Backup) enthält diese Dateien nicht. Änderungen erscheinen zusätzlich im Änderungsprotokoll („via API“).
+
 ## REST
 
 Aufruf: `index.php?r=api&p=<Pfad>`, Methode = HTTP-Verb, Header `Authorization: Bearer <Token>`. Schreibende Aufrufe senden JSON
@@ -108,9 +117,10 @@ plugins/api/
 ├── lib/ApiSpec.php               Tabelle aller Operationen → REST, MCP-Tools, OpenAPI
 ├── lib/ApiService.php            Fachlogik (Rechte, Feldrechte, Store, Protokoll) – ein Ort für REST und MCP
 ├── lib/ApiTokens.php             Token erstellen/prüfen/widerrufen, Bearer-Header, HTTPS-Prüfung
+├── lib/ApiLog.php                Zugriffsprotokoll (schreiben, lesen, Kennzahlen, Aufbewahrung)
 ├── lib/Mcp.php                   JSON-RPC-Verarbeitung (initialize, ping, tools/list, tools/call)
-├── controllers/api.php|mcp.php|tokens.php
-├── views/tokens.php, lang/{de,en}/api.php
+├── controllers/api.php|mcp.php|tokens.php|log.php
+├── views/tokens.php|log.php, lang/{de,en}/api.php
 └── bin/mcp-stdio.php             stdio-Brücke
 ```
 

@@ -268,6 +268,19 @@ mcp "$TW" "{\"jsonrpc\":\"2.0\",\"id\":8,\"method\":\"tools/call\",\"params\":{\
 [ "$(jq_ '$d["result"]["content"][0]["type"] . $d["result"]["content"][0]["mimeType"]')" = "imageimage/jpeg" ] && ok "MCP: Bild als Bildinhalt" || fail "MCP: Bildansicht: $(head -c 200 "$TMP/api.out")"
 apicheck "Bild löschen" 200 "$TW" -X DELETE "$BASE?r=api&p=/gallery/images/$IID"
 
+# Zugriffsprotokoll
+ALOG=$(ls "$TMP"/app/data/logs/api/*.jsonl 2>/dev/null | head -1)
+[ -n "$ALOG" ] && ok "Zugriffsprotokoll wird geschrieben" || fail "Kein Zugriffsprotokoll"
+logq() { php -r '$n = 0; foreach (file($argv[1]) as $l) { $r = json_decode($l, true); if (eval("return " . $argv[2] . ";")) { $n++; } } echo $n;' "$ALOG" "$1"; }
+[ "$(logq '$r["op"] === "contacts.create" && $r["write"] && $r["ok"] && $r["label"] === "smoke-write" && in_array("first", $r["args"], true)')" -ge 1 ] && ok "Schreibzugriff mit Token, Operation und Parameternamen" || fail "Schreibzugriff fehlt im Protokoll"
+[ "$(logq '$r["op"] === "contacts.create" && !$r["ok"] && $r["status"] === 403')" -ge 1 ] && ok "Abgelehnter Zugriff (Lesetoken) steht im Protokoll" || fail "Abgelehnter Zugriff fehlt"
+[ "$(logq '$r["proto"] === "mcp" && $r["op"] === "contacts.create"')" -ge 1 ] && ok "MCP-Tool-Aufruf im Protokoll" || fail "MCP-Aufruf fehlt"
+[ "$(logq '$r["op"] === "auth" && !$r["ok"]')" -ge 1 ] && ok "Fehlgeschlagene Anmeldung im Protokoll" || fail "Fehlgeschlagene Anmeldung fehlt"
+grep -q -e 'Detmold' -e 'Blumen bestellen' -e 'Maria Muster' "$ALOG" && fail "Parameterwerte stehen im Protokoll" || ok "Keine Parameterwerte im Protokoll"
+grep -qF -e "$TR" -e "$TW" "$ALOG" && fail "Token im Protokoll" || ok "Kein Token im Protokoll"
+check "Zugriffsprotokoll (Seite)" 200 "$BASE?r=apilog"
+check "Zugriffsprotokoll mit Filter" 200 "$BASE?r=apilog&days=7&proto=mcp&only=write"
+
 # Widerruf
 TID=$(php -r '$d = json_decode(file_get_contents($argv[1]), true); foreach ($d["tokens"] as $t) { if ($t["label"] === "smoke-read") echo $t["id"]; }' "$TMP/app/data/api_tokens.json")
 C=$(csrf apitokens)

@@ -22,11 +22,13 @@ function ctrl_api(string $r, string $a): void
     }
     $auth = ApiTokens::login();
     if (!$auth) {
+        ApiLog::fail('rest');
         header('WWW-Authenticate: Bearer realm="funeralorg"');
         json_out(['ok' => false, 'error' => t('api.err_token')], 401);
     }
     $scope = (string)$auth['token']['scope'];
     ApiService::$scope = $scope;
+    ApiLog::start($auth, $method, $path, []);
 
     [$op, $params] = ApiSpec::match($method, $path);
     if (!$op) {
@@ -36,6 +38,7 @@ function ctrl_api(string $r, string $a): void
         }
         json_out(['ok' => false, 'error' => t('error.404')], 404);
     }
+    ApiLog::op($op);
     if ($op['write'] && $scope !== 'write') {
         json_out(['ok' => false, 'error' => t('api.err_scope')], 403);
     }
@@ -57,6 +60,7 @@ function ctrl_api(string $r, string $a): void
     }
     $query = array_diff_key($_GET, ['r' => 1, 'p' => 1]);
     $args = array_merge($query, $body, $params);
+    ApiLog::args(array_keys($args));
 
     try {
         $data = ([ApiService::class, $op['fn']])($args);

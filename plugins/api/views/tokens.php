@@ -11,7 +11,8 @@ $desktop = json_encode(['mcpServers' => ['funeralorg' => [
 ]]], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 $when = fn(int $ts) => $ts ? fmt_date(date('c', $ts), true) : '–';
 ?>
-<div class="page-head"><div><h1><?= e(t('api.title')) ?></h1><p class="lead-note"><?= e(t('api.lead')) ?></p></div></div>
+<div class="page-head"><div><h1><?= e(t('api.title')) ?></h1><p class="lead-note"><?= e(t('api.lead')) ?></p></div>
+  <?php if ($isAdmin): ?><a class="btn btn-sm btn-outline-primary align-self-start" href="<?= e(url('apilog')) ?>"><i class="bi bi-journal-text me-1"></i><?= e(t('api.log_open')) ?></a><?php endif; ?></div>
 
 <?php if (!$https): ?><div class="alert alert-warning"><?= e(t('api.err_https')) ?></div><?php endif; ?>
 
@@ -77,7 +78,7 @@ $when = fn(int $ts) => $ts ? fmt_date(date('c', $ts), true) : '–';
             <?php if ($isAdmin): ?><td><?= e($names[$t['user']] ?? '–') ?></td><?php endif; ?>
             <td><span class="badge text-bg-<?= $t['scope'] === 'write' ? 'warning' : 'secondary' ?>"><?= e(t('api.scope_short_' . $t['scope'])) ?></span></td>
             <td><?= $t['expires'] ? e($when((int)$t['expires'])) . ($expired ? ' <span class="badge text-bg-danger">' . e(t('api.expired')) . '</span>' : '') : e(t('api.days_never')) ?></td>
-            <td><?= e($when((int)$t['last_used'])) ?></td>
+            <td><?= e($when((int)$t['last_used'])) ?><?php if ($isAdmin): ?><small class="d-block"><a href="<?= e(url('apilog', ['token' => $t['id']])) ?>"><?= e(t('api.log_open_token')) ?></a></small><?php endif; ?></td>
             <td class="text-end"><form method="post" action="<?= e(url('apitokens', ['a' => 'revoke'])) ?>" data-confirm="<?= e(t('api.revoke_confirm', ['name' => $t['label']])) ?>"><?= Csrf::field() ?>
               <input type="hidden" name="id" value="<?= e($t['id']) ?>"><button class="btn btn-sm btn-outline-danger"><?= e(t('api.revoke')) ?></button></form></td>
           </tr>

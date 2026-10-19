@@ -26,11 +26,13 @@ function ctrl_mcp(string $r, string $a): void
     }
     $auth = ApiTokens::login();
     if (!$auth) {
+        ApiLog::fail('mcp');
         header('WWW-Authenticate: Bearer realm="funeralorg"');
         json_out(['jsonrpc' => '2.0', 'id' => null, 'error' => ['code' => -32001, 'message' => t('api.err_token')]], 401);
     }
     $scope = (string)$auth['token']['scope'];
     ApiService::$scope = $scope;
+    Mcp::$auth = $auth;
 
     $msg = json_decode((string)file_get_contents('php://input', false, null, 0, 1048576), true);
     if ($msg === null || !is_array($msg)) {

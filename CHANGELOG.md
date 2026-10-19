@@ -5,6 +5,12 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+### Added
+
+- Plugin "api": access log for administrators (API access → Access log). Shows per token and in detail who used the REST
+  API or the MCP server and when, with filters for period, token, protocol, writing calls and errors. Only parameter
+  names are stored, never values or tokens; failed sign-ins are logged at most once per IP and minute.
+
 ## [0.0.9] - 2026-10-19
 
 ### Added
