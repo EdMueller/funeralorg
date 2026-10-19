@@ -129,6 +129,45 @@ check "Aufgabe mit Unteraufgaben wird nicht Unteraufgabe" 422 -H 'X-Requested-Wi
 check "Unbekannte Kategorie wird abgelehnt" 422 -H 'X-Requested-With: fetch' -d "_csrf=$C&id=$A&cat=gibtesnicht&parent=&ids[]=$A" "$BASE?r=checklist&a=move"
 check "Zurück auf oberste Ebene" 200 -H 'X-Requested-With: fetch' -d "_csrf=$C&id=$B&cat=$CAT2&parent=&ids[]=$B" "$BASE?r=checklist&a=move"
 
+echo "Export und Import"
+C=$(csrf admin\&a=backup)
+PKG="$TMP/export.zip"
+EXP="_csrf=$C&parts[]=settings&parts[]=groups&parts[]=configphp&parts[]=memorial&parts[]=gallery&parts[]=contacts&parts[]=checklist&parts[]=plugindata&parts[]=users&parts[]=logs"
+check "Export ohne Auswahl wird abgelehnt (302)" 302 -d "_csrf=$C" "$BASE?r=admin&a=transferexport"
+got=$(curl -s -o "$PKG" -w '%{http_code}' -b "$JAR" -c "$JAR" -d "$EXP" "$BASE?r=admin&a=transferexport")
+[ "$got" = 200 ] && ok "Export ($got)" || fail "Export: erwartet 200, erhalten $got"
+if php -r '$z = new ZipArchive(); exit($z->open($argv[1]) === true && $z->locateName("manifest.json") !== false && $z->locateName("data/checklist.json") !== false && $z->locateName("config/config.json") !== false ? 0 : 1);' "$PKG"; then ok "Paket enthält Manifest, Daten und Konfiguration"; else fail "Paket ist unvollständig"; fi
+php -r '$f = $argv[1]; $d = json_decode(file_get_contents($f), true); $d["items"] = []; $d["categories"] = []; file_put_contents($f, json_encode($d));' "$TMP/app/data/checklist.json"
+upload() { curl -s -D - -o /dev/null -b "$JAR" -c "$JAR" -F "_csrf=$C" -F "package=@$1" "$BASE?r=admin&a=transferimport"; }
+LOC=$(upload "$PKG" | tr -d '\r' | sed -n 's/^[Ll]ocation: //p')
+TOKEN=$(sed -n 's/.*token=\([a-f0-9]*\).*/\1/p' <<<"$LOC")
+if [ -n "$TOKEN" ]; then ok "Paket wird geprüft (Vorschau)"; else fail "Keine Vorschau: $LOC"; fi
+check "Vorschau" 200 "$BASE?r=admin&a=transferpreview&token=$TOKEN"
+check "Unbekanntes Paket (Token)" 302 "$BASE?r=admin&a=transferpreview&token=0000"
+check "Import ohne Auswahl" 302 -d "_csrf=$C&token=$TOKEN" "$BASE?r=admin&a=transferapply"
+check "Import (Checkliste, Gedenkseite)" 302 -d "_csrf=$C&token=$TOKEN&parts[]=checklist&parts[]=memorial&parts[]=configphp" "$BASE?r=admin&a=transferapply"
+if [ "$(php -r '$d = json_decode(file_get_contents($argv[1]), true); echo count($d["categories"]) > 0 ? "ok" : "no";' "$TMP/app/data/checklist.json")" = ok ]; then ok "Checkliste wiederhergestellt"; else fail "Checkliste nicht wiederhergestellt"; fi
+ls "$TMP/app/data/backups" | grep -q '^vor-import-' && ok "Sicherung vor dem Import" || fail "Keine Sicherung vor dem Import"
+[ ! -d "$TMP/app/data/tmp/import-$TOKEN" ] && ok "Entpacktes Paket entfernt" || fail "Entpacktes Paket bleibt liegen"
+check "Abgelaufenes Paket wird abgelehnt" 302 -d "_csrf=$C&token=$TOKEN&parts[]=checklist" "$BASE?r=admin&a=transferapply"
+
+# fehlerhafte Pakete
+printf 'kein zip' > "$TMP/bad.zip"
+LOC=$(upload "$TMP/bad.zip" | tr -d '\r' | sed -n 's/^[Ll]ocation: //p'); grep -q transferpreview <<<"$LOC" && fail "Kein ZIP wurde angenommen" || ok "Kein ZIP wird abgelehnt"
+php -r '$z = new ZipArchive(); $z->open($argv[1], ZipArchive::CREATE); $z->addFromString("../evil.json", "{}"); $z->addFromString("data/../../x.json", "{}"); $z->addFromString("data/users.php", "<?php"); $z->addFromString("data/checklist.json", "{\"categories\": 1, \"items\": []}"); $z->close();' "$TMP/evil.zip"
+LOC=$(upload "$TMP/evil.zip" | tr -d '\r' | sed -n 's/^[Ll]ocation: //p'); grep -q transferpreview <<<"$LOC" && fail "Ungültige Checkliste wurde angenommen" || ok "Ungültiges Paket wird abgelehnt"
+[ ! -e "$TMP/app/data/evil.json" ] && [ ! -e "$TMP/app/evil.json" ] && ok "Pfadtricks im Paket wirkungslos" || fail "Datei außerhalb geschrieben"
+php -r '$z = new ZipArchive(); $z->open($argv[1], ZipArchive::CREATE); $z->addFromString("data/users.json", json_encode([["id" => "u1", "username" => "x", "role" => "user", "active" => true]])); $z->close();' "$TMP/noadmin.zip"
+LOC=$(upload "$TMP/noadmin.zip" | tr -d '\r' | sed -n 's/^[Ll]ocation: //p'); T2=$(sed -n 's/.*token=\([a-f0-9]*\).*/\1/p' <<<"$LOC")
+check "Benutzer ohne Administrator werden nicht importiert" 302 -d "_csrf=$C&token=$T2&parts[]=users" "$BASE?r=admin&a=transferapply"
+[ "$(php -r '$d = json_decode(file_get_contents($argv[1]), true); echo count($d);' "$TMP/app/data/users.json")" = 1 ] && ok "Benutzer unverändert" || fail "Benutzer wurden überschrieben"
+check "Paket verwerfen" 302 -d "_csrf=$C&token=$T2" "$BASE?r=admin&a=transferdrop"
+LOC=$(upload "$PKG" | tr -d '\r' | sed -n 's/^[Ll]ocation: //p'); T3=$(sed -n 's/.*token=\([a-f0-9]*\).*/\1/p' <<<"$LOC")
+check "Import der Benutzer meldet ab" 302 -d "_csrf=$C&token=$T3&parts[]=users" "$BASE?r=admin&a=transferapply"
+check "Nach Benutzerimport: Anmeldung nötig" 302 "$BASE?r=admin"
+C=$(csrf login)
+check "Erneute Anmeldung" 302 -d "_csrf=$C&username=smoke&password=smoketest-1234" "$BASE?r=login"
+
 echo "Benutzer anlegen und als Benutzer anmelden"
 GROUP=$(php -r '$g = json_decode(file_get_contents($argv[1]), true); echo $g[0]["id"] ?? "";' "$TMP/app/data/groups.json")
 C=$(csrf "admin&a=users")

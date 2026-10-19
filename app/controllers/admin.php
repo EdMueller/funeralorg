@@ -7,7 +7,7 @@ function ctrl_admin(string $r, string $a): void
     $isPost = $_SERVER['REQUEST_METHOD'] === 'POST';
     if (in_array($a, ['usersave', 'userdelete', 'groupsave', 'groupdelete', 'sharesave', 'sharerevoke',
         'sharedelete', 'snapshot', 'requestdone', 'impersonate', 'sendersave', 'pluginset', 'pluginimport',
-        'plugindelete'], true) && !$isPost) {
+        'plugindelete', 'transferexport', 'transferimport', 'transferapply', 'transferdrop'], true) && !$isPost) {
         abort(400);
     }
     $me = Auth::user();
@@ -385,6 +385,58 @@ function ctrl_admin(string $r, string $a): void
 
         case 'download':
             backup_download(get('full') === '1');
+
+        /* ---------------------------------------------------------- Export und Import */
+        case 'transferexport':
+            $keys = array_map('strval', (array)($_POST['parts'] ?? []));
+            $keys = array_values(array_intersect(array_keys(Transfer::parts()), $keys));
+            if (!$keys) {
+                flash(t('transfer.err_nopart'), 'warning');
+                redirect('admin', ['a' => 'backup']);
+            }
+            $tmp = Transfer::export($keys);
+            Log::add('admin', 'Export erstellt: ' . implode(', ', $keys));
+            admin_send_zip($tmp, t('transfer.file') . '_' . date('Y-m-d_His') . '.zip');
+
+        case 'transferimport':
+            $f = $_FILES['package'] ?? null;
+            if (!$f || $f['error'] !== UPLOAD_ERR_OK || !is_uploaded_file($f['tmp_name'])) {
+                flash(t('transfer.err_upload'), 'warning');
+                redirect('admin', ['a' => 'backup']);
+            }
+            $res = Transfer::stage($f['tmp_name']);
+            if (isset($res['error'])) {
+                flash(t($res['error'], ['name' => $res['name'] ?? '', 'v' => $res['v'] ?? '']), 'warning');
+                redirect('admin', ['a' => 'backup']);
+            }
+            redirect('admin', ['a' => 'transferpreview', 'token' => $res['token']]);
+
+        case 'transferpreview':
+            $info = Transfer::inspect((string)get('token'));
+            if (!$info) {
+                flash(t('transfer.err_token'), 'warning');
+                redirect('admin', ['a' => 'backup']);
+            }
+            view('admin_import', ['info' => $info]);
+            return;
+
+        case 'transferapply':
+            $res = Transfer::apply((string)post('token'), array_map('strval', (array)($_POST['parts'] ?? [])));
+            if (isset($res['error'])) {
+                flash(t($res['error']), 'warning');
+                redirect('admin', ['a' => $res['error'] === 'transfer.err_token' ? 'backup' : 'transferpreview', 'token' => (string)post('token')]);
+            }
+            Log::add('admin', 'Import ausgeführt: ' . implode(', ', $res['parts']));
+            if ($res['users']) { // Konten wurden ersetzt: neu anmelden
+                Auth::logout();
+                redirect('login');
+            }
+            flash(t('transfer.done', ['parts' => implode(', ', array_map(fn($k) => t('transfer.part.' . $k), $res['parts'])), 'dir' => $res['snapshot']]));
+            redirect('admin', ['a' => 'backup']);
+
+        case 'transferdrop':
+            Transfer::drop((string)post('token'));
+            redirect('admin', ['a' => 'backup']);
     }
 
     // Dashboard
@@ -443,8 +495,14 @@ function backup_download(bool $full): never
     }
     $zip->close();
     Log::add('admin', $full ? 'Komplett-Backup heruntergeladen' : 'Daten-Backup heruntergeladen');
+    admin_send_zip($tmp, t($full ? 'backup.file_full' : 'backup.file_data') . '_' . date('Y-m-d_His') . '.zip');
+}
+
+/** Sendet die temporäre ZIP-Datei als Download und löscht sie danach. */
+function admin_send_zip(string $tmp, string $filename): never
+{
     header('Content-Type: application/zip');
-    header('Content-Disposition: attachment; filename="' . t($full ? 'backup.file_full' : 'backup.file_data') . '_' . date('Y-m-d_His') . '.zip"');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
     header('Content-Length: ' . filesize($tmp));
     header('Cache-Control: no-store');
     while (ob_get_level()) {

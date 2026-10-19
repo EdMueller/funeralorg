@@ -114,6 +114,7 @@ data/
 ├── logs/JJJJ-MM.jsonl          Ereignisprotokoll
 ├── uploads/orig|medium|thumb/  Bilddateien, Name = <bild-id>.<ext>
 ├── backups/JJJJ-MM-TT/         Tages-Snapshots der JSON-Dateien
+├── backups/vor-import-…/       Sicherung der JSON-Dateien vor einem Import (die letzten 5)
 ├── cache/                      Statistik-Cache, Wartungsmarker (löschbar)
 └── tmp/                        temporäre ZIP/XLSX (automatisch nach 1 h entfernt)
 ```
@@ -231,6 +232,9 @@ in `.htaccess` gesetzt) und nginx leiten selbstständig um.
 | `admin` | `sender` / `sendersave` | GET/POST | A | Absenderadresse für Umschläge (bis 5 Zeilen à 60 Zeichen), gespeichert in `settings.json` → `sender` (Array), gelesen über `sender_lines()` |
 | `admin` | `log` (`days`, `act`, `usr`, `q`, `fmt`) | GET | A | Protokoll, Export CSV/XLSX |
 | `admin` | `backup` / `snapshot` / `download` (`full=1`) | GET/POST | A | Backup |
+| `admin` | `transferexport` | POST | A | Export-Paket (ZIP) der gewählten Bereiche (`parts[]`) |
+| `admin` | `transferimport` / `transferpreview` (`token`) | POST/GET | A | Paket hochladen und prüfen (Entpacken nach `data/tmp/import-<token>/`), Vorschau mit Bereichsauswahl |
+| `admin` | `transferapply` / `transferdrop` | POST | A | Gewählte Bereiche ersetzen (nach Sicherung) bzw. Paket verwerfen |
 | `admin` | `plugins` / `pluginset` (`slug`, `state`=on/off) / `pluginimport` (`plugin_zip`, multipart) / `pluginexport` (`p`, GET) / `plugindelete` (`slug`, `delete_data`) | GET/POST | A | Plugin-Verwaltung (§17) |
 | `pluginasset` | – (`p`, `f`, `v`) | GET | Benutzer | Datei aus `assets/` eines **aktiven** Plugins (Whitelist der Endungen, Pfadprüfung, ETag) |
 
@@ -594,3 +598,14 @@ Entwicklerleitfaden: `docs/plugin-development.md`. Hier die Festlegungen der Anw
 - `Auth::user()` liefert zusätzlich `via` (Benutzername des Admins). `Log::add()` schreibt es als `v` in jede Zeile; Protokollansicht zeigt „via admin“, Export hängt `(via admin)` an die Benutzerspalte.
 - Beenden: Banner-Button (`unimpersonate`) **oder Logout** → zurück als Admin (`Auth::stopImpersonation()`). Ist der Admin inzwischen deaktiviert, kein Admin mehr oder hat sein Passwort geändert, wird die Sitzung komplett beendet (Hinweis `imp.admin_gone`).
 - Hat das Ziel keinen zugänglichen Bereich (`Perm::firstRoute() === null`), wird die Übernahme sofort zurückgenommen.
+
+---
+
+## 18. Export und Import (`app/lib/Transfer.php`)
+
+Admin → Backup. Ergänzt die Backup-Downloads: der Admin wählt per Dialog, welche **Bereiche** in ein ZIP-Paket kommen (Konfiguration: `settings`, `groups`, `configphp`; Inhalte: `memorial`, `gallery` mit Bilddateien, `contacts` inkl. Zu-/Absagen und Kondolenzen, `checklist`, `plugindata` = `stores` der installierten Plugins; Zugänge: `users`, `shares`, `logs`). Vorbelegt sind Konfiguration und Inhalte.
+
+- **Paket:** `manifest.json` (`format` = `funeralorg-export`, `version`, `app`, `created`, `parts`), `data/<store>.json`, `data/uploads/<orig|medium|thumb>/<id>.<ext>`, `data/logs/JJJJ-MM.jsonl`, `config/config.json` (nur Schlüssel aus `Transfer::CONFIG_KEYS`, keine Pfade/Basis-URL). Nicht verschlüsselt; `resets`/`ratelimit` nie enthalten.
+- **Import in zwei Schritten:** `stage()` entpackt nur erlaubte Pfade (Whitelist, kein `..`, keine Verknüpfungen, Größen-/Dateigrenzen), prüft JSON-Form und Bild-MIME (ungültige Bilder werden übersprungen) und legt das Paket unter `data/tmp/import-<token>/` ab (nach 1 h verworfen). Die Vorschau listet die gefundenen Bereiche mit Kennzahlen. `apply()` legt zuerst `data/backups/vor-import-<Zeitstempel>/` an, **ersetzt** dann die gewählten Stores vollständig (`Store::update`) und schreibt Bilder/Protokolle (vorhandene Bilddateien werden nicht gelöscht, gleichnamige überschrieben).
+- **Sonderfälle:** `settings` behält die `base_url` dieser Installation. `configphp` ist beim Import nur eine Ansicht (Vergleich und PHP-Auszug), `configs/config.php` wird nie geschrieben. `users` wird abgelehnt, wenn das Paket keinen aktiven Administrator enthält; nach dem Import der Konten wird der Admin abgemeldet. Plugin-Code gehört nicht ins Paket (Plugins → Export).
+- **Kompatibilität:** Auch Daten-/Komplett-Backups (ohne Manifest) lassen sich importieren. Ein Paket mit höherer `version` wird abgelehnt.

@@ -5,6 +5,14 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+### Added
+
+- Export and import (Admin → Backup): choose in a dialog which areas go into a ZIP package (settings, groups and
+  permissions, `config.php` values, memorial page, gallery with images, contacts, checklist, plugin data, user
+  accounts, share links, log). The import checks the package, shows what it contains, lets you select the areas to
+  replace and saves the current JSON files first. Data/full backups can be imported as well. `configs/config.php`
+  is never written, differing values are only shown.
+
 ## [0.0.7] - 2026-10-19
 
 ### Added
