@@ -5,6 +5,8 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+## [0.0.7] - 2026-10-19
+
 ### Added
 
 - Checklist: tasks can be reordered by drag and drop (handle) or with arrow buttons, and moved to another category
@@ -100,7 +102,8 @@ First public release.
   `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `THIRD-PARTY.md`
 - GitHub Actions (syntax check, language files, smoke test on PHP 8.2 to 8.4) and issue/pull request templates
 
-[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.6...HEAD
+[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.7...HEAD
+[0.0.7]: https://github.com/EdMueller/funeralorg/compare/v0.0.6...v0.0.7
 [0.0.6]: https://github.com/EdMueller/funeralorg/compare/v0.0.5...v0.0.6
 [0.0.5]: https://github.com/EdMueller/funeralorg/compare/v0.0.4...v0.0.5
 [0.0.4]: https://github.com/EdMueller/funeralorg/compare/v0.0.3...v0.0.4
