@@ -5,6 +5,16 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+## [0.0.11] - 2026-10-20
+
+### Added
+
+- Gallery: reorder pictures by touch. In sort mode a long press grabs a picture, then drag it to its new place
+  (mouse drag and arrow buttons work as before).
+- Gallery: administrators can hide albums. A hidden album, its sub-albums and their pictures are invisible to everyone
+  else (overview, lightbox, slideshow, direct image links, ZIP, stations, home page, web API and MCP). Pictures that
+  also appear in a visible album stay visible there. The login and portrait picture is not affected.
+
 ## [0.0.10] - 2026-10-19
 
 ### Added
@@ -131,7 +141,8 @@ First public release.
   `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `THIRD-PARTY.md`
 - GitHub Actions (syntax check, language files, smoke test on PHP 8.2 to 8.4) and issue/pull request templates
 
-[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.10...HEAD
+[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.11...HEAD
+[0.0.11]: https://github.com/EdMueller/funeralorg/compare/v0.0.10...v0.0.11
 [0.0.10]: https://github.com/EdMueller/funeralorg/compare/v0.0.9...v0.0.10
 [0.0.9]: https://github.com/EdMueller/funeralorg/compare/v0.0.8...v0.0.9
 [0.0.8]: https://github.com/EdMueller/funeralorg/compare/v0.0.7...v0.0.8
