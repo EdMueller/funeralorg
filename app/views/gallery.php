@@ -92,7 +92,7 @@ foreach ($slides as $img) {
     <a href="<?= e(url('gallery')) ?>" class="active"><?= e(t('gal.crumb_all')) ?><small><?= $total ?></small></a>
   <?php endif; ?>
   <?php foreach ($subs as $al): ?>
-    <a href="<?= e(url('gallery', ['album' => $al['id']])) ?>"><?php if (!empty($al['color'])): ?><span class="album-dot" style="background:<?= e($al['color']) ?>"></span><?php endif; ?><?= e($al['name']) ?><?= ($al['parent'] ?? '') !== $album && $album !== '' ? ' <i class="bi bi-link-45deg" title="' . e(t('gal.link_title')) . '"></i>' : '' ?><small><?= $counts[$al['id']] ?? 0 ?></small></a>
+    <a href="<?= e(url('gallery', ['album' => $al['id']])) ?>"><?php if (!empty($al['color'])): ?><span class="album-dot" style="background:<?= e($al['color']) ?>"></span><?php endif; ?><?= e($al['name']) ?><?= !empty($al['hidden']) ? ' <i class="bi bi-eye-slash" title="' . e(t('gal.hidden_title')) . '"></i>' : '' ?><?= ($al['parent'] ?? '') !== $album && $album !== '' ? ' <i class="bi bi-link-45deg" title="' . e(t('gal.link_title')) . '"></i>' : '' ?><small><?= $counts[$al['id']] ?? 0 ?></small></a>
   <?php endforeach; ?>
   <?php if ($album === '' && !empty($counts['_none']) && $albums): ?>
     <a href="<?= e(url('gallery', ['album' => '_none'])) ?>"><?= e(t('gal.no_album')) ?><small><?= $counts['_none'] ?></small></a>
@@ -101,7 +101,7 @@ foreach ($slides as $img) {
     <span class="act-sep"></span>
     <a class="act" href="#" data-bs-toggle="modal" data-bs-target="#albumModal" data-album="<?= e(json_encode(['parent' => $album === '_none' ? '' : $album], JSON_FORCE_OBJECT)) ?>"><i class="bi bi-plus"></i> <?= e(t($album !== '' && $album !== '_none' ? 'gal.subalbum' : 'gal.album')) ?></a>
     <?php if ($album !== '' && $album !== '_none'): ?>
-      <a class="act" href="#" data-bs-toggle="modal" data-bs-target="#albumModal" data-album="<?= e(json_encode(['id' => $album, 'name' => $albumNames[$album] ?? '', 'cat' => $albumCats[$album]['cat'] ?? '', 'color' => $albumCats[$album]['color'] ?? '', 'parent' => $albumCats[$album]['parent'] ?? '', 'links' => $albumCats[$album]['links'] ?? [], 'exclude' => $subtree])) ?>"><i class="bi bi-pencil"></i> <?= e(t('gal.edit_album')) ?></a>
+      <a class="act" href="#" data-bs-toggle="modal" data-bs-target="#albumModal" data-album="<?= e(json_encode(['id' => $album, 'name' => $albumNames[$album] ?? '', 'cat' => $albumCats[$album]['cat'] ?? '', 'color' => $albumCats[$album]['color'] ?? '', 'hidden' => !empty($albumCats[$album]['hidden']), 'parent' => $albumCats[$album]['parent'] ?? '', 'links' => $albumCats[$album]['links'] ?? [], 'exclude' => $subtree])) ?>"><i class="bi bi-pencil"></i> <?= e(t('gal.edit_album')) ?></a>
     <?php endif; ?>
   <?php endif; ?>
 </nav>
@@ -258,6 +258,9 @@ foreach ($slides as $img) {
           <label class="form-label mt-3" for="al-color"><?= e(t('gal.color')) ?></label>
           <select class="form-select" id="al-color" name="color"><option value=""><?= e(t('gal.color_none')) ?></option>
             <?php foreach (Albums::COLORS as $hex): ?><option value="<?= e($hex) ?>"><?= e(Albums::colorName($hex)) ?></option><?php endforeach; ?></select></div>
+        <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" id="al-hidden" name="hidden" value="1">
+          <label class="form-check-label" for="al-hidden"><?= e(t('gal.hide')) ?></label>
+          <div class="form-text"><?= e(t('gal.hide_hint')) ?></div></div></div>
         <div class="col-md-6" id="al-links"><span class="form-label d-block"><?= e(t('gal.also_under')) ?></span>
           <div class="border rounded p-2" style="max-height:19rem;overflow:auto"><?= $linkBoxes($flat) ?></div>
           <div class="form-text"><?= e(t('gal.also_under_hint')) ?></div></div>

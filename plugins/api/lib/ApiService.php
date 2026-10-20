@@ -614,6 +614,7 @@ final class ApiService
         return [
             'id' => $al['id'], 'name' => $al['name'], 'parent' => $al['parent'] ?? '', 'links' => array_values($al['links'] ?? []),
             'cat' => $al['cat'] ?? '', 'color' => $al['color'] ?? '', 'sort' => $al['sort'] ?? 0,
+            'hidden' => !empty($al['hidden']),
             'images' => count(Albums::images($g['images'], Albums::subtree($g['albums'], $al['id']))),
         ];
     }
@@ -621,7 +622,7 @@ final class ApiService
     public static function albums(array $a): array
     {
         self::needGallery();
-        $g = Store::read('gallery');
+        $g = Albums::forViewer(Store::read('gallery'));
         usort($g['albums'], fn($x, $y) => ($x['sort'] ?? 0) <=> ($y['sort'] ?? 0));
         return ['items' => array_map(fn($al) => self::albumOut($al, $g), $g['albums']),
                 'unassigned' => count(array_filter($g['images'], fn($i) => $i['album'] === ''))];
@@ -638,7 +639,8 @@ final class ApiService
         $parent = array_key_exists('parent', $a) ? (string)$a['parent'] : (string)($cur['parent'] ?? '');
         $parent = ($parent !== '' && find_by_id($g['albums'], $parent) && !in_array($parent, $own, true)) ? $parent : '';
         $links = Albums::cleanLinks($g['albums'], array_key_exists('links', $a) ? $a['links'] : ($cur['links'] ?? []), array_merge($own, [$parent]));
-        return ['name' => $name, 'cat' => self::s($a, 'cat', 40) ?? ($cur['cat'] ?? ''), 'color' => $color, 'parent' => $parent, 'links' => $links];
+        return ['name' => $name, 'cat' => self::s($a, 'cat', 40) ?? ($cur['cat'] ?? ''), 'color' => $color, 'parent' => $parent, 'links' => $links,
+                'hidden' => array_key_exists('hidden', $a) ? self::bool($a['hidden']) : !empty($cur['hidden'])];
     }
 
     public static function albumCreate(array $a): array
@@ -724,7 +726,7 @@ final class ApiService
     public static function images(array $a): array
     {
         self::needGallery();
-        $g = Store::read('gallery');
+        $g = Albums::forViewer(Store::read('gallery'));
         $album = (string)($a['album'] ?? '');
         if ($album === '_none') {
             $list = Albums::sortIn(array_values(array_filter($g['images'], fn($i) => $i['album'] === '')), '_none');
@@ -744,7 +746,7 @@ final class ApiService
     public static function imageGet(array $a): array
     {
         self::needGallery();
-        $i = find_by_id(Store::read('gallery')['images'], (string)$a['id']);
+        $i = find_by_id(Albums::forViewer(Store::read('gallery'))['images'], (string)$a['id']);
         $i || self::missing();
         return self::imageOut($i);
     }
@@ -753,7 +755,7 @@ final class ApiService
     {
         self::needGallery();
         $id = (string)$a['id'];
-        $img = find_by_id(Store::read('gallery')['images'], $id);
+        $img = find_by_id(Albums::forViewer(Store::read('gallery'))['images'], $id);
         $img || self::missing();
         if (!Auth::isAdmin() && ($img['uploaded_by_id'] ?? '') !== self::uid()) {
             self::deny(t('gal.denied_edit'));
@@ -831,7 +833,7 @@ final class ApiService
     public static function imageBinary(string $id, string $size): array
     {
         self::needGallery();
-        $img = find_by_id(Store::read('gallery')['images'], $id);
+        $img = find_by_id(Albums::forViewer(Store::read('gallery'))['images'], $id);
         $img || self::missing();
         $size = $size === 'thumb' ? 'thumb' : 'medium';
         $f = Image::path($img, $size);

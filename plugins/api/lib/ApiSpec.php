@@ -42,6 +42,7 @@ final class ApiSpec
             'name' => ['string', 'Name (max. 100 Zeichen)'], 'parent' => ['string', 'ID des übergeordneten Albums oder leer'],
             'cat' => ['string', 'Kategorie für die Stationen-Legende'], 'color' => ['string', 'Farbe (Hex aus der Palette) oder leer'],
             'links' => ['array', 'IDs weiterer Eltern-Alben (Verweise)'],
+            'hidden' => ['boolean', 'Für alle außer Administratoren verstecken (gilt auch für Unteralben)'],
         ];
         $ops = [
             ['me', 'GET', '/me', false, '', 'Angemeldeter Benutzer, Token-Bereich und Rechte', [], 'me'],

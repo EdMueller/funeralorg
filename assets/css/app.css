@@ -277,6 +277,7 @@ main.app-main { max-width: 1120px; margin: 0 auto; padding: 1.5rem 1rem 5rem; }
 .gallery-grid.sorting .g-item .mv { display: flex; }
 .gallery-grid.sorting .g-item .pick { display: none; }
 .gallery-grid.sorting .g-item img { pointer-events: none; }
+.gallery-grid.sorting .g-item { touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .g-item.dragging { opacity: .35; }
 .cart-bar {
   position: fixed; left: 50%; transform: translateX(-50%); bottom: 1rem; z-index: 1030;

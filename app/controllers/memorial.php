@@ -40,7 +40,7 @@ function ctrl_memorial(string $r, string $a): void
     $m = Store::read('memorial');
     $gallery = Store::read('gallery');
     $portrait = !empty($m['portrait']) ? find_by_id($gallery['images'], $m['portrait']) : null;
-    $recent = Perm::gallery() ? array_slice(array_reverse($gallery['images']), 0, 8) : [];
+    $recent = Perm::gallery() ? array_slice(array_reverse(Albums::forViewer($gallery)['images']), 0, 8) : [];
 
     $summary = [];
     if (Perm::can('checklist')) {

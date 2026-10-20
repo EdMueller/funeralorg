@@ -31,7 +31,7 @@ function ctrl_gallery(string $r, string $a): void
             if (!$isPost) {
                 abort(400);
             }
-            $img = find_by_id(Store::read('gallery')['images'], (string)post('id'));
+            $img = find_by_id(Albums::forViewer(Store::read('gallery'))['images'], (string)post('id'));
             if ($img) {
                 Log::add('img_view', $img['id'], ['c' => mb_substr($img['caption'] ?: $img['orig_name'], 0, 80)]);
             }
@@ -55,7 +55,7 @@ function ctrl_gallery(string $r, string $a): void
             }
             $id = (string)post('id');
             $mode = (string)post('mode', 'toggle'); // toggle | add | remove
-            $valid = array_column(Store::read('gallery')['images'], 'id');
+            $valid = array_column(Albums::forViewer(Store::read('gallery'))['images'], 'id');
             $res = Store::update('selections', function (array &$s) use ($uid, $id, $mode, $valid) {
                 $sel = array_values(array_intersect($s[$uid] ?? [], $valid));
                 $ids = $id === '*' ? $valid : [$id];
@@ -85,7 +85,7 @@ function ctrl_gallery(string $r, string $a): void
             if (!Perm::gallery('download')) {
                 abort(403);
             }
-            $g = Store::read('gallery');
+            $g = Albums::forViewer(Store::read('gallery'));
             $sel = Store::read('selections')[$uid] ?? [];
             $images = array_values(array_filter($g['images'], fn($i) => in_array($i['id'], $sel, true)));
             view('cart', ['images' => $images, 'albums' => $g['albums']]);
@@ -100,9 +100,10 @@ function ctrl_gallery(string $r, string $a): void
             }
             $target = (string)post('album');
             $isAdmin = Auth::isAdmin();
-            $sel = Store::read('selections')[$uid] ?? [];
-            $res = Store::update('gallery', function (array &$g) use ($target, $sel, $uid, $isAdmin) {
-                if ($target !== '' && !find_by_id($g['albums'], $target)) {
+            $seen = Albums::forViewer(Store::read('gallery'));
+            $sel = array_values(array_intersect(Store::read('selections')[$uid] ?? [], array_column($seen['images'], 'id')));
+            $res = Store::update('gallery', function (array &$g) use ($target, $sel, $uid, $isAdmin, $seen) {
+                if ($target !== '' && !find_by_id($seen['albums'], $target)) {
                     return null;
                 }
                 $moved = $skipped = 0;
@@ -177,10 +178,11 @@ function ctrl_gallery(string $r, string $a): void
             $name = mb_substr((string)post('name'), 0, 100);
             $cat = mb_substr((string)post('cat'), 0, 40);
             $color = in_array((string)post('color'), Albums::COLORS, true) ? (string)post('color') : '';
+            $hide = !empty($_POST['hidden']);
             if ($name !== '') {
                 $parent = (string)post('parent');
                 $links = $_POST['links'] ?? [];
-                Store::update('gallery', function (array &$g) use ($id, $name, $cat, $color, $parent, $links) {
+                Store::update('gallery', function (array &$g) use ($id, $name, $cat, $color, $parent, $links, $hide) {
                     // Schleifenschutz: Eltern und Verweise dürfen nicht im eigenen Teilbaum liegen
                     $own = $id !== '' ? Albums::subtree($g['albums'], $id) : [];
                     $parent = ($parent !== '' && find_by_id($g['albums'], $parent) && !in_array($parent, $own, true)) ? $parent : '';
@@ -190,16 +192,17 @@ function ctrl_gallery(string $r, string $a): void
                             $al['name'] = $name;
                             $al['cat'] = $cat;
                             $al['color'] = $color;
+                            $al['hidden'] = $hide;
                             $al['parent'] = $parent;
                             $al['links'] = $links;
                             return;
                         }
                     }
                     $g['albums'][] = ['id' => new_id(), 'name' => $name, 'cat' => $cat, 'color' => $color,
-                        'parent' => $parent, 'links' => $links,
+                        'hidden' => $hide, 'parent' => $parent, 'links' => $links,
                         'sort' => count($g['albums']), 'created' => now()];
                 });
-                Log::add('admin', 'Album gespeichert: ' . $name);
+                Log::add('admin', 'Album gespeichert: ' . $name . ($hide ? ' (versteckt)' : ''));
             }
             redirect_back('gallery');
 
@@ -247,7 +250,7 @@ function ctrl_gallery(string $r, string $a): void
                 abort(403, t('gal.denied_order'));
             }
             $key = (string)post('album');
-            $g = Store::read('gallery');
+            $g = Albums::forViewer(Store::read('gallery'));
             if ($key !== '_none' && !find_by_id($g['albums'], $key)) {
                 abort(404);
             }
@@ -365,7 +368,7 @@ function ctrl_gallery(string $r, string $a): void
     }
 
     // Übersicht
-    $g = Store::read('gallery');
+    $g = Albums::forViewer(Store::read('gallery'));
     usort($g['albums'], fn($x, $y) => $x['sort'] <=> $y['sort']);
     $album = (string)get('album', '');
     if ($album !== '_none' && $album !== '' && !find_by_id($g['albums'], $album)) {
@@ -430,7 +433,7 @@ function gallery_apply_order(array &$g, string $key, array $ids): void
 
 function gallery_serve(): never
 {
-    $img = find_by_id(Store::read('gallery')['images'], (string)get('id'));
+    $img = find_by_id(Albums::forViewer(Store::read('gallery'))['images'], (string)get('id'));
     if (!$img) {
         abort(404);
     }
@@ -453,7 +456,7 @@ function gallery_upload(): never
 {
     $files = $_FILES['files'] ?? null;
     $album = (string)post('album');
-    $g = Store::read('gallery');
+    $g = Albums::forViewer(Store::read('gallery'));
     if ($album !== '' && !find_by_id($g['albums'], $album)) {
         $album = '';
     }
@@ -509,7 +512,7 @@ function gallery_upload(): never
 function gallery_zip(string $what, string $albumId, string $uid): never
 {
     @set_time_limit(600);
-    $g = Store::read('gallery');
+    $g = Albums::forViewer(Store::read('gallery'));
     $albums = array_column($g['albums'], 'name', 'id');
     // Ordner je Bild: erstes Album im Baum (Tiefensuche), in dem es erscheint; 'album' rekursiv, relativ zum Album
     $folders = [];

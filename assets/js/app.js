@@ -437,7 +437,7 @@
     });
   });
 
-  /* ---------- Galerie: Reihenfolge ändern (Ziehen oder Pfeile) ---------- */
+  /* ---------- Galerie: Reihenfolge ändern (Ziehen, Touch: langer Druck, oder Pfeile) ---------- */
   var sortGrid = document.getElementById('galleryGrid');
   var sortBtn = $('[data-sort-toggle]');
   if (sortGrid && sortBtn) {
@@ -469,9 +469,53 @@
       }
       if (ev.target.closest('.open, .pick') || mv) { ev.stopPropagation(); ev.preventDefault(); }
     }, true);
+    // Touch/Stift: langer Druck greift das Bild, danach folgt es dem Finger (HTML5-Drag gilt nur für die Maus)
+    var touchEl = null, touchId = null, pressTimer = 0, startX = 0, startY = 0, touchType = false;
+    var touchEnd = function (save) {
+      clearTimeout(pressTimer);
+      if (touchEl) {
+        touchEl.classList.remove('dragging');
+        if (save && order().join() !== before) saveOrder();
+      }
+      touchEl = null; touchId = null;
+    };
+    sortGrid.addEventListener('pointerdown', function (ev) {
+      touchType = ev.pointerType !== 'mouse';
+      if (!touchType || !sortGrid.classList.contains('sorting') || ev.target.closest('[data-move]')) return;
+      var it = ev.target.closest('.g-item');
+      if (!it) return;
+      startX = ev.clientX; startY = ev.clientY; touchId = ev.pointerId;
+      clearTimeout(pressTimer);
+      pressTimer = setTimeout(function () {
+        touchEl = it; before = order().join();
+        it.classList.add('dragging');
+        if (navigator.vibrate) navigator.vibrate(15);
+      }, 350);
+    });
+    sortGrid.addEventListener('pointermove', function (ev) {
+      if (ev.pointerId !== touchId) return;
+      if (!touchEl) {
+        // vor dem langen Druck bewegt: Scrollen, kein Greifen
+        if (Math.abs(ev.clientX - startX) > 8 || Math.abs(ev.clientY - startY) > 8) { clearTimeout(pressTimer); touchId = null; }
+        return;
+      }
+      var t = document.elementFromPoint(ev.clientX, ev.clientY);
+      t = t && t.closest('.g-item');
+      if (!t || t === touchEl || t.parentNode !== sortGrid) return;
+      var r = t.getBoundingClientRect();
+      var rowAfter = ev.clientY > r.bottom - r.height / 2 && ev.clientX > r.left + r.width / 2;
+      sortGrid.insertBefore(touchEl, rowAfter ? t.nextSibling : t);
+    });
+    ['pointerup', 'pointercancel'].forEach(function (n) {
+      sortGrid.addEventListener(n, function (ev) { if (ev.pointerId === touchId) touchEnd(n === 'pointerup'); });
+    });
+    // gegriffen: Seite nicht mehr scrollen
+    sortGrid.addEventListener('touchmove', function (ev) { if (touchEl) ev.preventDefault(); }, { passive: false });
+    sortGrid.addEventListener('contextmenu', function (ev) { if (touchType && sortGrid.classList.contains('sorting')) ev.preventDefault(); });
     sortGrid.addEventListener('dragstart', function (ev) {
       var it = ev.target.closest && ev.target.closest('.g-item');
       if (!it || !sortGrid.classList.contains('sorting')) return;
+      if (touchType) { ev.preventDefault(); return; }
       dragEl = it; before = order().join();
       ev.dataTransfer.effectAllowed = 'move';
       ev.dataTransfer.setData('text/plain', it.dataset.id);

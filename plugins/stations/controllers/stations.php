@@ -86,7 +86,7 @@ function ctrl_stations(string $r, string $a): void
         redirect('stations');
     }
 
-    $gallery = Store::read('gallery');
+    $gallery = Albums::forViewer(Store::read('gallery'));
     $albums = $gallery['albums'];
     $images = $gallery['images'];
     $canGallery = Perm::gallery();

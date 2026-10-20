@@ -110,6 +110,53 @@ final class Albums
         return '';
     }
 
+    /** IDs der versteckten Alben: selbst versteckt oder mit verstecktem Heimat-Vorfahren. */
+    public static function hiddenIds(array $albums): array
+    {
+        $out = [];
+        foreach ($albums as $al) {
+            foreach (self::trail($albums, $al['id']) as $t) {
+                if (!empty($t['hidden'])) {
+                    $out[] = (string)$al['id'];
+                    break;
+                }
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * Galerie-Daten aus Sicht des angemeldeten Benutzers: Admins sehen alles, alle anderen weder versteckte Alben
+     * noch Bilder, die nur in versteckten Alben erscheinen. Ein Bild mit sichtbarem Verweis bleibt sichtbar;
+     * sein Heimatalbum ist dann das erste sichtbare.
+     */
+    public static function forViewer(array $g): array
+    {
+        if (Auth::isAdmin()) {
+            return $g;
+        }
+        $hidden = self::hiddenIds($g['albums']);
+        if (!$hidden) {
+            return $g;
+        }
+        $g['albums'] = array_values(array_filter($g['albums'], fn($al) => !in_array($al['id'], $hidden, true)));
+        $images = [];
+        foreach ($g['images'] as $i) {
+            $all = self::ofImage($i);
+            $vis = array_values(array_diff($all, $hidden));
+            if ($all && !$vis) {
+                continue;
+            }
+            if ($all) {
+                $i['album'] = $vis[0];
+                $i['links'] = array_slice($vis, 1);
+            }
+            $images[] = $i;
+        }
+        $g['images'] = $images;
+        return $g;
+    }
+
     /** Alben, in denen das Bild erscheint: Heimat zuerst, dann Verweise. */
     public static function ofImage(array $img): array
     {
