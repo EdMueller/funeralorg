@@ -5,6 +5,14 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+## [0.0.12] - 2026-10-22
+
+### Added
+
+- Memorial page: choose the frame of the portrait (classic oval, round, rectangular, passe-partout, wood, antique gold,
+  baroque, mourning crepe) in "Edit memorial page". The frame applies to the home page and the login page; existing
+  installations keep the classic oval. The web API and MCP plugin read and write it as `frame`.
+
 ## [0.0.11] - 2026-10-20
 
 ### Added
@@ -141,7 +149,8 @@ First public release.
   `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `THIRD-PARTY.md`
 - GitHub Actions (syntax check, language files, smoke test on PHP 8.2 to 8.4) and issue/pull request templates
 
-[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.11...HEAD
+[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.12...HEAD
+[0.0.12]: https://github.com/EdMueller/funeralorg/compare/v0.0.11...v0.0.12
 [0.0.11]: https://github.com/EdMueller/funeralorg/compare/v0.0.10...v0.0.11
 [0.0.10]: https://github.com/EdMueller/funeralorg/compare/v0.0.9...v0.0.10
 [0.0.9]: https://github.com/EdMueller/funeralorg/compare/v0.0.8...v0.0.9
