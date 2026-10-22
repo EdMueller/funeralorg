@@ -20,7 +20,7 @@ $flashes = take_flashes();
 
   <div class="login-wrap">
     <div class="login-hero">
-      <div class="portrait-oval mx-auto">
+      <div class="portrait-frame frame-<?= e(Frame::key($memorial['frame'] ?? '')) ?> mx-auto">
         <?php if ($portrait): ?>
           <img src="<?= e(url('pubimg', ['id' => $portrait['id'], 's' => 'medium'])) ?>" alt="<?= e(t('login.portrait_alt', ['name' => $name])) ?>">
         <?php else: ?>

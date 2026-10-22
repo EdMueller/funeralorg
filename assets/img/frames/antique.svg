@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 400">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f3dc8f"/><stop offset=".25" stop-color="#b8923f"/>
+      <stop offset=".5" stop-color="#ecd488"/><stop offset=".75" stop-color="#8e6b27"/>
+      <stop offset="1" stop-color="#d9b85f"/>
+    </linearGradient>
+    <g id="r">
+      <circle r="17" fill="url(#g)" stroke="#5e4513" stroke-width="1.5"/>
+      <g fill="#8e6b27" stroke="#5e4513" stroke-width=".6">
+        <ellipse cy="-9" rx="3.2" ry="6.5"/><ellipse cy="-9" rx="3.2" ry="6.5" transform="rotate(45)"/>
+        <ellipse cy="-9" rx="3.2" ry="6.5" transform="rotate(90)"/><ellipse cy="-9" rx="3.2" ry="6.5" transform="rotate(135)"/>
+        <ellipse cy="-9" rx="3.2" ry="6.5" transform="rotate(180)"/><ellipse cy="-9" rx="3.2" ry="6.5" transform="rotate(225)"/>
+        <ellipse cy="-9" rx="3.2" ry="6.5" transform="rotate(270)"/><ellipse cy="-9" rx="3.2" ry="6.5" transform="rotate(315)"/>
+      </g>
+      <circle r="4.2" fill="#f3dc8f" stroke="#5e4513" stroke-width="1"/>
+    </g>
+  </defs>
+  <path fill="url(#g)" fill-rule="evenodd" d="M10 18H310V382H10Z M38 46V354H282V46Z"/>
+  <g fill="none">
+    <rect x="10" y="18" width="300" height="364" stroke="#5e4513" stroke-width="1.5"/>
+    <rect x="17" y="25" width="286" height="350" stroke="#f7e6a8" stroke-width=".8"/>
+    <rect x="31" y="39" width="258" height="322" stroke="#6f5219" stroke-width="1"/>
+    <rect x="34" y="42" width="252" height="316" stroke="#f7e6a8" stroke-width="1"/>
+    <rect x="38" y="46" width="244" height="308" stroke="#5e4513" stroke-width="1.5"/>
+    <rect x="24" y="32" width="272" height="336" stroke="#5e4513" stroke-width="4" stroke-linecap="round" stroke-dasharray="0 11"/>
+  </g>
+  <use href="#r" x="24" y="32"/><use href="#r" x="296" y="32"/>
+  <use href="#r" x="24" y="368"/><use href="#r" x="296" y="368"/>
+  <use href="#r" transform="translate(160 32) scale(.62)"/><use href="#r" transform="translate(160 368) scale(.62)"/>
+  <use href="#r" transform="translate(24 200) scale(.62)"/><use href="#r" transform="translate(296 200) scale(.62)"/>
+</svg>

@@ -20,6 +20,31 @@
       <textarea class="form-control" id="f-text" name="text" rows="8"><?= e($m['text']) ?></textarea></div>
   </div>
 
+  <h2 class="h4 mt-4"><?= e(t('memorial.frame')) ?></h2>
+  <p class="text-muted small mb-2"><?= e(t('memorial.frame_hint')) ?></p>
+  <?php
+    $curFrame = Frame::key($m['frame'] ?? '');
+    $thumb = null;
+    foreach ($images as $img) {
+        if ($img['id'] === ($m['portrait'] ?? '')) { $thumb = $img; }
+    }
+  ?>
+  <div class="frame-pick" role="radiogroup" aria-label="<?= e(t('memorial.frame')) ?>">
+    <?php foreach (Frame::KEYS as $fk): ?>
+      <label class="frame-opt">
+        <input type="radio" name="frame" value="<?= e($fk) ?>" <?= $curFrame === $fk ? 'checked' : '' ?>>
+        <span class="portrait-frame frame-<?= e($fk) ?>">
+          <?php if ($thumb): ?>
+            <img src="<?= e(url('img', ['id' => $thumb['id'], 's' => 'thumb'])) ?>" alt="">
+          <?php else: ?>
+            <span class="portrait-empty w-100 h-100" aria-hidden="true"><?= e(mb_substr($m['name'] ?: '·', 0, 1)) ?></span>
+          <?php endif; ?>
+        </span>
+        <span><?= e(t('memorial.frame.' . $fk)) ?></span>
+      </label>
+    <?php endforeach; ?>
+  </div>
+
   <h2 class="h4 mt-4"><?= e(t('memorial.portrait')) ?></h2>
   <p class="text-muted small mb-2"><?= e(t('memorial.portrait_hint')) ?></p>
   <?php if (!$images): ?>

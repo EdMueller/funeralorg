@@ -127,7 +127,8 @@ final class ApiService
             self::deny();
         }
         $m = Store::read('memorial') + ['place' => '', 'quote_by' => ''];
-        return array_intersect_key($m, array_flip(['name', 'born', 'died', 'place', 'quote', 'quote_by', 'text', 'portrait']));
+        $m['frame'] = Frame::key($m['frame'] ?? '');
+        return array_intersect_key($m, array_flip(['name', 'born', 'died', 'place', 'quote', 'quote_by', 'text', 'portrait', 'frame']));
     }
 
     public static function memorialUpdate(array $a): array
@@ -142,6 +143,9 @@ final class ApiService
         }
         if (($portrait = self::s($a, 'portrait', 40)) !== null) {
             $in['portrait'] = ($portrait !== '' && find_by_id(Store::read('gallery')['images'], $portrait)) ? $portrait : '';
+        }
+        if (($frame = self::s($a, 'frame', 20)) !== null) {
+            $in['frame'] = Frame::key($frame);
         }
         Store::update('memorial', function (array &$m) use ($in) {
             $m = $in + $m;

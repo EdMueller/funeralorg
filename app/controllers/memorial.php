@@ -16,7 +16,8 @@ function ctrl_memorial(string $r, string $a): void
             if ($portrait !== '' && !find_by_id($gallery['images'], $portrait)) {
                 $portrait = '';
             }
-            Store::update('memorial', function (array &$m) use ($portrait) {
+            $frame = Frame::key(post('frame'));
+            Store::update('memorial', function (array &$m) use ($portrait, $frame) {
                 $m['name'] = mb_substr((string)post('name'), 0, 120);
                 $m['born'] = mb_substr((string)post('born'), 0, 40);
                 $m['died'] = mb_substr((string)post('died'), 0, 40);
@@ -25,6 +26,7 @@ function ctrl_memorial(string $r, string $a): void
                 $m['quote_by'] = mb_substr((string)post('quote_by'), 0, 120);
                 $m['text'] = mb_substr((string)post('text'), 0, 8000);
                 $m['portrait'] = $portrait;
+                $m['frame'] = $frame;
             });
             Log::add('admin', 'Gedenkseite bearbeitet');
             flash(t('memorial.saved'));

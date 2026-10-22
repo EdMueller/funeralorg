@@ -1,6 +1,6 @@
 <?php $pageTitle = ''; ?>
 <section class="memorial-hero">
-  <div class="portrait-oval">
+  <div class="portrait-frame frame-<?= e(Frame::key($m['frame'] ?? '')) ?>">
     <?php if ($portrait): ?>
       <img src="<?= e(url('img', ['id' => $portrait['id'], 's' => 'medium'])) ?>" alt="<?= e(t('memorial.portrait_of', ['name' => $m['name']])) ?>">
     <?php else: ?>

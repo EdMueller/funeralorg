@@ -46,7 +46,7 @@ Beim Apache wird der `Authorization`-Header per `.htaccess` an PHP durchgereicht
 |---|---|---|---|
 | `GET` | `/me` | lesen | Angemeldeter Benutzer, Token-Bereich und Rechte |
 | `GET` | `/summary` | lesen | Kennzahlen wie auf der Startseite (offene Aufgaben, Rückmeldungen, offene Dankeskarten, Anrufe) |
-| `GET` | `/memorial` | lesen | Gedenkseite: Name, Lebensdaten, Spruch, Text, Portrait-Bild-ID |
+| `GET` | `/memorial` | lesen | Gedenkseite: Name, Lebensdaten, Spruch, Text, Portrait-Bild-ID, Rahmen |
 | `PATCH` | `/memorial` | schreiben | Gedenkseite ändern (nur Administratoren); nur übergebene Felder werden gesetzt |
 | `GET` | `/contacts` | lesen | Kontakte auflisten (nur Felder, die der Benutzer sehen darf) |
 | `GET` | `/contacts/{id}` | lesen | Einen Kontakt lesen |

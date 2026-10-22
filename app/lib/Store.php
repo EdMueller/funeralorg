@@ -16,7 +16,7 @@ final class Store
         'shares'     => [],
         'contacts'   => [],
         'checklist'  => ['categories' => [], 'items' => []],
-        'memorial'   => ['name' => '', 'born' => '', 'died' => '', 'quote' => '', 'text' => '', 'portrait' => ''],
+        'memorial'   => ['name' => '', 'born' => '', 'died' => '', 'quote' => '', 'text' => '', 'portrait' => '', 'frame' => 'oval'],
         'gallery'    => ['albums' => [], 'images' => []],
         'selections' => [],
         'ratelimit'  => [],

@@ -326,9 +326,9 @@ Sortierung in der Ansicht (`cl_cmp()`): offen vor erledigt; Aufgaben mit manuell
 ### memorial.json
 ```json
 { "name": "…", "born": "12. März 1941", "died": "15. September 2026", "place": "",
-  "quote": "…", "quote_by": "…", "text": "…", "portrait": "<bild-id>|''" }
+  "quote": "…", "quote_by": "…", "text": "…", "portrait": "<bild-id>|''", "frame": "oval" }
 ```
-Lebensdaten sind **Freitext** (Formatfreiheit, z. B. nur Jahr).
+Lebensdaten sind **Freitext** (Formatfreiheit, z. B. nur Jahr). `frame` ist einer der Schlüssel aus `Frame::KEYS` (`oval`, `round`, `rect`, `passepartout`, `wood`, `antique`, `baroque`, `mourning`); fehlende oder unbekannte Werte gelten als `oval`.
 
 ### gallery.json
 ```json
@@ -448,7 +448,7 @@ Format je Zeile (`data/logs/JJJJ-MM.jsonl`):
 | `--nebel` | `#d9dcd6` | Rahmen, Trennlinien |
 
 - Schrift: EB Garamond für Namen, Überschriften, Gedenktexte; Source Sans 3 für die Oberfläche.
-- Leitmotiv: `.portrait-oval` – ovales Portrait mit doppeltem Messingrand wie ein Porzellanbild am Grabstein.
+- Leitmotiv: `.portrait-frame` – Portrait im wählbaren Rahmen (Standard `oval`: doppelter Messingrand wie ein Porzellanbild am Grabstein). Klasse `frame-<schlüssel>`, Auswahl im Formular „Gedenkseite bearbeiten“, wirkt auf Startseite und Anmeldeseite. Oval, Rund, Rechteckig, Passepartout und Holz sind reines CSS; Antik-Gold, Barock und Trauerflor sind SVG-Overlays aus `assets/img/frames/` (`::after`, 14 % Überstand, Seitenverhältnis 4:5 bleibt). Neuer Rahmen → Schlüssel in `Frame::KEYS`, CSS-Block `.frame-<schlüssel>`, Text `memorial.frame.<schlüssel>` in de und en.
 - Bewegung nur auf der Anmeldeseite (langsame Überblendung, leichter Zoom); `prefers-reduced-motion` wird respektiert.
 - Mobile first; Listen statt Tabellen in den Arbeitsbereichen.
 
