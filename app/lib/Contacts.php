@@ -66,6 +66,9 @@ final class Contacts
                     $cols[] = ['key' => 'rsvp', 'label' => t('cf.rsvp'), 'type' => 'rsvp', 'edit' => Perm::can('rsvp', Perm::CHECK), 'on' => true, 'w' => 140];
                     $cols[] = ['key' => 'persons', 'label' => t('cf.persons'), 'type' => 'num', 'edit' => false, 'on' => false, 'w' => 90];
                 }
+                if (Perm::can('condolences')) {
+                    $cols[] = ['key' => 'thanks', 'label' => t('cond.thanks'), 'type' => 'flag', 'edit' => Perm::can('condolences', Perm::CHECK), 'on' => false, 'w' => 150];
+                }
             }
             if ($perm !== null && !Perm::field($perm)) {
                 continue;
