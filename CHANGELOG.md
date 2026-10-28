@@ -5,6 +5,13 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+## [0.0.13] - 2026-10-28
+
+### Added
+
+- Contacts table: new column "Thank-you card sent" (hidden by default, read-only without the check permission for
+  condolences).
+
 ## [0.0.12] - 2026-10-22
 
 ### Added
@@ -149,7 +156,8 @@ First public release.
   `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `THIRD-PARTY.md`
 - GitHub Actions (syntax check, language files, smoke test on PHP 8.2 to 8.4) and issue/pull request templates
 
-[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.12...HEAD
+[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.13...HEAD
+[0.0.13]: https://github.com/EdMueller/funeralorg/compare/v0.0.12...v0.0.13
 [0.0.12]: https://github.com/EdMueller/funeralorg/compare/v0.0.11...v0.0.12
 [0.0.11]: https://github.com/EdMueller/funeralorg/compare/v0.0.10...v0.0.11
 [0.0.10]: https://github.com/EdMueller/funeralorg/compare/v0.0.9...v0.0.10

@@ -1,7 +1,7 @@
 # ECKDATEN – Gedenkseite
 
 Technische Referenz für die Weiterentwicklung (PHPStorm, Claude Code).
-Stand: 22.10.2026 · Version 0.0.12
+Stand: 28.10.2026 · Version 0.0.13
 
 ---
 
@@ -454,6 +454,7 @@ Format je Zeile (`data/logs/JJJJ-MM.jsonl`):
 
 ### Kontakt-Tabelle
 - Spalten: `Contacts::tableColumns()` (rechte- und feldrechteabhängig, Textfelder in `Contacts::TEXT_FIELDS`). Neues Kontaktfeld → dort eintragen, dann erscheint es in der Tabelle.
+- Spalte „Dankeskarte versendet“ (`thanks`, Ja/Nein): nur mit Leserecht auf Kondolenzen, standardmäßig ausgeblendet; umschaltbar nur mit Recht „Abhaken“ auf Kondolenzen, sonst schreibgeschützt.
 - Nur für Admins: schreibgeschützte Spalte „Zugang“ (Benutzername des mit `contact_id` verknüpften Zugangs, standardmäßig ausgeblendet; der Controller ergänzt `access` je Zeile). Knopf „Zugänge“ in der Auswahlleiste öffnet den Dialog (Gruppe, Klebepapier, Startstreifen).
 - Browser-Speicher (`localStorage`): `gdk.ct.cols` (sichtbare Spalten), `gdk.ct.w` (Breiten), `gdk.ct.filters` (Filterzeile).
 - Sortierung, Spaltenfilter, Suche und laufende Nummer arbeiten nur im Browser auf den geladenen Zeilen; die Nummer wird nicht gespeichert.
