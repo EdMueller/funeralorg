@@ -360,7 +360,7 @@ Bild-Tooltip: `title` am Vorschaubild, erzeugt von `image_tip()` (`app/helpers.p
 - **Datum** normaler Stationen wird beim Speichern aus Freitext gelesen und als ISO-Teilformat abgelegt; ungenaue Angaben liegen in der Mitte ihres Zeitraums.
 - **Farbe und Kategorie** kommen vom Album (`color` aus `Stations::COLORS`, `cat` frei; leere Werte werden vom nächsten Heimat-Vorfahren geerbt, Fallback Albumname; ohne Album grau „Ohne Album“). Die Diashow der Station umfasst auch Unteralben. Die Legende filtert Zeitstrahl und Karte.
 - Ohne `lat`/`lon` erscheint die Station nur im Zeitstrahl. Ohne Datum nur auf der Karte (Geburt/Tod mit nicht lesbarem Freitext).
-- Karte: `assets/vendor/worldmap/world.svg` (Natural Earth 110m, gemeinfrei; Equirectangular 84°N–58°S, viewBox 360×142). Pins in Prozent: `x = (lon+180)/360`, `y = (84−lat)/142`. Kein Kachelserver, keine externen Anfragen.
+- Karte: `assets/vendor/worldmap/world.svg` (Natural Earth 1:50m, gemeinfrei; Winkel Tripel 84°N–58°S, viewBox 400×208,989; erzeugt mit `php bin/make-worldmap.php <ne_50m_admin_0_countries.geojson>`). Pins in Prozent über `wt()` in `stations.js` (Konstanten `WT_X0/Y0/XS/YS` aus dem Skript); Klick → Breite/Länge über `unproject()` (Newton-Verfahren, `null` außerhalb des Umrisses). Kein Kachelserver, keine externen Anfragen.
 - Popup/Zeitstrahl: `plugins/stations/assets/js/stations.js` (Auslieferung über `pluginasset`; füllt auch den Dialog „Station“) (Daten aus `<script type="application/json" id="stationsData">`). Klick (Maus) bzw. zweiter Tipp (Touch) öffnet `gallery&album=<id>&play=1`, ohne Album das einzelne Bild per `gallery&open=<bild-id>`.
 
 ### selections.json

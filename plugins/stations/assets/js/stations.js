@@ -1,10 +1,13 @@
-/* Stationen – Zeitstrahl und Weltkarte (Vanilla JS, Karte = lokales SVG, Equirectangular 84°N–58°S) */
+/* Stationen – Zeitstrahl und Weltkarte (Vanilla JS, Karte = lokales SVG, Winkel Tripel 84°N–58°S) */
 (function () {
   'use strict';
 
   var $ = function (s, c) { return (c || document).querySelector(s); };
   var $$ = function (s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); };
-  var LAT_TOP = 84, LAT_SPAN = 142, MAX_ZOOM = 40;
+  var MAX_ZOOM = 40;
+  // Winkel Tripel; Konstanten stammen aus bin/make-worldmap.php (Ausschnitt der world.svg)
+  var WT_X0 = -2.570796, WT_Y0 = 1.514134, WT_XS = 5.141593, WT_YS = 2.686335, WT_COS1 = 2 / Math.PI;
+  var RAD = Math.PI / 180;
   var touchOnly = window.matchMedia('(hover: none)').matches;
 
   var I18N = {};
@@ -19,8 +22,37 @@
     return String(v).replace(/\{(\w+)\}/g, function (m, k) { return params[k] !== undefined ? params[k] : m; });
   }
 
+  /** Winkel Tripel (Einheitskugel, y nach oben); Winkel in Bogenmaß. */
+  function wt(phi, lam) {
+    var a = Math.acos(Math.cos(phi) * Math.cos(lam / 2));
+    var sinc = a < 1e-9 ? 1 : Math.sin(a) / a;
+    return [0.5 * (lam * WT_COS1 + 2 * Math.cos(phi) * Math.sin(lam / 2) / sinc), 0.5 * (phi + Math.sin(phi) / sinc)];
+  }
+
   function pct(lat, lon) {
-    return { x: (lon + 180) / 360 * 100, y: (LAT_TOP - lat) / LAT_SPAN * 100 };
+    var p = wt(lat * RAD, lon * RAD);
+    return { x: (p[0] - WT_X0) / WT_XS * 100, y: (WT_Y0 - p[1]) / WT_YS * 100 };
+  }
+
+  /** Umkehrung per Newton-Verfahren; null, wenn der Punkt außerhalb des Kartenumrisses liegt. */
+  function unproject(px, py) {
+    var X = WT_X0 + px * WT_XS, Y = WT_Y0 - py * WT_YS;
+    var phi = Math.max(-1.5, Math.min(1.5, Y)), lam = 2 * X / (1 + WT_COS1), h = 1e-6;
+    for (var i = 0; i < 60; i++) {
+      var f = wt(phi, lam), ex = f[0] - X, ey = f[1] - Y;
+      if (Math.abs(ex) + Math.abs(ey) < 1e-9) break;
+      var fp = wt(phi + h, lam), fl = wt(phi, lam + h);
+      var a = (fl[0] - f[0]) / h, b = (fp[0] - f[0]) / h, c = (fl[1] - f[1]) / h, d = (fp[1] - f[1]) / h;
+      var det = a * d - b * c;
+      if (Math.abs(det) < 1e-12) return null;
+      lam -= (d * ex - b * ey) / det;
+      phi -= (-c * ex + a * ey) / det;
+      phi = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, phi));
+      lam = Math.max(-Math.PI, Math.min(Math.PI, lam));
+    }
+    var g = wt(phi, lam);
+    if (Math.abs(g[0] - X) + Math.abs(g[1] - Y) > 1e-5) return null;
+    return { lat: phi / RAD, lon: lam / RAD };
   }
 
   /** Zoom- und verschiebbare Karte. Positionen der Pins stehen in Prozent der Kartenfläche. */
@@ -79,7 +111,7 @@
     api.toLatLon = function (clientX, clientY) {
       var r = el.getBoundingClientRect(), z = size();
       var xp = ((clientX - r.left - tx) / s) / z.w, yp = ((clientY - r.top - ty) / s) / z.h;
-      return { lat: LAT_TOP - yp * LAT_SPAN, lon: xp * 360 - 180 };
+      return unproject(xp, yp);
     };
     api.refresh = function () { apply(false); };
 
@@ -130,7 +162,10 @@
     el.addEventListener('pointercancel', endDrag);
     el.addEventListener('click', function (ev) {
       if (dragged) { dragged = false; ev.stopPropagation(); return; }
-      if (opts.onPick && !ev.target.closest('.wmap-ctl')) opts.onPick(api.toLatLon(ev.clientX, ev.clientY));
+      if (opts.onPick && !ev.target.closest('.wmap-ctl')) {
+        var ll = api.toLatLon(ev.clientX, ev.clientY);
+        if (ll) opts.onPick(ll);
+      }
     }, true);
     window.addEventListener('resize', function () { apply(false); });
 

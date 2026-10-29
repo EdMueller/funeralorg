@@ -25,7 +25,7 @@
 .st-legend .chip { border: 1px solid var(--nebel); background: var(--papier); border-radius: 2rem; padding: .2rem .75rem; font-size: .88rem; color: var(--schiefer); }
 .st-legend .chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through; }
 
-.wmap { position: relative; width: 100%; aspect-ratio: 360 / 142; overflow: hidden; background: #dde6e8; border: 1px solid var(--nebel); border-radius: .5rem; user-select: none; touch-action: pan-y pinch-zoom; }
+.wmap { position: relative; width: 100%; aspect-ratio: 400 / 208.989; overflow: hidden; border: 1px solid var(--nebel); border-radius: .5rem; user-select: none; touch-action: pan-y pinch-zoom; }
 .wmap.zoomed { touch-action: none; cursor: grab; }
 .wmap-view { position: absolute; inset: 0; transform-origin: 0 0; }
 .wmap-view.anim { transition: transform .35s ease; }

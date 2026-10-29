@@ -9,7 +9,7 @@ die mit der GPL-3.0 kompatibel sind.
 | [Bootstrap](https://getbootstrap.com/) (CSS, JS-Bundle) | 5.3.3 | MIT | © 2011–2024 The Bootstrap Authors | `assets/vendor/bootstrap/` |
 | [Bootstrap Icons](https://icons.getbootstrap.com/) (CSS, Schrift) | 1.11.3 | MIT | © 2019–2024 The Bootstrap Authors | `assets/vendor/bootstrap/` |
 | [Chart.js](https://www.chartjs.org/) | 4.4.4 | MIT | © 2024 Chart.js Contributors | `assets/vendor/chartjs/` |
-| Weltkarte `world.svg`, abgeleitet aus [Natural Earth](https://www.naturalearthdata.com/) 1:110m Admin 0 – Countries | – | gemeinfrei | Natural Earth | `assets/vendor/worldmap/` |
+| Weltkarte `world.svg`, abgeleitet aus [Natural Earth](https://www.naturalearthdata.com/) 1:50m Admin 0 – Countries (Winkel Tripel, `bin/make-worldmap.php`) | – | gemeinfrei | Natural Earth | `assets/vendor/worldmap/` |
 | [EB Garamond](https://github.com/octaviopardo/EBGaramond12) (woff2, 400/500, normal/kursiv) | 1.003 | SIL Open Font License 1.1 | © 2017 The EB Garamond Project Authors | `assets/fonts/` |
 | [Source Sans 3](https://github.com/adobe-fonts/source-sans) (woff2, 400/600) | 3.052 | SIL Open Font License 1.1 | © 2023 Adobe, Reserved Font Name „Source“ | `assets/fonts/` |
 
