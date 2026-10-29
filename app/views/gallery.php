@@ -128,7 +128,8 @@ foreach ($slides as $img) {
 <?php endif; ?>
 
 <?php if (!$images): ?>
-  <div class="empty surface"><i class="bi bi-images"></i><?= e(t($canUpload ? 'gal.empty_upload' : 'gal.empty')) ?></div>
+  <div class="empty surface"><i class="bi bi-images"></i><?= e(t($canUpload ? 'gal.empty_upload' : 'gal.empty')) ?>
+    <?php if ($canUpload): ?><br><button class="btn btn-sm btn-primary mt-3" type="button" data-bs-toggle="collapse" data-bs-target="#uploadBox"><i class="bi bi-cloud-upload me-1"></i><?= e(t('gal.upload_first')) ?></button><?php endif; ?></div>
 <?php else: ?>
 <div class="gallery-grid" id="galleryGrid" data-order-album="<?= e($album) ?>">
   <?php foreach ($images as $n => $img): $picked = in_array($img['id'], $selected, true); ?>

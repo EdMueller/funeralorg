@@ -70,6 +70,7 @@ return [
     'contacts.vcard_import' => 'vCard import',
     'contacts.add' => 'Contact',
     'contacts.none_filter' => 'No contacts for this filter.',
+    'contacts.add_first' => 'Add first contact',
     'contacts.none' => 'No contacts yet. Add them one by one or import a vCard file.',
     'contacts.persons_short' => 'ppl.',
     'contacts.condolence_badge' => 'Condolence',

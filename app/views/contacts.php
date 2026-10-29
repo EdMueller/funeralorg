@@ -23,7 +23,8 @@ $searchAttr = $tableMode ? 'data-ct-search' : 'data-search=".person"';
 <?php require __DIR__ . '/_toolbar.php'; ?>
 
 <?php if (!$list): ?>
-  <div class="empty surface"><i class="bi bi-person-lines-fill"></i><?= e(t($all ? 'contacts.none_filter' : 'contacts.none')) ?></div>
+  <div class="empty surface"><i class="bi bi-person-lines-fill"></i><?= e(t($all ? 'contacts.none_filter' : 'contacts.none')) ?>
+    <?php if (!$all && $canEdit): ?><br><a class="btn btn-sm btn-primary mt-3" href="<?= e(url('contacts', ['a' => 'form'])) ?>"><i class="bi bi-plus-lg me-1"></i><?= e(t('contacts.add_first')) ?></a><?php endif; ?></div>
 <?php elseif ($tableMode): ?>
 <?php require __DIR__ . '/_contacts_table.php'; ?>
 <?php else: ?>

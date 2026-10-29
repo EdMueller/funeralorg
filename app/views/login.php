@@ -24,7 +24,7 @@ $flashes = take_flashes();
         <?php if ($portrait): ?>
           <img src="<?= e(url('pubimg', ['id' => $portrait['id'], 's' => 'medium'])) ?>" alt="<?= e(t('login.portrait_alt', ['name' => $name])) ?>">
         <?php else: ?>
-          <div class="portrait-empty w-100 h-100"><?= e(mb_substr($name, 0, 1)) ?></div>
+          <div class="portrait-empty w-100 h-100" aria-hidden="true"></div>
         <?php endif; ?>
       </div>
 

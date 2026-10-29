@@ -87,6 +87,7 @@ return [
     'gal.progress' => 'Upload progress',
     'gal.upload_hint' => 'JPG, PNG, GIF, WebP up to {mb} MB per picture. Location data is removed, photos are rotated automatically.',
     'gal.empty_upload' => 'No pictures yet. Use “Upload” to add the first ones.',
+    'gal.upload_first' => 'Upload first pictures',
     'gal.empty' => 'No pictures yet.',
     'gal.open_pic' => 'Open picture',
     'gal.add_to_sel' => 'Add to selection',

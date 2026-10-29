@@ -117,7 +117,7 @@ main.app-main { max-width: 1120px; margin: 0 auto; padding: 1.5rem 1rem 5rem; }
 .frame-antique::after { background-image: url("../img/frames/antique.svg"); }
 .frame-baroque::after { background-image: url("../img/frames/baroque.svg"); }
 .frame-mourning::after { background-image: url("../img/frames/mourning.svg"); }
-.portrait-empty { display: grid; place-items: center; color: var(--grau); font-family: var(--serif); font-size: 3rem; }
+.portrait-empty { background: #e6e8e3 url("../img/portrait-placeholder.svg") center / cover no-repeat; }
 
 .life-dates { font-family: var(--serif); font-size: 1.2rem; color: var(--grau); }
 .life-dates span + span { margin-left: 1.25rem; }
@@ -445,4 +445,3 @@ main.app-main.app-main-wide { max-width: none; }
 .frame-opt:has(input:checked) { border-color: var(--efeu); box-shadow: 0 0 0 2px var(--efeu); background: var(--efeu-hell); }
 .frame-opt:has(input:focus-visible) { outline: 2px solid var(--efeu); outline-offset: 2px; }
 .frame-opt .portrait-frame { --pw: 64px; }
-.frame-opt .portrait-empty { font-size: 1.4rem; }

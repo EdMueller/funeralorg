@@ -5,6 +5,17 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+## [0.0.14] - 2026-10-29
+
+### Added
+
+- Empty contact list and empty gallery now offer a button for the next step ("Add first contact", "Upload first
+  pictures").
+
+### Changed
+
+- Without a portrait, the memorial and login pages show a neutral silhouette instead of the initial letter.
+
 ## [0.0.13] - 2026-10-28
 
 ### Added
@@ -156,7 +167,8 @@ First public release.
   `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `THIRD-PARTY.md`
 - GitHub Actions (syntax check, language files, smoke test on PHP 8.2 to 8.4) and issue/pull request templates
 
-[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.13...HEAD
+[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.14...HEAD
+[0.0.14]: https://github.com/EdMueller/funeralorg/compare/v0.0.13...v0.0.14
 [0.0.13]: https://github.com/EdMueller/funeralorg/compare/v0.0.12...v0.0.13
 [0.0.12]: https://github.com/EdMueller/funeralorg/compare/v0.0.11...v0.0.12
 [0.0.11]: https://github.com/EdMueller/funeralorg/compare/v0.0.10...v0.0.11

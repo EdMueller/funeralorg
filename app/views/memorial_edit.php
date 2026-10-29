@@ -37,7 +37,7 @@
           <?php if ($thumb): ?>
             <img src="<?= e(url('img', ['id' => $thumb['id'], 's' => 'thumb'])) ?>" alt="">
           <?php else: ?>
-            <span class="portrait-empty w-100 h-100" aria-hidden="true"><?= e(mb_substr($m['name'] ?: '·', 0, 1)) ?></span>
+            <span class="portrait-empty w-100 h-100" aria-hidden="true"></span>
           <?php endif; ?>
         </span>
         <span><?= e(t('memorial.frame.' . $fk)) ?></span>

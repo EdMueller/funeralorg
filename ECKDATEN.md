@@ -1,7 +1,7 @@
 # ECKDATEN – Gedenkseite
 
 Technische Referenz für die Weiterentwicklung (PHPStorm, Claude Code).
-Stand: 28.10.2026 · Version 0.0.13
+Stand: 29.10.2026 · Version 0.0.14
 
 ---
 
@@ -449,6 +449,8 @@ Format je Zeile (`data/logs/JJJJ-MM.jsonl`):
 
 - Schrift: EB Garamond für Namen, Überschriften, Gedenktexte; Source Sans 3 für die Oberfläche.
 - Leitmotiv: `.portrait-frame` – Portrait im wählbaren Rahmen (Standard `oval`: doppelter Messingrand wie ein Porzellanbild am Grabstein). Klasse `frame-<schlüssel>`, Auswahl im Formular „Gedenkseite bearbeiten“, wirkt auf Startseite und Anmeldeseite. Oval, Rund, Rechteckig, Passepartout und Holz sind reines CSS; Antik-Gold, Barock und Trauerflor sind SVG-Overlays aus `assets/img/frames/` (`::after`, 14 % Überstand, Seitenverhältnis 4:5 bleibt). Neuer Rahmen → Schlüssel in `Frame::KEYS`, CSS-Block `.frame-<schlüssel>`, Text `memorial.frame.<schlüssel>` in de und en.
+- Ohne Portrait zeigt `.portrait-empty` eine neutrale Silhouette (`assets/img/portrait-placeholder.svg`, per CSS-Hintergrund) – kein Datensatz, nur Fallback auf Startseite, Anmeldeseite und Rahmenauswahl.
+- Leere Listen (`.empty`) nennen bei Schreibrecht die nächste Aktion als Button (Kontakte: „Ersten Kontakt anlegen“, Galerie: „Erste Bilder hochladen“). Es werden bewusst keine Beispieldaten angelegt.
 - Bewegung nur auf der Anmeldeseite (langsame Überblendung, leichter Zoom); `prefers-reduced-motion` wird respektiert.
 - Mobile first; Listen statt Tabellen in den Arbeitsbereichen.
 

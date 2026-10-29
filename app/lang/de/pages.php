@@ -87,6 +87,7 @@ return [
     'gal.progress' => 'Upload-Fortschritt',
     'gal.upload_hint' => 'JPG, PNG, GIF, WebP bis {mb} MB pro Bild. Standortdaten werden entfernt, Fotos automatisch gedreht.',
     'gal.empty_upload' => 'Noch keine Bilder. Über „Hochladen“ kannst du die ersten hinzufügen.',
+    'gal.upload_first' => 'Erste Bilder hochladen',
     'gal.empty' => 'Noch keine Bilder vorhanden.',
     'gal.open_pic' => 'Bild öffnen',
     'gal.add_to_sel' => 'Zur Auswahl hinzufügen',
