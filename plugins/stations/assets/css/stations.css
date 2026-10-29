@@ -51,6 +51,6 @@ a.wpop-card:hover .wpop-cta { text-decoration: underline; }
 .wpop-place { font-size: .88rem; color: var(--grau); }
 .wpop-text { font-size: .9rem; margin: .35rem 0 0; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 .wpop-cta { margin-top: .45rem; font-size: .88rem; font-weight: 600; color: var(--efeu); }
-.wmap-pick { max-height: 22rem; }
+.wmap-pick { max-height: 22rem; max-width: calc(22rem * 400 / 208.989); margin-inline: auto; }
 @media (max-width: 575px) { .tl { height: 13rem; } .wmap { aspect-ratio: 4 / 3; } }
 @media (prefers-reduced-motion: reduce) { .wmap-view.anim { transition: none; } .wpin.is-active::after { animation: none; } .tl-dot { transition: none; } }
