@@ -187,7 +187,7 @@ foreach ($geo['features'] as $f) {
 $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' . num(WIDTH) . ' ' . $height . '" preserveAspectRatio="none">'
     . '<path d="' . $sea . '" fill="#dde6e8"/>'
     . '<path d="' . $grid . '" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width=".25"/>'
-    . '<path d="' . $land . '" fill="#e3e5dd" stroke="#fbfbf9" stroke-width=".3" stroke-linejoin="round"/>'
+    . '<path d="' . $land . '" fill="#e3e5dd" stroke="#fbfbf9" stroke-width=".22" stroke-linejoin="round"/>'
     . '</svg>';
 file_put_contents($outFile, $svg);
 

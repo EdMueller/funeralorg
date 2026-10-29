@@ -23,6 +23,13 @@ die mit der GPL-3.0 kompatibel sind.
   Text der SIL Open Font License 1.1 mit den Urheberzeilen der Schriften.
 - **Weltkarte:** Quelle und Erzeugung stehen in `assets/vendor/worldmap/README.txt`.
 
+## Bilder in den Screenshots
+
+Die Screenshots unter `docs/screenshots/` zeigen erfundene Daten und KI-generierte Beispielbilder. Das Portrait
+stammt von [Pixabay](https://pixabay.com/illustrations/ai-generated-man-elderly-old-man-8558611/)
+(Pixabay-Inhaltslizenz); die übrigen Bilder hat der Maintainer mit einem KI-Bildgenerator erzeugt. Die Bilder
+selbst gehören nicht zur ausgelieferten Anwendung.
+
 ## Hinweise
 
 - Die OFL erlaubt Weitergabe und Einbettung der Schriften zusammen mit der Anwendung, verlangt aber, dass
