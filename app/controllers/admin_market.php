@@ -6,13 +6,13 @@ declare(strict_types=1);
  * Admin-Prüfung schon erledigt hat; CSRF prüft dispatch() für jedes POST.
  *
  * GET:  plugins (Installiert), pluginsearch, plugindetail, pluginconfirm
- * POST: pluginscheck, pluginupdate, pluginsupdateall, pluginprepare, pluginapply, plugincancel, pluginrollback, pluginmarkettoken
+ * POST: pluginscheck, pluginupdate, pluginsupdateall, pluginprepare, pluginapply, plugincancel, pluginrollback, pluginmarkettoken, pluginselftest
  *
  * @return bool true, wenn die Aktion hier behandelt wurde
  */
 function admin_market(string $a, bool $isPost): bool
 {
-    $postOnly = ['pluginscheck', 'pluginupdate', 'pluginsupdateall', 'pluginprepare', 'pluginapply', 'plugincancel', 'pluginrollback', 'pluginmarkettoken'];
+    $postOnly = ['pluginscheck', 'pluginupdate', 'pluginsupdateall', 'pluginprepare', 'pluginapply', 'plugincancel', 'pluginrollback', 'pluginmarkettoken', 'pluginselftest'];
     if (in_array($a, $postOnly, true) && !$isPost) {
         abort(400);
     }
@@ -37,6 +37,7 @@ function admin_market(string $a, bool $isPost): bool
             view('admin_plugins', [
                 'plugins' => $rows, 'maxMb' => Plugins::MAX_ZIP / 1048576, 'updates' => $updates,
                 'checked' => (string)(Store::read('market')['checked'] ?? ''), 'rate' => PluginMarket::rate(),
+                'exposure' => PluginExposure::last(),
             ]);
             return true;
 
@@ -180,6 +181,9 @@ function admin_market(string $a, bool $isPost): bool
                 flash($err, 'warning');
                 redirect('admin', ['a' => 'plugins']);
             }
+            if ($pend['mode'] === 'install') {
+                PluginExposure::runIfStale(); // erste Installation: gleich prüfen, ob das Plugin-Verzeichnis geschützt ist
+            }
             $m = Plugins::all()[$slug]['m'];
             Log::add('admin', 'Plugin aus GitHub ' . ($pend['mode'] === 'install' ? 'installiert' : 'aktualisiert') . ': ' . $m['name'] . ' ' . $m['version'] . ' (' . $pend['repo'] . ')');
             flash(t($pend['mode'] === 'install' ? 'market.installed' : 'market.updated', ['name' => $m['name'], 'version' => $m['version']]));
@@ -200,6 +204,13 @@ function admin_market(string $a, bool $isPost): bool
                 Log::add('admin', 'Plugin zurückgesetzt: ' . $name . ' ' . $v);
                 flash(t('market.rolled_back', ['name' => $name, 'version' => $v]));
             }
+            redirect('admin', ['a' => 'plugins']);
+
+        case 'pluginselftest':
+            @set_time_limit(60);
+            $res = PluginExposure::run();
+            Log::add('admin', 'Plugin-Verzeichnis geprüft: ' . $res['status']);
+            flash(t('market.selftest_' . $res['status']), $res['status'] === 'protected' ? 'success' : 'warning');
             redirect('admin', ['a' => 'plugins']);
 
         case 'pluginmarkettoken':

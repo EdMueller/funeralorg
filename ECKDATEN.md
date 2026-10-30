@@ -83,7 +83,7 @@ gedenkseite/                    ← Webroot (gesamter Projektordner)
 │   ├── controllers/            je Datei eine Funktion ctrl_<name>(string $r, string $a)
 │   └── views/                  PHP-Templates; Präfix _ = Teil-View
 ├── plugins/                    Plugins (`<slug>/plugin.json`, `plugin.php`, …), per .htaccess gesperrt; enthält `stations/` (§17)
-├── bin/                        check-lang.php (Sprachdateien prüfen), smoke-test.sh (Rauchtest in temporärer Kopie), per .htaccess gesperrt
+├── bin/                        check-lang.php (Sprachdateien prüfen), smoke-test.sh (Rauchtest in temporärer Kopie, inkl. Marktplatz-Oberfläche), test-plugins.php (Plugin-Kern und GitHub-Client), github-mock.php (lokaler GitHub-Ersatz für die Tests), per .htaccess gesperrt
 ├── configs/                    Konfiguration, per .htaccess gesperrt
 │   ├── config.php               (nie ins Repo)
 │   └── config.sample.php       Vorlage → config.php
@@ -596,6 +596,9 @@ Entwicklerleitfaden: `docs/plugin-guide.md` (Anleitung), Referenz `docs/plugin-d
   validiert den Inhalt wie beim Import (`inspect()`), entpackt nach `plugins/.tmp-*` und benennt um (`unpack()`); *Deaktivieren* löscht danach den Ordner (`retire()`, nur wenn die ZIP vorhanden ist).
   Stationen, API und manuell importierte Plugins bleiben Ordner. `delete()` entfernt Ordner, alle ZIPs und die Herkunft; `export()` liefert bei archivierten die ZIP.
 - **Marktplatz-Oberfläche** (`admin_market.php`, Views `admin_plugins*.php`, `admin_plugin_detail.php`, `admin_plugin_confirm.php`, Reiter „Installiert“/„Plugins suchen“): Installieren und Aktualisieren sind zweistufig – `pluginprepare` lädt das Paket nach `data/tmp/market-*.zip`, merkt den Vorgang in `$_SESSION['plugin_pending']` (höchstens 3, 1 h gültig, nur Dateien aus diesem Verzeichnis) und zeigt die Bestätigungsseite; `pluginapply` übergibt an `Plugins::archive()`/`update()` (Hash und Inhalt werden dort erneut geprüft). Ein Update ohne neue Berechtigungen läuft per Klick ohne Bestätigungsseite. „Alle aktualisieren“ lädt nacheinander; Fehler einzelner Plugins brechen die übrigen nicht ab. `Plugins::rollback()` setzt auf die behaltene vorherige ZIP zurück (Hash `previous_sha`) und übergeht die neuere Version bis zu einer noch neueren (`skip_version`). Repository-Namen prüft `Plugins::REPO_RE` (Besitzer ohne Punkt, Name nie `.`/`..`).
+- **Selbsttest** (`app/lib/PluginExposure.php`, Button „Plugin-Verzeichnis prüfen“ auf `admin&a=plugins`, POST `pluginselftest`): legt je eine Textdatei mit Zufallsnamen in `plugins/` und `plugins/_archive/` an,
+  ruft sie über Basis-URL (sonst aktuelle Anfrage) ab und löscht sie; Ergebnis `protected`/`exposed`/`unknown` in `market.json → selftest`, bei `exposed` rote Warnung mit den erreichbaren Adressen.
+  Läuft automatisch nach der ersten Marktplatz-Installation, wenn es noch kein Ergebnis oder keines der letzten 7 Tage gibt. Im Nginx-Layout mit `plugins/` außerhalb des Webroots ergibt sich 404 = geschützt.
 - **GitHub-Client** (`app/lib/PluginMarket.php`): `search()` (Topic `funeral-org-plugin`), `releases($repo)` (nur veröffentlichte Releases mit Tag `vX.Y.Z` und den Assets
   `<slug>-X.Y.Z.zip`, `….zip.sha256`, `plugin.json`; je Release `compatible`/`reason` aus dem Release-Manifest, ohne die ZIP zu laden), `latest()`, `checkUpdates()` (merkt Ergebnis in
   `market.updates`, `confirm` = neue Berechtigungen → nicht ohne Rückfrage übernehmen), `updates()`, `fetch($repo, $version)` (lädt ZIP + SHA-256 nach `data/tmp/market-*.zip`, vergleicht den Hash,

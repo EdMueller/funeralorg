@@ -12,9 +12,12 @@ TMP=$(mktemp -d)
 JAR="$TMP/cookies.txt"
 FAILS=0
 PID=""
+MPID=""
+MPORT=${MOCK_PORT:-18090}
 
 cleanup() {
   [ -n "$PID" ] && kill "$PID" 2>/dev/null
+  [ -n "$MPID" ] && kill "$MPID" 2>/dev/null
   rm -rf "$TMP"
 }
 trap cleanup EXIT
@@ -36,9 +39,15 @@ csrf() {
 
 mkdir -p "$TMP/app" "$TMP/data"
 tar -C "$ROOT" --exclude=./data --exclude=./configs/config.php --exclude=./.git --exclude=./.idea -cf - . | tar -C "$TMP/app" -xf -
-mkdir -p "$TMP/app/data"
+mkdir -p "$TMP/app/data" "$TMP/mock"
 
-php -S "127.0.0.1:$PORT" -t "$TMP/app" >"$TMP/server.log" 2>&1 &
+# Plugin-Marktplatz: GitHub durch den lokalen Mock ersetzen
+sed "s#// 'market_api'.*#'market_api' => 'http://127.0.0.1:$MPORT',#" "$ROOT/configs/config.sample.php" >"$TMP/app/configs/config.php"
+MOCK_DIR="$TMP/mock" MOCK_PORT="$MPORT" php -S "127.0.0.1:$MPORT" "$ROOT/bin/github-mock.php" >/dev/null 2>&1 &
+MPID=$!
+
+# mehrere Worker: der Selbsttest des Plugin-Verzeichnisses ruft die Anwendung von innen auf
+PHP_CLI_SERVER_WORKERS=4 php -S "127.0.0.1:$PORT" -t "$TMP/app" >"$TMP/server.log" 2>&1 &
 PID=$!
 for _ in $(seq 1 50); do
   curl -s -o /dev/null "$BASE?r=login" && break
@@ -111,6 +120,73 @@ check "Aktives Plugin löschen wird abgelehnt" 302 -d "_csrf=$C&slug=smoke-plug"
 check "Plugin deaktivieren" 302 -d "_csrf=$C&slug=smoke-plug&state=off" "$BASE?r=admin&a=pluginset"
 check "Plugin mit Daten löschen" 302 -d "_csrf=$C&slug=smoke-plug&delete_data=1" "$BASE?r=admin&a=plugindelete"
 if [ -d "$TMP/app/plugins/smoke-plug" ] || [ -f "$TMP/app/data/smoke_data.json" ]; then fail "Plugin oder Daten sind noch vorhanden"; else ok "Plugin und Daten entfernt"; fi
+
+echo "Plugin-Marktplatz (lokaler GitHub-Mock)"
+has()    { if grep -qF -- "$2" <<<"$1"; then ok "$3"; else fail "$3 (fehlt: $2)"; fi; }
+hasnot() { if grep -qF -- "$2" <<<"$1"; then fail "$3 (unerwartet: $2)"; else ok "$3"; fi; }
+mpage()  { curl -s -b "$JAR" -c "$JAR" "$BASE?r=$1"; }
+mpost()  { curl -s -D "$TMP/h.txt" -o /dev/null -b "$JAR" -c "$JAR" -d "$2" "$BASE?r=admin&a=$1"; }
+mloc()   { tr -d '\r' <"$TMP/h.txt" | sed -n 's/^[Ll]ocation: *//p'; }
+C=$(csrf "admin&a=plugins")
+P=$(mpage "admin&a=pluginsearch")
+has "$P" "me/funeral-org-demo-plug" "Suche findet das Repository"
+has "$P" "&lt;b&gt;x&lt;/b&gt;" "Fremdtext aus GitHub wird maskiert"
+P=$(mpage "admin&a=plugindetail&repo=me/funeral-org-demo-plug")
+has "$P" "Nicht kompatibel" "Inkompatibles Release ist markiert"
+has "$P" "&lt;script&gt;1.1.0&lt;/script&gt;" "Release-Notizen werden maskiert"
+check "Ungültiger Repository-Name" 404 "$BASE?r=admin&a=plugindetail&repo=../x"
+mpost pluginprepare "_csrf=$C&repo=me/funeral-org-demo-plug&version=1.0.0"
+L=$(mloc); ID=$(sed 's/.*id=//' <<<"$L")
+if [[ "$L" == *"a=pluginconfirm&id="* ]]; then ok "Prüfen führt zur Bestätigungsseite"; else fail "Bestätigungsseite: $L"; fi
+P=$(curl -s -b "$JAR" -c "$JAR" "http://127.0.0.1:$PORT/$L")
+has "$P" "installieren?" "Bestätigung: Titel"
+has "$P" "SHA-256 stimmt" "Bestätigung: Prüfsumme"
+check "GET auf pluginapply wird abgelehnt" 400 "$BASE?r=admin&a=pluginapply"
+check "POST ohne CSRF-Token wird abgelehnt" 419 -d "id=$ID" "$BASE?r=admin&a=pluginapply"
+mpost pluginapply "_csrf=$C&id=$ID"
+[ -f "$TMP/app/plugins/_archive/demo-plug-1.0.0.zip" ] && [ ! -d "$TMP/app/plugins/demo-plug" ] && ok "Installation: ZIP im Archiv, kein Ordner" || fail "Installation: Archiv/Ordner"
+ls "$TMP/app/data/tmp/market-"* >/dev/null 2>&1 && fail "Temporäre ZIP bleibt liegen" || ok "Temporäre ZIP aufgeräumt"
+mpost pluginapply "_csrf=$C&id=$ID"
+has "$(mpage "admin&a=plugins")" "Der Vorgang ist abgelaufen" "Vorgang lässt sich nur einmal übernehmen"
+P=$(mpage "admin&a=plugins")
+has "$P" "als Paket im Archiv" "Liste zeigt archiviertes Marktplatz-Plugin"
+has "$P" "von außen erreichbar" "Selbsttest erkennt das erreichbare Plugin-Verzeichnis (eingebauter Server liefert alles aus)"
+mpost pluginset "_csrf=$C&slug=demo-plug&state=on"
+[ -d "$TMP/app/plugins/demo-plug" ] && ok "Aktivieren entpackt aus dem Archiv" || fail "Aktivieren: Ordner fehlt"
+mpost pluginscheck "_csrf=$C"
+P=$(mpage "admin&a=plugins")
+has "$P" "Update 1.1.0 verfügbar" "Aktualisierungsprüfung findet 1.1.0"
+has "$P" "Neue Berechtigungen: mail" "Neue Berechtigung wird angezeigt"
+mpost pluginsupdateall "_csrf=$C"
+has "$(mpage "admin&a=plugins")" "Übersprungen" "Alle aktualisieren überspringt Plugins mit neuer Berechtigung"
+mpost pluginupdate "_csrf=$C&slug=demo-plug"
+L=$(mloc); ID=$(sed 's/.*id=//' <<<"$L")
+if [[ "$L" == *"a=pluginconfirm&id="* ]]; then ok "Update mit neuer Berechtigung braucht Bestätigung"; else fail "Update-Ziel: $L"; fi
+mpost plugincancel "_csrf=$C&id=$ID"
+ls "$TMP/app/data/tmp/market-"* >/dev/null 2>&1 && fail "Abbrechen räumt nicht auf" || ok "Abbrechen räumt auf"
+mpost pluginupdate "_csrf=$C&slug=demo-plug"; ID=$(sed 's/.*id=//' <<<"$(mloc)")
+mpost pluginapply "_csrf=$C&id=$ID"
+P=$(mpage "admin&a=plugins")
+has "$P" "auf Version 1.1.0 aktualisiert" "Aktives Plugin wird aktualisiert"
+grep -q '"version":"1.1.0"' "$TMP/app/plugins/demo-plug/plugin.json" && ok "Ordner enthält die neue Version" || fail "Ordner nicht aktualisiert"
+[ "$(cat "$TMP/app/data/update-hook.txt" 2>/dev/null)" = "1.0.0" ] && ok "onUpdate lief mit der alten Version" || fail "onUpdate lief nicht"
+has "$P" "Zurück auf 1.0.0" "Rollback wird angeboten"
+mpost pluginrollback "_csrf=$C&slug=demo-plug"
+P=$(mpage "admin&a=plugins")
+has "$P" "auf Version 1.0.0 zurückgesetzt" "Rollback"
+mpost pluginscheck "_csrf=$C"
+hasnot "$(mpage "admin&a=plugins")" "Update 1.1.0 verfügbar" "Zurückgesetzte Version wird nicht erneut angeboten"
+mpost pluginmarkettoken "_csrf=$C&token=kurz"
+has "$(mpage "admin&a=pluginsearch")" "ungültiges Format" "Ungültiges GitHub-Token wird abgelehnt"
+mpost pluginmarkettoken "_csrf=$C&token=ghp_abcdefghijklmnopqrstuvwxyz0123456789"
+P=$(mpage "admin&a=pluginsearch")
+has "$P" "hinterlegt" "GitHub-Token ist gespeichert"
+hasnot "$P" "ghp_abcdefghijkl" "GitHub-Token wird nie angezeigt"
+mpost pluginmarkettoken "_csrf=$C&remove=1"
+mpost pluginset "_csrf=$C&slug=demo-plug&state=off"
+[ ! -d "$TMP/app/plugins/demo-plug" ] && [ -f "$TMP/app/plugins/_archive/demo-plug-1.0.0.zip" ] && ok "Deaktivieren löscht den Ordner, die ZIP bleibt" || fail "Deaktivieren: Ordner/Archiv"
+mpost plugindelete "_csrf=$C&slug=demo-plug&delete_data=1"
+[ -z "$(ls "$TMP/app/plugins/_archive/"*.zip 2>/dev/null)" ] && ok "Löschen entfernt das Archiv" || fail "Archiv bleibt"
 
 echo "Checkliste: Verschieben und Sortieren"
 CL="$TMP/app/data/checklist.json"

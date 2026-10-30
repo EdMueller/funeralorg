@@ -21,7 +21,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: gd, zip, mbstring, fileinfo, exif
+          extensions: gd, zip, mbstring, fileinfo, exif, curl
           coverage: none
 
       - name: Syntax check (php -l)
@@ -38,6 +38,9 @@ jobs:
 
       - name: Language files (de/en)
         run: php bin/check-lang.php
+
+      - name: Plugin tests
+        run: php bin/test-plugins.php
 
       - name: Smoke test
         run: bin/smoke-test.sh

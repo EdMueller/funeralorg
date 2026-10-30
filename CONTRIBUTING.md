@@ -37,12 +37,15 @@ A complete description of architecture, routes, permissions and data model is in
 ```bash
 find . -name '*.php' -not -path './data/*' -exec php -l {} \; | grep -v 'No syntax'
 php bin/check-lang.php
+php bin/test-plugins.php   # only if you touch plugins or the marketplace
 bin/smoke-test.sh
 ```
 
 `bin/smoke-test.sh` copies the project to a temporary directory, runs the built-in PHP server, performs the setup and
 checks the main routes, permissions and “log in as user”. It does not touch your own `data/` or `configs/config.php`.
-The same checks run in GitHub Actions for PHP 8.2 to 8.4.
+`bin/test-plugins.php` tests the plugin core and the GitHub client against a local mock (`bin/github-mock.php`); the smoke test
+also walks through the marketplace screens with it. No test talks to the real GitHub. The same checks run in GitHub Actions
+for PHP 8.2 to 8.4.
 
 Please also check the change manually where it matters: as administrator, as a user with a restricted group and
 through a shared link, and on a phone-sized screen (about 390 px). Update `ECKDATEN.md` if you change routes, the data

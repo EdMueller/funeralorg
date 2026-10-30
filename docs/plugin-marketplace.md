@@ -1,6 +1,6 @@
 # Plugin-Marktplatz über GitHub – Konzept (Entwurf)
 
-Stand: 30.10.2026. Ergebnis eines Planungschats mit Claude. **Umsetzungsstand: Schritte 1 (Kern), 2 (GitHub-Client) und 3 (Verwaltungsoberfläche) fertig, Schritt 4 offen** (siehe Abschnitt 9).
+Stand: 30.10.2026. Ergebnis eines Planungschats mit Claude. **Umsetzungsstand: alle vier Schritte umgesetzt** (siehe Abschnitt 9).
 Bestehendes Plugin-System: `docs/plugin-development.md`, `app/lib/Plugins.php`, `app/lib/PluginApi.php`.
 
 > Der ursprüngliche Entwurf (Claude Doc „Funeral Org – Plugin-System“) ging von MySQL, Namespaces und einem
@@ -124,4 +124,4 @@ URL über `url()`/Basis ermitteln (Unterverzeichnis-Installationen!).
    - **Aktualisierungen prüfen:** Schaltfläche „Nach Aktualisierungen suchen“ vergleicht alle Marktplatz-Plugins mit dem neuesten kompatiblen Release (Ergebnis wird gemerkt, Anzeige je Plugin „Version x → y“, Hinweis am Reiter).
    - **Alle aktualisieren:** Schaltfläche „Alle aktualisieren (n)“ aktualisiert nacheinander alle Plugins mit verfügbarem Update (je Plugin: Download, Hash, `Plugins::update()`), mit Ergebnisliste (aktualisiert / übersprungen mit Grund / Fehler); ein Fehler bricht die übrigen nicht ab. Vorher Bestätigung mit Liste der Plugins und Versionen. Bei Plugins, die neue `permissions` anfordern, wird **nicht** automatisch aktualisiert, sondern die Bestätigungsseite verlangt (wie im Play Store bei geänderten Berechtigungen).
    - Einzelne Plugins lassen sich weiter einzeln aktualisieren; Rückfall auf die vorherige Version über die behaltene ZIP (`previous`).
-4. **Selbsttest, Doku, Rauchtest:** Selbsttest für `plugins/`, `docs/plugin-development.md` (Richtlinie), Nginx-Snippet, ECKDATEN.md, Erweiterung von `bin/smoke-test.sh`.
+4. **Selbsttest, Doku, Tests** – **fertig:** `PluginExposure` (Selbsttest), Richtlinie in `docs/plugin-development.md`, Nginx-Hinweis in `docs/nginx-ispconfig.conf`, ECKDATEN.md; Tests: `php bin/test-plugins.php` (Kern und GitHub-Client gegen `bin/github-mock.php`), Abschnitt „Plugin-Marktplatz“ in `bin/smoke-test.sh`, beides in der CI.

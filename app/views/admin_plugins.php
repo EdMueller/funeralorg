@@ -1,5 +1,5 @@
 <?php
-/** @var array $plugins @var int|float $maxMb @var array $updates @var string $checked @var ?array $rate */
+/** @var array $plugins @var int|float $maxMb @var array $updates @var string $checked @var ?array $rate @var ?array $exposure */
 $pageTitle = t('plugins.title');
 ?>
 <div class="page-head"><h1><?= e(t('admin.title')) ?></h1></div>
@@ -8,6 +8,12 @@ $pageTitle = t('plugins.title');
 <div class="alert alert-warning small" role="note"><i class="bi bi-exclamation-triangle me-1"></i><?= e(t('plugins.warning')) ?></div>
 
 <?php $ptab = 'installed'; require __DIR__ . '/_plugins_tabs.php'; ?>
+
+<?php if ($exposure && $exposure['status'] === 'exposed'): ?>
+  <div class="alert alert-danger" role="alert"><i class="bi bi-shield-exclamation me-1"></i><strong><?= e(t('market.exposed_h')) ?></strong>
+    <?= e(t('market.exposed')) ?>
+    <ul class="mb-0 mt-1 small"><?php foreach ($exposure['urls'] as $u): ?><li><code><?= e($u) ?></code></li><?php endforeach; ?></ul></div>
+<?php endif; ?>
 
 <div class="surface surface-pad mb-3">
   <div class="d-flex flex-wrap align-items-center gap-2">
@@ -25,6 +31,16 @@ $pageTitle = t('plugins.title');
     <span class="small text-muted ms-md-2">
       <?= e($checked !== '' ? t('market.checked', ['when' => fmt_date($checked, true)]) : t('market.never_checked')) ?>
       <?php if ($rate): ?> · <?= e(t('market.rate', ['n' => (string)$rate['remaining'], 'max' => (string)$rate['limit']])) ?><?php endif; ?>
+    </span>
+  </div>
+  <div class="d-flex flex-wrap align-items-center gap-2 mt-2 pt-2 border-top">
+    <form method="post" action="<?= e(url('admin', ['a' => 'pluginselftest'])) ?>" class="m-0">
+      <?= Csrf::field() ?>
+      <button class="btn btn-sm btn-outline-secondary" type="submit"><i class="bi bi-shield-check me-1"></i><?= e(t('market.selftest')) ?></button>
+    </form>
+    <span class="small text-muted">
+      <?php if (!$exposure): ?><?= e(t('market.selftest_never')) ?>
+      <?php else: ?><?= e(t('market.selftest_last', ['when' => fmt_ts((int)$exposure['time'], 'dt'), 'result' => t('market.selftest_r_' . $exposure['status'])])) ?><?php endif; ?>
     </span>
   </div>
 </div>

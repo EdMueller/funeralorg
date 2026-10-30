@@ -85,6 +85,24 @@ Wirft `plugin.php` eine Ausnahme, wird das Plugin nicht geladen (Meldung in Verw
 - Eigene Sprachschlüssel mit eigenem Präfix (`bsp.…`, JS-Texte `js.bsp_…`).
 - Plugin-Assets werden nur bei aktivem Plugin und nur für angemeldete Benutzer ausgeliefert (Route `pluginasset`).
 
+## Richtlinie für veröffentlichte Plugins
+
+Gilt für Plugins, die im Marktplatz (GitHub) angeboten werden; Begründung und Beispiele in [`plugin-guide.md`](plugin-guide.md).
+
+- **Repository und Release:** öffentlich, Name `funeral-org-<slug>`, Topic `funeral-org-plugin`; Release mit Tag `vX.Y.Z` (= `version`
+  im Manifest) und den Assets `<slug>-X.Y.Z.zip`, `<slug>-X.Y.Z.zip.sha256`, `plugin.json`. Veröffentlichte Releases nie ändern –
+  eine Korrektur ist eine neue Version. Bau per GitHub Action, damit die Prüfsumme automatisch entsteht.
+- **Verboten:** `eval`, `exec`, `shell_exec`, `system`, `passthru`, `proc_open`, `popen`, dynamische `include`/`require` mit
+  Benutzereingaben, `unserialize()` auf Fremddaten.
+- **Netzwerk:** nur zu Hosts, die unter `permissions` als `network:<host>` stehen; HTTPS, Zeit- und Größenlimit.
+- **Datenschutz:** keine Telemetrie und keine Weitergabe von Daten ohne Zustimmung; das README nennt verarbeitete Daten und
+  externe Ressourcen.
+- **Berechtigungen** nur angeben, wenn sie gebraucht werden. Neue Berechtigungen in einer Version verhindern die automatische
+  Aktualisierung („Alle aktualisieren“ überspringt solche Plugins).
+- **Audit** (optional): `audit.commit` und `AUDIT.md`; gilt nur für den genannten Stand.
+- **Updates:** Datenformat-Änderungen in `onUpdate()` migrieren, `requires_app` nicht höher als nötig, Kennung, Route und
+  Store-Namen nach der Veröffentlichung nie ändern.
+
 ## ZIP für den Import
 
 Die ZIP-Datei enthält genau ein Plugin, entweder direkt (`plugin.json` im Hauptverzeichnis) oder in einem Ordner.

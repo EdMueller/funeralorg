@@ -16,7 +16,11 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
   the previous version is kept for a one-click rollback.
 - Inactive marketplace plugins are kept as ZIP archives in `plugins/_archive/` and unpacked (hash checked every time) only
   when activated.
+- Self-test for the plugin directory (Administration → Plugins → "Check plugin directory"): warns when plugin code or the
+  ZIP archive can be downloaded from outside.
 - Plugin hook `onUpdate()`; manifest fields `requires_php`, `permissions`, `repository`, `license` and `audit`.
+- Tests for the plugin core and the GitHub client (`php bin/test-plugins.php`, run in CI) against a local GitHub mock
+  (`bin/github-mock.php`), plus marketplace checks in `bin/smoke-test.sh`.
 - Plugin guide `docs/plugin-guide.md` (tutorial, available functions, best practices, publishing) and the example plugin
   `docs/examples/notizen/`.
 
