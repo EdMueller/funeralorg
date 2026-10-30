@@ -5,6 +5,21 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+### Added
+
+- Plugin marketplace on GitHub (Administration → Plugins → "Find plugins"): search repositories with the topic
+  `funeral-org-plugin`, review releases and install them after a confirmation page showing permissions, audit status and
+  the verified SHA-256. Packages are only fetched over HTTPS from GitHub hosts; the optional GitHub token is stored in
+  `data/market.json` and only sent to `api.github.com`.
+- "Check for updates" and "Update all" for marketplace plugins (like an app store). Plugins that request new permissions
+  are skipped by "Update all" and must be confirmed individually. A running plugin is replaced in place and stays active;
+  the previous version is kept for a one-click rollback.
+- Inactive marketplace plugins are kept as ZIP archives in `plugins/_archive/` and unpacked (hash checked every time) only
+  when activated.
+- Plugin hook `onUpdate()`; manifest fields `requires_php`, `permissions`, `repository`, `license` and `audit`.
+- Plugin guide `docs/plugin-guide.md` (tutorial, available functions, best practices, publishing) and the example plugin
+  `docs/examples/notizen/`.
+
 ## [0.0.16] - 2026-10-30
 
 ### Added

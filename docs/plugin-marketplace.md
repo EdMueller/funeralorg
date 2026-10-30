@@ -1,6 +1,6 @@
 # Plugin-Marktplatz über GitHub – Konzept (Entwurf)
 
-Stand: 30.10.2026. Ergebnis eines Planungschats mit Claude. **Umsetzungsstand: Schritte 1 (Kern in `Plugins.php`) und 2 (GitHub-Client `PluginMarket.php`) fertig, Schritte 3–4 offen** (siehe Abschnitt 9).
+Stand: 30.10.2026. Ergebnis eines Planungschats mit Claude. **Umsetzungsstand: Schritte 1 (Kern), 2 (GitHub-Client) und 3 (Verwaltungsoberfläche) fertig, Schritt 4 offen** (siehe Abschnitt 9).
 Bestehendes Plugin-System: `docs/plugin-development.md`, `app/lib/Plugins.php`, `app/lib/PluginApi.php`.
 
 > Der ursprüngliche Entwurf (Claude Doc „Funeral Org – Plugin-System“) ging von MySQL, Namespaces und einem
@@ -120,7 +120,7 @@ URL über `url()`/Basis ermitteln (Unterverzeichnis-Installationen!).
 
 1. **Kern** (`Plugins.php`, `PluginApi.php`, `Store.php`) – **fertig:** `inspect()`/`stage()`, Archiv, `archive()`, `update()`, Aktivieren/Deaktivieren/Löschen/Export für archivierte Plugins, `onUpdate`, Hash-Prüfung bei jeder Aktivierung.
 2. **GitHub-Client** `PluginMarket.php` – **fertig** (getestet gegen lokalen Mock): Suche nach Topic, Releases und Assets, Host-Whitelist auch nach Redirects, ETag-Cache in `data/cache/`, Token, Basis-URL per Config überschreibbar (Rauchtest mit lokalem Mock).
-3. **Verwaltungsoberfläche:** Reiter „Installiert“ / „Suchen“, Bestätigungsseite, Installieren, Aktualisieren.
+3. **Verwaltungsoberfläche** – **fertig** (Ende-zu-Ende gegen den Mock getestet; Rollback-Rückfall und Anleitung `docs/plugin-guide.md` inklusive): Reiter „Installiert“ / „Suchen“, Bestätigungsseite, Installieren, Aktualisieren.
    - **Aktualisierungen prüfen:** Schaltfläche „Nach Aktualisierungen suchen“ vergleicht alle Marktplatz-Plugins mit dem neuesten kompatiblen Release (Ergebnis wird gemerkt, Anzeige je Plugin „Version x → y“, Hinweis am Reiter).
    - **Alle aktualisieren:** Schaltfläche „Alle aktualisieren (n)“ aktualisiert nacheinander alle Plugins mit verfügbarem Update (je Plugin: Download, Hash, `Plugins::update()`), mit Ergebnisliste (aktualisiert / übersprungen mit Grund / Fehler); ein Fehler bricht die übrigen nicht ab. Vorher Bestätigung mit Liste der Plugins und Versionen. Bei Plugins, die neue `permissions` anfordern, wird **nicht** automatisch aktualisiert, sondern die Bestätigungsseite verlangt (wie im Play Store bei geänderten Berechtigungen).
    - Einzelne Plugins lassen sich weiter einzeln aktualisieren; Rückfall auf die vorherige Version über die behaltene ZIP (`previous`).

@@ -1,0 +1,3 @@
+/* Nur eigene Klassen mit Präfix, Farben und Abstände aus den Design-Tokens der Anwendung (app.css → :root). */
+.nz-note { border-left: 4px solid var(--messing, #9c8558); }
+.nz-text { white-space: normal; overflow-wrap: anywhere; }

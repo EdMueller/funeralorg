@@ -237,6 +237,8 @@ in `.htaccess` gesetzt) und nginx leiten selbstständig um.
 | `admin` | `transferimport` / `transferpreview` (`token`) | POST/GET | A | Paket hochladen und prüfen (Entpacken nach `data/tmp/import-<token>/`), Vorschau mit Bereichsauswahl |
 | `admin` | `transferapply` / `transferdrop` | POST | A | Gewählte Bereiche ersetzen (nach Sicherung) bzw. Paket verwerfen |
 | `admin` | `plugins` / `pluginset` (`slug`, `state`=on/off) / `pluginimport` (`plugin_zip`, multipart) / `pluginexport` (`p`, GET) / `plugindelete` (`slug`, `delete_data`) | GET/POST | A | Plugin-Verwaltung (§17) |
+| `admin` | `pluginsearch` (`q`) / `plugindetail` (`repo`) / `pluginconfirm` (`id`) | GET | A | Marktplatz: Suche (GitHub-Topic), Releases eines Repos, Bestätigungsseite vor Installation/Update (Berechtigungen, Audit-Status, Hash) |
+| `admin` | `pluginscheck` / `pluginupdate` (`slug`) / `pluginsupdateall` / `pluginprepare` (`repo`, `version`) / `pluginapply` (`id`) / `plugincancel` (`id`) / `pluginrollback` (`slug`) / `pluginmarkettoken` (`token`, `remove`) | POST | A | Marktplatz: Aktualisierungen prüfen, einzeln oder alle aktualisieren (Plugins mit neuen Berechtigungen werden übersprungen und brauchen die Bestätigungsseite), Paket laden und prüfen (`prepare` → Bestätigung), übernehmen, abbrechen, auf die vorherige Version zurücksetzen, GitHub-Token speichern/entfernen. Alle mit Protokolleintrag; Controller: `app/controllers/admin_market.php` |
 | `pluginasset` | – (`p`, `f`, `v`) | GET | Benutzer | Datei aus `assets/` eines **aktiven** Plugins (Whitelist der Endungen, Pfadprüfung, ETag) |
 
 Regel: **Jede zustandsändernde Aktion ist POST** (CSRF-geschützt). GET-Aktionen verändern nur Protokoll/Cache.
@@ -570,7 +572,7 @@ Format je Zeile (`data/logs/JJJJ-MM.jsonl`):
 
 ## 17. Plugins
 
-Entwicklerleitfaden: `docs/plugin-development.md`. Hier die Festlegungen der Anwendung.
+Entwicklerleitfaden: `docs/plugin-guide.md` (Anleitung), Referenz `docs/plugin-development.md`. Hier die Festlegungen der Anwendung.
 
 - **Ordner** `plugins/<slug>/` mit Pflichtdateien `plugin.json` (Manifest, `Plugins::parseManifest`) und `plugin.php`
   (`return function (PluginApi $p): void`). Der Slug ist die Ordnerkennung (`^[a-z][a-z0-9-]{1,39}$`).
@@ -593,7 +595,8 @@ Entwicklerleitfaden: `docs/plugin-development.md`. Hier die Festlegungen der Anw
   danach beim nächsten Laden einmal `onUpdate`; die vorherige ZIP bleibt als Rückfall, ältere werden gelöscht). *Aktivieren* prüft den Hash bei **jedem** Mal erneut und
   validiert den Inhalt wie beim Import (`inspect()`), entpackt nach `plugins/.tmp-*` und benennt um (`unpack()`); *Deaktivieren* löscht danach den Ordner (`retire()`, nur wenn die ZIP vorhanden ist).
   Stationen, API und manuell importierte Plugins bleiben Ordner. `delete()` entfernt Ordner, alle ZIPs und die Herkunft; `export()` liefert bei archivierten die ZIP.
-- **GitHub-Client** (`app/lib/PluginMarket.php`, noch ohne Oberfläche): `search()` (Topic `funeral-org-plugin`), `releases($repo)` (nur veröffentlichte Releases mit Tag `vX.Y.Z` und den Assets
+- **Marktplatz-Oberfläche** (`admin_market.php`, Views `admin_plugins*.php`, `admin_plugin_detail.php`, `admin_plugin_confirm.php`, Reiter „Installiert“/„Plugins suchen“): Installieren und Aktualisieren sind zweistufig – `pluginprepare` lädt das Paket nach `data/tmp/market-*.zip`, merkt den Vorgang in `$_SESSION['plugin_pending']` (höchstens 3, 1 h gültig, nur Dateien aus diesem Verzeichnis) und zeigt die Bestätigungsseite; `pluginapply` übergibt an `Plugins::archive()`/`update()` (Hash und Inhalt werden dort erneut geprüft). Ein Update ohne neue Berechtigungen läuft per Klick ohne Bestätigungsseite. „Alle aktualisieren“ lädt nacheinander; Fehler einzelner Plugins brechen die übrigen nicht ab. `Plugins::rollback()` setzt auf die behaltene vorherige ZIP zurück (Hash `previous_sha`) und übergeht die neuere Version bis zu einer noch neueren (`skip_version`). Repository-Namen prüft `Plugins::REPO_RE` (Besitzer ohne Punkt, Name nie `.`/`..`).
+- **GitHub-Client** (`app/lib/PluginMarket.php`): `search()` (Topic `funeral-org-plugin`), `releases($repo)` (nur veröffentlichte Releases mit Tag `vX.Y.Z` und den Assets
   `<slug>-X.Y.Z.zip`, `….zip.sha256`, `plugin.json`; je Release `compatible`/`reason` aus dem Release-Manifest, ohne die ZIP zu laden), `latest()`, `checkUpdates()` (merkt Ergebnis in
   `market.updates`, `confirm` = neue Berechtigungen → nicht ohne Rückfrage übernehmen), `updates()`, `fetch($repo, $version)` (lädt ZIP + SHA-256 nach `data/tmp/market-*.zip`, vergleicht den Hash,
   der Aufrufer übergibt an `Plugins::archive()`/`update()` mit `$sha` und `['slug','version']` und ruft `discard()`), `audit()` (Audit-Commit gegen Commit des Release-Tags), `setToken()`/`tokenSource()`/`rate()`.

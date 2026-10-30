@@ -188,7 +188,7 @@ final class PluginMarket
         foreach (Plugins::sources() as $slug => $src) {
             $slug = (string)$slug;
             try {
-                $rel = self::latest((string)($src['repo'] ?? ''), (string)($src['version'] ?? ''));
+                $rel = self::latest((string)($src['repo'] ?? ''), self::floor($src));
             } catch (RuntimeException $e) {
                 $errors[$slug] = $e->getMessage();
                 if ($e->getCode() === 429) {
@@ -209,13 +209,21 @@ final class PluginMarket
         return ['updates' => $updates, 'errors' => $errors];
     }
 
+    /** Version, über der ein Update liegen muss: installierte oder – nach einem Rollback – die zurückgesetzte Version. */
+    private static function floor(array $src): string
+    {
+        $v = (string)($src['version'] ?? '0.0.0');
+        $skip = (string)($src['skip_version'] ?? '');
+        return $skip !== '' && version_compare($skip, $v, '>') ? $skip : $v;
+    }
+
     /** Gemerkte Aktualisierungen (nur solche, die noch neuer als die installierte Version sind). */
     public static function updates(): array
     {
         $out = [];
         foreach ((array)(Store::read('market')['updates'] ?? []) as $slug => $u) {
             $src = Plugins::source((string)$slug);
-            if ($src !== null && is_array($u) && version_compare((string)($u['version'] ?? '0'), (string)$src['version'], '>')) {
+            if ($src !== null && is_array($u) && version_compare((string)($u['version'] ?? '0'), self::floor($src), '>')) {
                 $out[(string)$slug] = $u;
             }
         }

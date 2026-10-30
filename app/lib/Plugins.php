@@ -28,7 +28,8 @@ final class Plugins
     public const VERSION_RE = '/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/';
     /** Erlaubte Einträge in `permissions` (rein informativ, kein Schutz – Plugins laufen ohne Sandbox). */
     public const PERMISSION_RE = '/^(network:[a-z0-9]([a-z0-9.-]*[a-z0-9])?|mail|files|data:(users|contacts|gallery|memorial|checklist))$/';
-    public const REPO_RE = '~^[A-Za-z0-9_.-]{1,100}/[A-Za-z0-9_.-]{1,100}$~';
+    /** GitHub-Repository `besitzer/name`: Besitzer nur Buchstaben, Ziffern, Bindestrich; Name nie `.` oder `..` (kein Pfadtrick in API-Adressen). */
+    public const REPO_RE = '~^[A-Za-z0-9][A-Za-z0-9-]{0,38}/(?!\.{1,2}$)[A-Za-z0-9_.-]{1,100}$~';
 
     /** Dateitypen, die ein importiertes Plugin enthalten darf. */
     private const FILE_EXT = ['php', 'json', 'js', 'css', 'svg', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'woff', 'woff2', 'txt', 'md'];
@@ -879,31 +880,88 @@ final class Plugins
         if (($e = self::storeArchive($zipFile, $m, $sha)) !== null) {
             return [null, $e];
         }
-        if ($swap) {
-            $tmp = self::stage($r['content']);
-            $bak = self::dir() . '/.old-' . bin2hex(random_bytes(6));
-            if ($tmp === null || !@rename($dir, $bak)) {
-                $tmp !== null && self::rmtree($tmp);
-                @unlink(self::archiveFile($slug, $m['version']));
-                return [null, t('plugins.err_write')];
-            }
-            if (!@rename($tmp, $dir)) {
-                @rename($bak, $dir);
-                self::rmtree($tmp);
-                @unlink(self::archiveFile($slug, $m['version']));
-                return [null, t('plugins.err_write')];
-            }
-            self::rmtree($bak);
+        if ($swap && ($e = self::swapFolder($slug, $r['content'])) !== null) {
+            @unlink(self::archiveFile($slug, $m['version']));
+            return [null, $e];
         }
         $pending = $swap ? (string)($src['pending_from'] ?? $old) : '';
-        Store::update('market', function (array &$d) use ($slug, $m, $repo, $sha, $old, $pending) {
+        Store::update('market', function (array &$d) use ($slug, $m, $repo, $sha, $old, $pending, $src) {
             $d['sources'][$slug] = ['repo' => $repo, 'version' => $m['version'], 'sha256' => $sha, 'installed' => now(),
-                'manifest' => $m, 'previous' => $old] + ($pending !== '' ? ['pending_from' => $pending] : []);
+                'manifest' => $m, 'previous' => $old, 'previous_sha' => (string)$src['sha256']] + ($pending !== '' ? ['pending_from' => $pending] : []);
             unset($d['updates'][$slug]);
         });
         self::pruneArchive($slug, [$m['version'], $old]);
         self::$all = null;
         return [$slug, ''];
+    }
+
+    /** Ersetzt den Ordner eines Plugins durch neue Dateien (zwei rename()-Schritte, bei Fehler wird zurückgesetzt). @return ?string Fehlertext */
+    private static function swapFolder(string $slug, array $content): ?string
+    {
+        $dir = self::dir() . '/' . $slug;
+        $tmp = self::stage($content);
+        $bak = self::dir() . '/.old-' . bin2hex(random_bytes(6));
+        if ($tmp === null || !@rename($dir, $bak)) {
+            $tmp !== null && self::rmtree($tmp);
+            return t('plugins.err_write');
+        }
+        if (!@rename($tmp, $dir)) {
+            @rename($bak, $dir);
+            self::rmtree($tmp);
+            return t('plugins.err_write');
+        }
+        self::rmtree($bak);
+        return null;
+    }
+
+    /**
+     * Setzt ein Marktplatz-Plugin auf die vorherige Version zurück (ZIP aus dem Archiv, Hash wird geprüft). Die neuere
+     * Version wird bei der Aktualisierungsprüfung übergangen (`skip_version`), bis eine noch neuere erscheint.
+     * @return ?string Fehlertext
+     */
+    public static function rollback(string $slug): ?string
+    {
+        $src = self::source($slug);
+        $prev = (string)($src['previous'] ?? '');
+        $sha = (string)($src['previous_sha'] ?? '');
+        if ($src === null || $prev === '' || $sha === '') {
+            return t('plugins.err_no_previous');
+        }
+        $file = self::archiveFile($slug, $prev);
+        if (!is_file($file) || !hash_equals($sha, (string)hash_file('sha256', $file))) {
+            return t('plugins.err_hash');
+        }
+        [$r, $err] = self::readZip($file);
+        if ($r === null) {
+            return $err;
+        }
+        $m = $r['m'];
+        if ($m['slug'] !== $slug || $m['version'] !== $prev) {
+            return t('plugins.err_hash');
+        }
+        if (($why = self::installProblem($m, true)) !== '') {
+            return $why;
+        }
+        if (is_dir(self::dir() . '/' . $slug)) {
+            foreach ($m['requires'] as $dep) {
+                if (!(self::all()[$dep]['ok'] ?? false) || !self::isActive($dep)) {
+                    return t('plugins.err_deps_inactive', ['names' => $dep]);
+                }
+            }
+            if (($e = self::swapFolder($slug, $r['content'])) !== null) {
+                return $e;
+            }
+        }
+        $cur = (string)$src['version'];
+        $skip = (string)($src['skip_version'] ?? '');
+        Store::update('market', function (array &$d) use ($slug, $src, $prev, $sha, $m, $cur, $skip) {
+            $d['sources'][$slug] = ['repo' => $src['repo'], 'version' => $prev, 'sha256' => $sha, 'installed' => now(), 'manifest' => $m,
+                'skip_version' => $skip !== '' && version_compare($skip, $cur, '>') ? $skip : $cur];
+            unset($d['updates'][$slug]);
+        });
+        self::pruneArchive($slug, [$prev]);
+        self::$all = null;
+        return null;
     }
 
     /** Entpackt ein archiviertes Plugin nach `plugins/<slug>/` (Hash- und Inhaltsprüfung bei jedem Mal). @return ?string Fehlertext */

@@ -1,7 +1,8 @@
 # Plugins entwickeln
 
 Ein Plugin ist ein Ordner `plugins/<slug>/`. Verwaltet wird es unter **Verwaltung → Plugins** (aktivieren,
-deaktivieren, importieren, exportieren, löschen). Als Vorlage dient `plugins/stations/`.
+deaktivieren, importieren, exportieren, löschen, aus GitHub installieren und aktualisieren). Als Vorlage dient `plugins/stations/`.
+Eine ausführliche Anleitung mit Beispiel, Funktionsreferenz, Best Practices und Veröffentlichung steht in [`plugin-guide.md`](plugin-guide.md); diese Datei ist die knappe Referenz.
 
 > Ein Plugin ist beliebiger PHP-Code mit vollem Zugriff auf Anwendung und Daten. Es gibt keine Sandbox.
 > Importieren dürfen nur Admins; der Import warnt entsprechend.

@@ -1,11 +1,33 @@
 <?php
-/** @var array $plugins @var int|float $maxMb */
+/** @var array $plugins @var int|float $maxMb @var array $updates @var string $checked @var ?array $rate */
 $pageTitle = t('plugins.title');
 ?>
 <div class="page-head"><h1><?= e(t('admin.title')) ?></h1></div>
 <?php require __DIR__ . '/_adminnav.php'; ?>
 
 <div class="alert alert-warning small" role="note"><i class="bi bi-exclamation-triangle me-1"></i><?= e(t('plugins.warning')) ?></div>
+
+<?php $ptab = 'installed'; require __DIR__ . '/_plugins_tabs.php'; ?>
+
+<div class="surface surface-pad mb-3">
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <form method="post" action="<?= e(url('admin', ['a' => 'pluginscheck'])) ?>" class="m-0">
+      <?= Csrf::field() ?>
+      <button class="btn btn-sm btn-outline-primary" type="submit"><i class="bi bi-arrow-repeat me-1"></i><?= e(t('market.check')) ?></button>
+    </form>
+    <?php if ($updates): ?>
+      <form method="post" action="<?= e(url('admin', ['a' => 'pluginsupdateall'])) ?>" class="m-0"
+            data-confirm="<?= e(t('market.update_all_confirm', ['list' => implode(', ', array_map(fn($s, $u) => ($plugins[$s]['m']['name'] ?? $s) . ' ' . ($plugins[$s]['m']['version'] ?? '') . ' → ' . $u['version'], array_keys($updates), $updates))])) ?>">
+        <?= Csrf::field() ?>
+        <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-cloud-arrow-down me-1"></i><?= e(tn('market.update_all', count($updates))) ?></button>
+      </form>
+    <?php endif; ?>
+    <span class="small text-muted ms-md-2">
+      <?= e($checked !== '' ? t('market.checked', ['when' => fmt_date($checked, true)]) : t('market.never_checked')) ?>
+      <?php if ($rate): ?> · <?= e(t('market.rate', ['n' => (string)$rate['remaining'], 'max' => (string)$rate['limit']])) ?><?php endif; ?>
+    </span>
+  </div>
+</div>
 
 <form method="post" action="<?= e(url('admin', ['a' => 'pluginimport'])) ?>" enctype="multipart/form-data" class="surface surface-pad mb-4">
   <?= Csrf::field() ?>
@@ -44,6 +66,14 @@ $pageTitle = t('plugins.title');
           <?php if ($m['requires']): ?> · <?= e(t('plugins.requires', ['names' => implode(', ', $m['requires'])])) ?><?php endif; ?>
           <?php if ($p['data']): ?> · <?= e(t('plugins.data', ['files' => implode(', ', array_map(fn($n, $sz) => $n . '.json (' . fmt_bytes($sz) . ')', array_keys($p['data']), $p['data']))])) ?><?php endif; ?>
         </div>
+        <?php if ($p['source']): ?>
+          <div class="small text-muted mt-1"><i class="bi bi-github me-1"></i><a href="https://github.com/<?= e($p['source']['repo']) ?>" target="_blank" rel="noopener noreferrer"><?= e($p['source']['repo']) ?></a>
+            <?php if ($p['archived']): ?> · <?= e(t('market.archived')) ?><?php endif; ?></div>
+        <?php endif; ?>
+        <?php if ($p['update']): ?>
+          <div class="small mt-1"><span class="badge text-bg-info"><?= e(t('market.update_available', ['version' => $p['update']['version']])) ?></span>
+            <?php if ($p['update']['confirm']): ?><span class="text-warning-emphasis"><?= e(t('market.new_perms', ['perms' => implode(', ', $p['update']['confirm'])])) ?></span><?php endif; ?></div>
+        <?php endif; ?>
         <?php if (!$p['ok']): ?><div class="small text-danger mt-1"><?= e($p['error']) ?></div><?php endif; ?>
         <?php if ($p['problem'] !== ''): ?><div class="small text-danger mt-1"><?= e($p['problem']) ?></div><?php endif; ?>
       </div>
@@ -56,6 +86,19 @@ $pageTitle = t('plugins.title');
             <?php else: ?>
               <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-toggle-on me-1"></i><?= e(t('plugins.activate')) ?></button>
             <?php endif; ?>
+          </form>
+        <?php endif; ?>
+        <?php if ($p['update']): ?>
+          <form method="post" action="<?= e(url('admin', ['a' => 'pluginupdate'])) ?>" class="m-0">
+            <?= Csrf::field() ?><input type="hidden" name="slug" value="<?= e($slug) ?>">
+            <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-cloud-arrow-down me-1"></i><?= e(t($p['update']['confirm'] ? 'market.review_update' : 'market.update')) ?></button>
+          </form>
+        <?php endif; ?>
+        <?php if ($p['can_rollback']): ?>
+          <form method="post" action="<?= e(url('admin', ['a' => 'pluginrollback'])) ?>" class="m-0"
+                data-confirm="<?= e(t('market.rollback_confirm', ['name' => $m['name'], 'version' => (string)$p['source']['previous']])) ?>">
+            <?= Csrf::field() ?><input type="hidden" name="slug" value="<?= e($slug) ?>">
+            <button class="btn btn-sm btn-outline-secondary" type="submit"><i class="bi bi-arrow-counterclockwise me-1"></i><?= e(t('market.rollback', ['version' => (string)$p['source']['previous']])) ?></button>
           </form>
         <?php endif; ?>
         <a class="btn btn-sm btn-outline-primary" href="<?= e(url('admin', ['a' => 'pluginexport', 'p' => $slug])) ?>"><i class="bi bi-download me-1"></i><?= e(t('plugins.export')) ?></a>

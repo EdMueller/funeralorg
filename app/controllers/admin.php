@@ -12,6 +12,11 @@ function ctrl_admin(string $r, string $a): void
     }
     $me = Auth::user();
 
+    require_once APP_DIR . '/controllers/admin_market.php';
+    if (admin_market($a, $isPost)) {
+        return;
+    }
+
     switch ($a) {
         /* ---------------------------------------------------------- Benutzer */
         case 'users':
@@ -286,22 +291,7 @@ function ctrl_admin(string $r, string $a): void
             flash(t($lines ? 'sender.saved' : 'sender.removed'));
             redirect('admin', ['a' => 'sender']);
 
-        /* ---------------------------------------------------------- Plugins */
-        case 'plugins':
-            $rows = [];
-            foreach (Plugins::all() as $slug => $p) {
-                $active = $p['ok'] && Plugins::isActive($slug);
-                $rows[$slug] = $p + [
-                    'active'     => $active,
-                    'loaded'     => Plugins::isLoaded($slug),
-                    'problem'    => $active ? Plugins::problem($slug) : '',
-                    'dependents' => Plugins::dependents($slug),
-                    'data'       => Plugins::dataFiles($slug),
-                ];
-            }
-            view('admin_plugins', ['plugins' => $rows, 'maxMb' => Plugins::MAX_ZIP / 1048576]);
-            return;
-
+        /* ---------------------------------------------------------- Plugins (Liste, Marktplatz: admin_market.php) */
         case 'pluginset':
             $slug = (string)post('slug');
             $on = post('state') === 'on';

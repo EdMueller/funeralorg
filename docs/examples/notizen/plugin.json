@@ -1,0 +1,14 @@
+{
+    "slug": "notizen",
+    "name": "Notizen",
+    "version": "1.0.0",
+    "description": "Gemeinsame Notizen für alle angemeldeten Benutzer (Beispiel-Plugin).",
+    "author": "Beispiel",
+    "requires_app": "0.0.16",
+    "requires_php": "8.2",
+    "license": "MIT",
+    "permissions": [],
+    "stores": { "notizen": [] },
+    "core": false,
+    "default_active": false
+}

@@ -21,7 +21,7 @@ Die Screenshots zeigen erfundene Beispieldaten. Die Oberfläche ist für das Han
 
 - **Gedenkseite** mit Portrait, Lebensdaten, Spruch und Text; Anmeldeseite mit Diashow ausgewählter Fotos
 - **Stationen:** Zeitstrahl und Weltkarte, verknüpft mit Alben (vorinstalliertes Plugin)
-- **Plugins:** Erweiterungen verwalten, importieren, aktivieren, exportieren und löschen (Verwaltung → Plugins, Entwicklung: `docs/plugin-development.md`)
+- **Plugins:** Erweiterungen verwalten, importieren, aktivieren, exportieren und löschen (Verwaltung → Plugins, Plugins aus GitHub suchen, installieren und aktualisieren; Entwicklung: `docs/plugin-guide.md`, Referenz `docs/plugin-development.md`)
 - **Bilder:** Alben, Mehrfach-Upload, Leuchtkasten, Diashow, Auswahl und ZIP-Download
 - **Aufgaben:** Checklisten mit Fälligkeit, Zuständigkeit und Notizen; Start-Checkliste bei der Einrichtung
 - **Kontakte:** Adressen, Telefon, Anruf-/Briefstatus, vCard-Import, Export als XLSX/CSV, Adressetiketten
