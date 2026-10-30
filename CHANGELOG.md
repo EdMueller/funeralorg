@@ -5,6 +5,23 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+## [0.0.16] - 2026-10-30
+
+### Added
+
+- Gallery: administrators can reorder albums in the album bar ("Sort albums") by dragging (mouse, long press on touch)
+  or with the left/right arrow keys. The whole level is saved in one request.
+- Web API and MCP: `PUT /gallery/albums/{id}/albums-order` (tool `gallery_album_order`) sets the order of the
+  albums below a parent (`_root` = top level). Administrators only.
+
+### Changed
+
+- Albums have their own order under each parent (`ord`), so an album that is linked into several parents can be
+  placed independently in each. Albums without an entry follow in their previous order, so no migration is needed.
+- `GET /gallery/albums` returns albums in tree order; `sort` is now the position below the home parent and `ord`
+  lists the position per parent.
+- The sorting code of the picture grid and the album bar is shared.
+
 ## [0.0.15] - 2026-10-29
 
 ### Changed
@@ -175,7 +192,8 @@ First public release.
   `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `THIRD-PARTY.md`
 - GitHub Actions (syntax check, language files, smoke test on PHP 8.2 to 8.4) and issue/pull request templates
 
-[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.15...HEAD
+[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.16...HEAD
+[0.0.16]: https://github.com/EdMueller/funeralorg/compare/v0.0.15...v0.0.16
 [0.0.15]: https://github.com/EdMueller/funeralorg/compare/v0.0.14...v0.0.15
 [0.0.14]: https://github.com/EdMueller/funeralorg/compare/v0.0.13...v0.0.14
 [0.0.13]: https://github.com/EdMueller/funeralorg/compare/v0.0.12...v0.0.13
