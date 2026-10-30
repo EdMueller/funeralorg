@@ -65,6 +65,7 @@ return function (PluginApi $p): void {
 | `apiRoute($route, $datei, $funktion)` | Wie `route()`, aber **ohne** Sitzungsanmeldung und CSRF-Prüfung, für Maschinenzugriff (Web-API, MCP). Der Controller muss selbst authentifizieren (z. B. Token) und danach `Auth::actAs($benutzer)` aufrufen; Sitzungs-Cookies dürfen dort nie als Anmeldung gelten. Vorbild: `plugins/api/` |
 | `nav($route, $sprachschluessel, $icon, ?$sichtbar, $nach)` | Menüpunkt (Bootstrap-Icon `bi-…`); `$sichtbar` ist ein Callback `fn(): bool`, `$nach` eine Route, hinter der der Punkt erscheint |
 | `onActivate($fn)` / `onDeactivate($fn)` | einmalig beim Aktivieren bzw. vor dem Deaktivieren durch einen Admin |
+| `onUpdate($fn)` | einmalig nach einer Aktualisierung über den Marktplatz, beim ersten Aufruf mit dem neuen Code; `$fn(string $von)` erhält die vorherige Version (z. B. für Datenmigration). Das Plugin bleibt während des Updates aktiv |
 
 Wirft `plugin.php` eine Ausnahme, wird das Plugin nicht geladen (Meldung in Verwaltung → Plugins und im Server-Log).
 

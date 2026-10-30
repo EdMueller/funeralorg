@@ -54,4 +54,9 @@ return [
     'plugins.err_zip_noplugin' => 'plugin.php is missing in the ZIP file.',
     'plugins.err_syntax' => 'Syntax error in {file}: {err}',
     'plugins.err_write' => 'The plugin directory is not writable or cannot be changed.',
+    'plugins.err_hash' => 'The checksum (SHA-256) of the plugin package does not match. The package is not used.',
+    'plugins.err_repo' => 'The GitHub repository is invalid (expected: owner/name).',
+    'plugins.err_repo_other' => 'The plugin was installed from the repository "{repo}". A package from another source does not replace it.',
+    'plugins.err_not_market' => 'The plugin was not installed through the marketplace and cannot be updated through it.',
+    'plugins.err_not_newer' => 'The version is not newer than the installed one.',
 ];

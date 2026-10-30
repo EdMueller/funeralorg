@@ -72,7 +72,7 @@ gedenkseite/                    ← Webroot (gesamter Projektordner)
 │   │   ├── Log.php             Ereignisprotokoll, Statistik mit Cache, Wartung
 │   │   ├── Contacts.php        Kontakt-Domäne: Felder, Filter, Summen, Export-Tabellen
 │   │   ├── Plugins.php         Plugin-System: Entdecken, Manifest, Zustand, Laden, Import/Export/Löschen (§17)
-│   │   ├── PluginApi.php       Schnittstelle, die `plugin.php` erhält (route, nav, onActivate, onDeactivate)
+│   │   ├── PluginApi.php       Schnittstelle, die `plugin.php` erhält (route, nav, onActivate, onDeactivate, onUpdate)
 │   │   ├── Image.php           Upload, EXIF, Vorschaubilder, Auslieferung
 │   │   ├── Access.php          Zugänge für Kontakte: Benutzername/Passwort erzeugen, Massenanlage, Druckformate
 │   │   ├── Reset.php           „Passwort vergessen“: Tokens (nur Hash), Rate-Limit, Anfragen an den Admin, Mailversand über mail()
@@ -584,7 +584,15 @@ Entwicklerleitfaden: `docs/plugin-development.md`. Hier die Festlegungen der Anw
 - **PluginApi**: `route()` (Datei wird erst beim Aufruf per `require_once` geladen, Pfad auf den Plugin-Ordner geprüft; Kernrouten
   haben Vorrang; immer Anmeldung nötig), `nav()` (Callback für Sichtbarkeit, Einfügeposition über `after`; `Plugins::applyNav()` im Layout),
   `apiRoute()` (wie `route()`, aber ohne Sitzungsanmeldung und CSRF-Prüfung; der Controller muss sich selbst authentifizieren und danach `Auth::actAs()` aufrufen; `dispatch()` überspringt dafür Login- und CSRF-Prüfung, `Plugins::isApiRoute()`),
-  `onActivate()`, `onDeactivate()`. Bewusst klein gehalten; weitere Erweiterungspunkte (Rechtebereiche, Admin-Seiten, Filter/Hooks in Views) erst bei Bedarf.
+  `onActivate()`, `onDeactivate()`, `onUpdate($fn(string $von))` (einmal beim ersten Aufruf mit dem neuen Code nach einem Marktplatz-Update). Bewusst klein gehalten; weitere Erweiterungspunkte (Rechtebereiche, Admin-Seiten, Filter/Hooks in Views) erst bei Bedarf.
+- **Marktplatz-Plugins (Archivmodell, Kern fertig; GitHub-Anbindung und Oberfläche folgen, `docs/plugin-marketplace.md`)**: Herkunft in `data/market.json`
+  (Store `market`, nicht in `Transfer`; `token` = optionales GitHub-Token, nie anzeigen) → `sources.<slug>` = `{repo, version, sha256, installed, manifest, previous?, pending_from?}`.
+  Solche Plugins liegen inaktiv **nur als ZIP** in `plugins/_archive/<slug>-<version>.zip` (eigene `.htaccess`); `Plugins::all()` führt sie mit `archived: true`
+  (Manifest aus `sources`, ohne die ZIP zu öffnen), `isActive()` ist dort immer false. `Plugins::archive($zip, $repo, $sha)` legt ein geprüftes Paket ab (inaktiv),
+  `Plugins::update($zip, $repo, $sha)` ersetzt eine Version durch eine neuere desselben Repos (aktiv: Ordner wird per `rename()` getauscht, ohne Deaktivieren, Abhängige bleiben aktiv;
+  danach beim nächsten Laden einmal `onUpdate`; die vorherige ZIP bleibt als Rückfall, ältere werden gelöscht). *Aktivieren* prüft den Hash bei **jedem** Mal erneut und
+  validiert den Inhalt wie beim Import (`inspect()`), entpackt nach `plugins/.tmp-*` und benennt um (`unpack()`); *Deaktivieren* löscht danach den Ordner (`retire()`, nur wenn die ZIP vorhanden ist).
+  Stationen, API und manuell importierte Plugins bleiben Ordner. `delete()` entfernt Ordner, alle ZIPs und die Herkunft; `export()` liefert bei archivierten die ZIP.
 - **Verwaltung** (`admin&a=plugins`, nur Admin, POST + CSRF + Protokoll `Log::add('admin', …)`):
   - *Aktivieren*: prüft Mindestversion, Abhängigkeiten, Kollision der Datendateien; lädt das Plugin sofort, ruft `onActivate`; bei Fehler Rückgängig.
   - *Deaktivieren*: verweigert, solange ein aktives Plugin dieses benötigt; ruft `onDeactivate`. Daten bleiben unverändert.

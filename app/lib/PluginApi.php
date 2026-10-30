@@ -65,4 +65,14 @@ final class PluginApi
     {
         Plugins::registerHook($this->slug, 'deactivate', $fn);
     }
+
+    /**
+     * Wird einmal ausgeführt, nachdem das Plugin auf eine neuere Version aktualisiert wurde – beim ersten Aufruf mit dem
+     * neuen Code. `$fn` erhält die vorherige Version (z. B. um Daten zu migrieren).
+     * @param callable(string): void $fn
+     */
+    public function onUpdate(callable $fn): void
+    {
+        Plugins::registerHook($this->slug, 'update', $fn);
+    }
 }

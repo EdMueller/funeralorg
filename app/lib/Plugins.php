@@ -6,6 +6,10 @@ declare(strict_types=1);
  * `plugin.php` (siehe PluginApi). Der Zustand (aktiv/inaktiv) steht in `settings.json → plugins.<slug>.active`;
  * fehlt er, gilt `default_active` aus dem Manifest.
  *
+ * Marktplatz-Plugins (Eintrag in `market.json → sources.<slug>`) liegen inaktiv nur als ZIP in `plugins/_archive/`.
+ * Aktivieren prüft den SHA-256-Hash, entpackt nach `plugins/.tmp-*` und benennt per rename() um; Deaktivieren löscht
+ * den Ordner, die ZIP bleibt. Alles andere (mitgelieferte und manuell importierte Plugins) bleibt ein Ordner.
+ *
  * Aus der Ordnerstruktur ergibt sich automatisch (nur bei aktiven Plugins):
  *   lib/<Klasse>.php        Autoload (nach den Klassen des Kerns)
  *   views/<name>.php        view('@<slug>/<name>')
@@ -21,6 +25,8 @@ final class Plugins
     public const MAX_ZIP = 10 * 1024 * 1024;
     public const MAX_UNPACKED = 20 * 1024 * 1024;
     public const MAX_FILES = 300;
+    public const VERSION_RE = '/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/';
+    public const REPO_RE = '~^[A-Za-z0-9_.-]{1,100}/[A-Za-z0-9_.-]{1,100}$~';
 
     /** Dateitypen, die ein importiertes Plugin enthalten darf. */
     private const FILE_EXT = ['php', 'json', 'js', 'css', 'svg', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'woff', 'woff2', 'txt', 'md'];
@@ -111,7 +117,25 @@ final class Plugins
             self::$problems[$slug] = $e->getMessage();
             return false;
         }
+        self::runPendingUpdate($slug);
         return true;
+    }
+
+    /** Nach einem Update einmalig die Update-Hooks des neuen Codes mit der alten Version ausführen. */
+    private static function runPendingUpdate(string $slug): void
+    {
+        $from = (string)(self::source($slug)['pending_from'] ?? '');
+        if ($from === '') {
+            return;
+        }
+        try {
+            self::fire($slug, 'update', $from);
+        } catch (Throwable $e) {
+            error_log('Plugin ' . $slug . ' (update): ' . $e->getMessage());
+        }
+        Store::update('market', function (array &$d) use ($slug) {
+            unset($d['sources'][$slug]['pending_from']);
+        });
     }
 
     private static function forget(string $slug): void
@@ -212,10 +236,10 @@ final class Plugins
         self::$hooks[$slug][$name][] = $fn;
     }
 
-    private static function fire(string $slug, string $name): void
+    private static function fire(string $slug, string $name, mixed ...$args): void
     {
         foreach (self::$hooks[$slug][$name] ?? [] as $fn) {
-            $fn();
+            $fn(...$args);
         }
     }
 
@@ -272,7 +296,7 @@ final class Plugins
 
     /* ------------------------------------------------------------ Bestand und Zustand */
 
-    /** @return array<string, array{slug:string, dir:string, ok:bool, error:string, m:array}> */
+    /** @return array<string, array{slug:string, dir:string, ok:bool, error:string, m:array, archived:bool}> */
     public static function all(): array
     {
         if (self::$all !== null) {
@@ -287,7 +311,18 @@ final class Plugins
             $json = @file_get_contents($d . '/plugin.json');
             [$m, $err] = self::parseManifest($json === false ? '' : $json, $slug);
             $out[$slug] = ['slug' => $slug, 'dir' => $d, 'ok' => $m !== null, 'error' => $err,
-                'm' => $m ?? self::blankManifest($slug)];
+                'm' => $m ?? self::blankManifest($slug), 'archived' => false];
+        }
+        // Marktplatz-Plugins, die inaktiv nur als ZIP im Archiv liegen (Manifest aus der Herkunft, ohne die ZIP zu öffnen)
+        foreach (self::sources() as $slug => $src) {
+            $slug = (string)$slug;
+            if (isset($out[$slug]) || !preg_match(self::SLUG_RE, $slug) || !preg_match(self::VERSION_RE, (string)($src['version'] ?? ''))
+                || !is_file(self::archiveFile($slug, (string)$src['version']))) {
+                continue;
+            }
+            $m = is_array($src['manifest'] ?? null) ? array_replace(self::blankManifest($slug), $src['manifest']) : null;
+            $out[$slug] = ['slug' => $slug, 'dir' => '', 'ok' => $m !== null, 'error' => $m === null ? t('plugins.err_manifest_json') : '',
+                'm' => $m ?? self::blankManifest($slug), 'archived' => true];
         }
         ksort($out);
         return self::$all = $out;
@@ -318,7 +353,7 @@ final class Plugins
             return [null, t('plugins.err_manifest_field', ['field' => 'name'])];
         }
         $version = (string)($d['version'] ?? '');
-        if (!preg_match('/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/', $version)) {
+        if (!preg_match(self::VERSION_RE, $version)) {
             return [null, t('plugins.err_manifest_field', ['field' => 'version'])];
         }
         $reqApp = (string)($d['requires_app'] ?? '');
@@ -359,6 +394,9 @@ final class Plugins
 
     public static function isActive(string $slug): bool
     {
+        if (self::all()[$slug]['archived'] ?? false) {
+            return false; // ohne entpackten Ordner kann es nicht laufen
+        }
         $st = self::settings()['plugins'][$slug] ?? null;
         if (is_array($st) && array_key_exists('active', $st)) {
             return (bool)$st['active'];
@@ -435,9 +473,13 @@ final class Plugins
                     return t('plugins.err_store_clash', ['plugin' => $o['m']['name']]);
                 }
             }
+            if ($p['archived'] && ($err = self::unpack($slug)) !== null) {
+                return $err;
+            }
             self::saveState($slug, true);
             if (!self::load($slug)) {
                 self::saveState($slug, false);
+                self::retire($slug);
                 return t('plugins.err_load', ['err' => self::problem($slug)]);
             }
             try {
@@ -445,6 +487,7 @@ final class Plugins
             } catch (Throwable $e) {
                 error_log('Plugin ' . $slug . ' (activate): ' . $e->getMessage());
                 self::saveState($slug, false);
+                self::retire($slug);
                 return t('plugins.err_load', ['err' => $e->getMessage()]);
             }
             return null;
@@ -459,14 +502,39 @@ final class Plugins
             error_log('Plugin ' . $slug . ' (deactivate): ' . $e->getMessage());
         }
         self::saveState($slug, false);
+        self::retire($slug);
         return null;
     }
 
     /**
-     * Installiert ein Plugin aus einer ZIP-Datei (inaktiv).
+     * Installiert ein Plugin aus einer ZIP-Datei als Ordner (inaktiv).
      * @return array{0:?string, 1:string} Slug oder Fehlertext
      */
     public static function install(string $zipFile): array
+    {
+        [$r, $err] = self::readZip($zipFile);
+        if ($r === null) {
+            return [null, $err];
+        }
+        $m = $r['m'];
+        if (($why = self::installProblem($m)) !== '') {
+            return [null, $why];
+        }
+        $tmp = self::stage($r['content']);
+        if ($tmp === null) {
+            return [null, t('plugins.err_write')];
+        }
+        if (!@rename($tmp, self::dir() . '/' . $m['slug'])) {
+            self::rmtree($tmp);
+            return [null, t('plugins.err_write')];
+        }
+        self::saveState($m['slug'], false);
+        self::$all = null;
+        return [$m['slug'], ''];
+    }
+
+    /** Öffnet und prüft eine ZIP-Datei. @return array{0:?array{m:array, content:array<string,string>}, 1:string} */
+    private static function readZip(string $zipFile): array
     {
         if (!class_exists('ZipArchive')) {
             return [null, t('plugins.err_zip_open')];
@@ -479,13 +547,17 @@ final class Plugins
             return [null, t('plugins.err_zip_open')];
         }
         try {
-            return self::installFrom($zip);
+            return self::inspect($zip);
         } finally {
             $zip->close();
         }
     }
 
-    private static function installFrom(ZipArchive $zip): array
+    /**
+     * Prüft Einträge, Dateitypen, Manifest und PHP-Syntax vollständig im Speicher, bevor etwas geschrieben wird.
+     * @return array{0:?array{m:array, content:array<string,string>}, 1:string}
+     */
+    private static function inspect(ZipArchive $zip): array
     {
         if ($zip->numFiles < 1 || $zip->numFiles > self::MAX_FILES) {
             return [null, t('plugins.err_zip_entries', ['max' => (string)self::MAX_FILES])];
@@ -558,19 +630,6 @@ final class Plugins
         if ($m === null) {
             return [null, $err];
         }
-        $slug = $m['slug'];
-        if (is_dir(self::dir() . '/' . $slug)) {
-            return [null, t('plugins.err_exists', ['name' => $m['name']])];
-        }
-        $have = app_version();
-        if ($m['requires_app'] !== '' && $have !== '' && version_compare($have, $m['requires_app'], '<')) {
-            return [null, t('plugins.err_requires_app', ['need' => $m['requires_app'], 'have' => $have])];
-        }
-        foreach (self::all() as $o) {
-            if ($o['ok'] && array_intersect_key($o['m']['stores'], $m['stores'])) {
-                return [null, t('plugins.err_store_clash', ['plugin' => $o['m']['name']])];
-            }
-        }
         // Inhalte lesen und PHP-Syntax prüfen, bevor etwas auf die Platte geschrieben wird
         $content = [];
         foreach ($rel as $i => $r) {
@@ -587,10 +646,34 @@ final class Plugins
             }
             $content[$r] = $data;
         }
-        // Schreiben in ein verstecktes Nachbarverzeichnis, dann umbenennen (gleiches Dateisystem)
+        return [['m' => $m, 'content' => $content], ''];
+    }
+
+    /** Regeln für neue Plugins/Updates; '' = in Ordnung. */
+    private static function installProblem(array $m, bool $update = false): string
+    {
+        $slug = $m['slug'];
+        if (!$update && (is_dir(self::dir() . '/' . $slug) || isset(self::all()[$slug]))) {
+            return t('plugins.err_exists', ['name' => $m['name']]);
+        }
+        $have = app_version();
+        if ($m['requires_app'] !== '' && $have !== '' && version_compare($have, $m['requires_app'], '<')) {
+            return t('plugins.err_requires_app', ['need' => $m['requires_app'], 'have' => $have]);
+        }
+        foreach (self::all() as $s => $o) {
+            if ($s !== $slug && $o['ok'] && array_intersect_key($o['m']['stores'], $m['stores'])) {
+                return t('plugins.err_store_clash', ['plugin' => $o['m']['name']]);
+            }
+        }
+        return '';
+    }
+
+    /** Schreibt die Dateien in ein verstecktes Nachbarverzeichnis (gleiches Dateisystem, danach rename()). @return ?string Pfad */
+    private static function stage(array $content): ?string
+    {
         $root = self::dir();
         if (!is_dir($root) && !@mkdir($root, 0750, true) && !is_dir($root)) {
-            return [null, t('plugins.err_write')];
+            return null;
         }
         $tmp = $root . '/.tmp-' . bin2hex(random_bytes(6));
         try {
@@ -605,16 +688,219 @@ final class Plugins
                 }
                 @chmod($target, 0640);
             }
-            if (!@rename($tmp, $root . '/' . $slug)) {
-                throw new RuntimeException('rename');
-            }
         } catch (RuntimeException) {
             self::rmtree($tmp);
-            return [null, t('plugins.err_write')];
+            return null;
         }
-        self::saveState($slug, false);
+        return $tmp;
+    }
+
+    /* ------------------------------------------------------------ Archiv (Marktplatz-Plugins) */
+
+    public static function archiveDir(): string
+    {
+        return self::dir() . '/_archive';
+    }
+
+    private static function archiveFile(string $slug, string $version): string
+    {
+        return self::archiveDir() . '/' . $slug . '-' . $version . '.zip';
+    }
+
+    /** Herkunft aller Marktplatz-Plugins: slug => {repo, version, sha256, installed, manifest, previous?, pending_from?}. */
+    public static function sources(): array
+    {
+        $s = Store::read('market')['sources'] ?? [];
+        return is_array($s) ? $s : [];
+    }
+
+    public static function source(string $slug): ?array
+    {
+        $s = self::sources()[$slug] ?? null;
+        return is_array($s) ? $s : null;
+    }
+
+    /** Legt die ZIP geprüft im Archiv ab. @return ?string Fehlertext */
+    private static function storeArchive(string $zipFile, array $m, string $sha): ?string
+    {
+        $dir = self::archiveDir();
+        if (!is_dir($dir) && !@mkdir($dir, 0750, true) && !is_dir($dir)) {
+            return t('plugins.err_write');
+        }
+        if (!is_file($dir . '/.htaccess')) {
+            @file_put_contents($dir . '/.htaccess', "Require all denied\n");
+        }
+        $target = self::archiveFile($m['slug'], $m['version']);
+        $part = $target . '.' . bin2hex(random_bytes(4)) . '.part';
+        if (!@copy($zipFile, $part) || !hash_equals($sha, (string)hash_file('sha256', $part)) || !@rename($part, $target)) {
+            @unlink($part);
+            return t('plugins.err_write');
+        }
+        @chmod($target, 0640);
+        return null;
+    }
+
+    /** Löscht Archiv-ZIPs eines Plugins, deren Version nicht in $keep steht (leer = alle). */
+    private static function pruneArchive(string $slug, array $keep = []): void
+    {
+        $re = '/^' . preg_quote($slug, '/') . '-(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)\.zip$/';
+        foreach (glob(self::archiveDir() . '/*.zip') ?: [] as $f) {
+            if (preg_match($re, basename($f), $mm) && !in_array($mm[1], $keep, true)) {
+                @unlink($f);
+            }
+        }
+    }
+
+    /**
+     * Übernimmt ein geprüftes Paket (z. B. aus einem GitHub-Release) als inaktives Marktplatz-Plugin ins Archiv.
+     * @param string $expectedSha SHA-256 aus dem Release (leer = nicht prüfen)
+     * @return array{0:?string, 1:string} Slug oder Fehlertext
+     */
+    public static function archive(string $zipFile, string $repo, string $expectedSha = ''): array
+    {
+        if (!preg_match(self::REPO_RE, $repo)) {
+            return [null, t('plugins.err_repo')];
+        }
+        $sha = is_file($zipFile) ? (string)hash_file('sha256', $zipFile) : '';
+        if ($expectedSha !== '' && !hash_equals(strtolower($expectedSha), $sha)) {
+            return [null, t('plugins.err_hash')];
+        }
+        [$r, $err] = self::readZip($zipFile);
+        if ($r === null) {
+            return [null, $err];
+        }
+        $m = $r['m'];
+        if (($why = self::installProblem($m)) !== '') {
+            return [null, $why];
+        }
+        if (($e = self::storeArchive($zipFile, $m, $sha)) !== null) {
+            return [null, $e];
+        }
+        Store::update('market', function (array &$d) use ($m, $repo, $sha) {
+            $d['sources'][$m['slug']] = ['repo' => $repo, 'version' => $m['version'], 'sha256' => $sha, 'installed' => now(), 'manifest' => $m];
+        });
+        self::saveState($m['slug'], false);
+        self::$all = null;
+        return [$m['slug'], ''];
+    }
+
+    /**
+     * Aktualisiert ein Marktplatz-Plugin auf eine neuere Version desselben Repositorys. Ist es aktiv, wird der Ordner
+     * ausgetauscht (ohne Deaktivieren; Abhängige bleiben aktiv) und beim nächsten Aufruf `onUpdate` ausgeführt. Die
+     * vorherige ZIP bleibt als Rückfall im Archiv.
+     * @return array{0:?string, 1:string} Slug oder Fehlertext
+     */
+    public static function update(string $zipFile, string $repo, string $expectedSha = ''): array
+    {
+        $sha = is_file($zipFile) ? (string)hash_file('sha256', $zipFile) : '';
+        if ($expectedSha !== '' && !hash_equals(strtolower($expectedSha), $sha)) {
+            return [null, t('plugins.err_hash')];
+        }
+        [$r, $err] = self::readZip($zipFile);
+        if ($r === null) {
+            return [null, $err];
+        }
+        $m = $r['m'];
+        $slug = $m['slug'];
+        $src = self::source($slug);
+        if ($src === null) {
+            return [null, t('plugins.err_not_market')];
+        }
+        if (($src['repo'] ?? '') !== $repo) {
+            return [null, t('plugins.err_repo_other', ['repo' => (string)$src['repo']])];
+        }
+        $old = (string)$src['version'];
+        if (version_compare($m['version'], $old, '<=')) {
+            return [null, t('plugins.err_not_newer')];
+        }
+        if (($why = self::installProblem($m, true)) !== '') {
+            return [null, $why];
+        }
+        $dir = self::dir() . '/' . $slug;
+        $swap = is_dir($dir);
+        if ($swap) {
+            foreach ($m['requires'] as $dep) {
+                if (!(self::all()[$dep]['ok'] ?? false) || !self::isActive($dep)) {
+                    return [null, t('plugins.err_deps_inactive', ['names' => $dep])];
+                }
+            }
+        }
+        if (($e = self::storeArchive($zipFile, $m, $sha)) !== null) {
+            return [null, $e];
+        }
+        if ($swap) {
+            $tmp = self::stage($r['content']);
+            $bak = self::dir() . '/.old-' . bin2hex(random_bytes(6));
+            if ($tmp === null || !@rename($dir, $bak)) {
+                $tmp !== null && self::rmtree($tmp);
+                @unlink(self::archiveFile($slug, $m['version']));
+                return [null, t('plugins.err_write')];
+            }
+            if (!@rename($tmp, $dir)) {
+                @rename($bak, $dir);
+                self::rmtree($tmp);
+                @unlink(self::archiveFile($slug, $m['version']));
+                return [null, t('plugins.err_write')];
+            }
+            self::rmtree($bak);
+        }
+        $pending = $swap ? (string)($src['pending_from'] ?? $old) : '';
+        Store::update('market', function (array &$d) use ($slug, $m, $repo, $sha, $old, $pending) {
+            $d['sources'][$slug] = ['repo' => $repo, 'version' => $m['version'], 'sha256' => $sha, 'installed' => now(),
+                'manifest' => $m, 'previous' => $old] + ($pending !== '' ? ['pending_from' => $pending] : []);
+        });
+        self::pruneArchive($slug, [$m['version'], $old]);
         self::$all = null;
         return [$slug, ''];
+    }
+
+    /** Entpackt ein archiviertes Plugin nach `plugins/<slug>/` (Hash- und Inhaltsprüfung bei jedem Mal). @return ?string Fehlertext */
+    private static function unpack(string $slug): ?string
+    {
+        $src = self::source($slug);
+        if ($src === null || !(self::all()[$slug]['archived'] ?? false)) {
+            return t('plugins.err_unknown');
+        }
+        $file = self::archiveFile($slug, (string)$src['version']);
+        if (!is_file($file) || !hash_equals((string)$src['sha256'], (string)hash_file('sha256', $file))) {
+            return t('plugins.err_hash');
+        }
+        [$r, $err] = self::readZip($file);
+        if ($r === null) {
+            return $err;
+        }
+        if ($r['m']['slug'] !== $slug || $r['m']['version'] !== $src['version']) {
+            return t('plugins.err_hash');
+        }
+        $dir = self::dir() . '/' . $slug;
+        if (is_dir($dir)) {
+            return t('plugins.err_exists', ['name' => $r['m']['name']]);
+        }
+        $tmp = self::stage($r['content']);
+        if ($tmp === null) {
+            return t('plugins.err_write');
+        }
+        if (!@rename($tmp, $dir)) {
+            self::rmtree($tmp);
+            return t('plugins.err_write');
+        }
+        self::$all = null;
+        return null;
+    }
+
+    /** Entfernt den Ordner eines Marktplatz-Plugins, sofern seine ZIP im Archiv liegt (sonst bleibt er als Sicherung). */
+    private static function retire(string $slug): void
+    {
+        $src = self::source($slug);
+        if ($src === null || !is_file(self::archiveFile($slug, (string)($src['version'] ?? '')))) {
+            return;
+        }
+        $base = realpath(self::dir());
+        $dir = realpath(self::dir() . '/' . $slug);
+        if ($base && $dir && str_starts_with($dir, $base . DIRECTORY_SEPARATOR)) {
+            self::rmtree($dir);
+            self::$all = null;
+        }
     }
 
     /** Erstellt eine ZIP-Datei des Plugin-Ordners (ohne Nutzdaten). @return array{0:?string, 1:string} Pfad, Dateiname */
@@ -629,6 +915,10 @@ final class Plugins
             return [null, ''];
         }
         $tmp = $tmpDir . '/plugin-' . bin2hex(random_bytes(6)) . '.zip';
+        if ($p['archived']) {
+            $src = self::archiveFile($slug, $p['m']['version']);
+            return is_file($src) && @copy($src, $tmp) ? [$tmp, basename($src)] : [null, ''];
+        }
         $zip = new ZipArchive();
         if ($zip->open($tmp, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
             return [null, ''];
@@ -668,17 +958,27 @@ final class Plugins
                 @unlink(DATA_DIR . '/' . $name . '.lock');
             }
         }
-        $base = realpath(self::dir());
-        $dir = realpath($p['dir']);
-        if (!$base || !$dir || !str_starts_with($dir, $base . DIRECTORY_SEPARATOR)) {
-            return t('plugins.err_write');
+        // Ordner (auch ein nach Fehlern übrig gebliebener bei Marktplatz-Plugins), dann Archiv und Herkunft
+        $folder = self::dir() . '/' . $slug;
+        if (is_dir($folder)) {
+            $base = realpath(self::dir());
+            $dir = realpath($folder);
+            if (!$base || !$dir || !str_starts_with($dir, $base . DIRECTORY_SEPARATOR)) {
+                return t('plugins.err_write');
+            }
+            self::rmtree($dir);
         }
-        self::rmtree($dir);
+        if (self::source($slug) !== null) {
+            self::pruneArchive($slug);
+            Store::update('market', function (array &$d) use ($slug) {
+                unset($d['sources'][$slug]);
+            });
+        }
         Store::update('settings', function (array &$s) use ($slug) {
             unset($s['plugins'][$slug]);
         });
         self::$all = null;
-        return is_dir($dir) ? t('plugins.err_write') : null;
+        return is_dir($folder) ? t('plugins.err_write') : null;
     }
 
     /** Löscht ein Verzeichnis samt Inhalt; Verknüpfungen werden entfernt, nicht verfolgt. */

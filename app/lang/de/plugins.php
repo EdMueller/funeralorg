@@ -54,4 +54,9 @@ return [
     'plugins.err_zip_noplugin' => 'In der ZIP-Datei fehlt plugin.php.',
     'plugins.err_syntax' => 'Syntaxfehler in {file}: {err}',
     'plugins.err_write' => 'Das Plugin-Verzeichnis ist nicht beschreibbar oder lässt sich nicht ändern.',
+    'plugins.err_hash' => 'Die Prüfsumme (SHA-256) des Plugin-Pakets stimmt nicht überein. Das Paket wird nicht verwendet.',
+    'plugins.err_repo' => 'Das GitHub-Repository ist ungültig (erwartet: besitzer/name).',
+    'plugins.err_repo_other' => 'Das Plugin ist aus dem Repository „{repo}“ installiert. Ein Paket aus einer anderen Quelle ersetzt es nicht.',
+    'plugins.err_not_market' => 'Das Plugin wurde nicht über den Marktplatz installiert und lässt sich nicht darüber aktualisieren.',
+    'plugins.err_not_newer' => 'Die Version ist nicht neuer als die installierte.',
 ];
