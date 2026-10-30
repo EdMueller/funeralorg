@@ -22,7 +22,7 @@ final class Store
         'ratelimit'  => [],
         'settings'   => [],
         'resets'     => ['tokens' => [], 'requests' => [], 'rl' => []],
-        'market'     => ['sources' => [], 'token' => ''],
+        'market'     => ['sources' => [], 'token' => '', 'updates' => [], 'checked' => ''],
     ];
 
     /** Von Plugins ergänzte Datendateien (Name => Standardinhalt). */

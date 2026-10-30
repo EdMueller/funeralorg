@@ -41,6 +41,10 @@ plugins/<slug>/
 | `slug` | Kennung = Ordnername, `[a-z][a-z0-9-]`, 2–40 Zeichen |
 | `name`, `version` | Anzeigename, `x.y.z` |
 | `requires_app` | Mindestversion der Anwendung (`VERSION`); sonst lässt sich das Plugin nicht aktivieren |
+| `requires_php` | optional: Mindest-PHP-Version (`8.2` oder `8.2.0`), verglichen ohne Distributionszusatz |
+| `permissions` | optional, rein informativ (wird im Marktplatz angezeigt, schützt nicht – Plugins laufen ohne Sandbox): `network:<host>`, `mail`, `files`, `data:users`, `data:contacts`, `data:gallery`, `data:memorial`, `data:checklist` |
+| `repository`, `license` | optional: GitHub-Repository (`besitzer/name`), Lizenzkennung |
+| `audit` | optional: `{"commit": "<40-stelliger Git-SHA>", "report": "AUDIT.md"}`; der Marktplatz vergleicht den Commit mit dem des Release-Tags |
 | `requires` | Slugs anderer Plugins, die aktiv sein müssen; solange ein aktives Plugin ein anderes braucht, lässt dieses sich nicht deaktivieren |
 | `stores` | Datendateien `data/<name>.json` mit Standardinhalt (`[a-z_]`, nicht die des Kerns). Sie gehören zu den Snapshots und Backups. Löschen mit „Daten ebenfalls löschen“ entfernt genau diese Dateien |
 | `core` | Teil der Anwendung: lässt sich deaktivieren, aber nicht löschen |

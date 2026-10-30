@@ -593,6 +593,14 @@ Entwicklerleitfaden: `docs/plugin-development.md`. Hier die Festlegungen der Anw
   danach beim nächsten Laden einmal `onUpdate`; die vorherige ZIP bleibt als Rückfall, ältere werden gelöscht). *Aktivieren* prüft den Hash bei **jedem** Mal erneut und
   validiert den Inhalt wie beim Import (`inspect()`), entpackt nach `plugins/.tmp-*` und benennt um (`unpack()`); *Deaktivieren* löscht danach den Ordner (`retire()`, nur wenn die ZIP vorhanden ist).
   Stationen, API und manuell importierte Plugins bleiben Ordner. `delete()` entfernt Ordner, alle ZIPs und die Herkunft; `export()` liefert bei archivierten die ZIP.
+- **GitHub-Client** (`app/lib/PluginMarket.php`, noch ohne Oberfläche): `search()` (Topic `funeral-org-plugin`), `releases($repo)` (nur veröffentlichte Releases mit Tag `vX.Y.Z` und den Assets
+  `<slug>-X.Y.Z.zip`, `….zip.sha256`, `plugin.json`; je Release `compatible`/`reason` aus dem Release-Manifest, ohne die ZIP zu laden), `latest()`, `checkUpdates()` (merkt Ergebnis in
+  `market.updates`, `confirm` = neue Berechtigungen → nicht ohne Rückfrage übernehmen), `updates()`, `fetch($repo, $version)` (lädt ZIP + SHA-256 nach `data/tmp/market-*.zip`, vergleicht den Hash,
+  der Aufrufer übergibt an `Plugins::archive()`/`update()` mit `$sha` und `['slug','version']` und ruft `discard()`), `audit()` (Audit-Commit gegen Commit des Release-Tags), `setToken()`/`tokenSource()`/`rate()`.
+  Netzwerk: cURL, nur HTTPS zu `github.com`, `api.github.com`, `objects.githubusercontent.com`, `release-assets.githubusercontent.com`, Weiterleitungen von Hand und je Ziel geprüft, Größenlimits,
+  Token nur an `api.github.com`. Cache `data/cache/market/` (API 1 h mit ETag, Release-Manifeste dauerhaft, `rate.json`). Fehler = `RuntimeException` mit übersetztem Text (Code 429 = Kontingent).
+  Manifest-Felder (optional): `requires_php`, `permissions` (`network:<host>`, `mail`, `files`, `data:users|contacts|gallery|memorial|checklist`), `repository`, `license`, `audit.commit`/`audit.report`;
+  `Plugins::compatProblem()` prüft Anwendungs- und PHP-Version (ohne Distributionszusatz). Konfiguration: `github_token` (Vorrang vor dem gespeicherten), `market_api` (nur für Tests).
 - **Verwaltung** (`admin&a=plugins`, nur Admin, POST + CSRF + Protokoll `Log::add('admin', …)`):
   - *Aktivieren*: prüft Mindestversion, Abhängigkeiten, Kollision der Datendateien; lädt das Plugin sofort, ruft `onActivate`; bei Fehler Rückgängig.
   - *Deaktivieren*: verweigert, solange ein aktives Plugin dieses benötigt; ruft `onDeactivate`. Daten bleiben unverändert.

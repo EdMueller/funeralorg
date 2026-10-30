@@ -42,6 +42,8 @@ return [
     'image_max_pixels'     => 50000000,      // größere Bilder werden abgelehnt (0 = unbegrenzt)
     'api_allow_http'       => false,         // Plugin „api“: Token-Zugriff auch ohne HTTPS erlauben (nur für Tests im internen Netz)
     'plugins_safe_mode'    => false,         // true: kein Plugin-Code wird ausgeführt (Notausgang, siehe docs/plugin-development.md)
+    // 'github_token'     => '',        // Plugin-Marktplatz: GitHub-Token (mehr API-Anfragen/h); hat Vorrang vor dem in der Verwaltung gespeicherten
+    // 'market_api'       => '',        // nur für Tests: andere GitHub-API-Adresse (dieser Ursprung ist dann auch ohne HTTPS erlaubt)
     'image_memory_limit'   => '768M',        // GD braucht bei großen Fotos viel RAM
 
     // Link zur Datenschutzerklärung (optional, wird auf den Seiten „Passwort vergessen“ angezeigt)

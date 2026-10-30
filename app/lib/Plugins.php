@@ -26,6 +26,8 @@ final class Plugins
     public const MAX_UNPACKED = 20 * 1024 * 1024;
     public const MAX_FILES = 300;
     public const VERSION_RE = '/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/';
+    /** Erlaubte Einträge in `permissions` (rein informativ, kein Schutz – Plugins laufen ohne Sandbox). */
+    public const PERMISSION_RE = '/^(network:[a-z0-9]([a-z0-9.-]*[a-z0-9])?|mail|files|data:(users|contacts|gallery|memorial|checklist))$/';
     public const REPO_RE = '~^[A-Za-z0-9_.-]{1,100}/[A-Za-z0-9_.-]{1,100}$~';
 
     /** Dateitypen, die ein importiertes Plugin enthalten darf. */
@@ -331,7 +333,8 @@ final class Plugins
     private static function blankManifest(string $slug): array
     {
         return ['slug' => $slug, 'name' => $slug, 'version' => '', 'description' => '', 'author' => '',
-            'requires_app' => '', 'requires' => [], 'stores' => [], 'core' => false, 'default_active' => false];
+            'requires_app' => '', 'requires' => [], 'stores' => [], 'core' => false, 'default_active' => false,
+            'requires_php' => '', 'permissions' => [], 'repository' => '', 'license' => '', 'audit' => ['commit' => '', 'report' => '']];
     }
 
     /** @return array{0:?array, 1:string} Manifest oder Fehlertext */
@@ -378,7 +381,28 @@ final class Plugins
                 return [null, t('plugins.err_store', ['store' => (string)$sn])];
             }
         }
+        $reqPhp = (string)($d['requires_php'] ?? '');
+        if ($reqPhp !== '' && !preg_match('/^\d+\.\d+(\.\d+)?$/', $reqPhp)) {
+            return [null, t('plugins.err_manifest_field', ['field' => 'requires_php'])];
+        }
+        $perms = $d['permissions'] ?? [];
+        if (!is_array($perms) || array_filter($perms, fn($x) => !is_string($x) || !preg_match(self::PERMISSION_RE, $x))) {
+            return [null, t('plugins.err_manifest_field', ['field' => 'permissions'])];
+        }
+        $repo = (string)($d['repository'] ?? '');
+        if ($repo !== '' && !preg_match(self::REPO_RE, $repo)) {
+            return [null, t('plugins.err_manifest_field', ['field' => 'repository'])];
+        }
+        $audit = $d['audit'] ?? [];
+        $commit = is_array($audit) ? (string)($audit['commit'] ?? '') : '-';
+        $report = is_array($audit) ? (string)($audit['report'] ?? '') : '-';
+        if (!is_array($audit) || ($commit !== '' && !preg_match('/^[0-9a-f]{40}$/', $commit))
+            || ($report !== '' && !preg_match('~^[A-Za-z0-9_][A-Za-z0-9_./-]{0,98}$~', $report))) {
+            return [null, t('plugins.err_manifest_field', ['field' => 'audit'])];
+        }
         return [[
+            'requires_php' => $reqPhp, 'permissions' => array_values(array_unique($perms)), 'repository' => $repo,
+            'license' => mb_substr(trim((string)($d['license'] ?? '')), 0, 40), 'audit' => ['commit' => $commit, 'report' => $report],
             'slug' => $slug, 'name' => $name, 'version' => $version,
             'description' => mb_substr(trim((string)($d['description'] ?? '')), 0, 400),
             'author' => mb_substr(trim((string)($d['author'] ?? '')), 0, 80),
@@ -411,15 +435,26 @@ final class Plugins
         });
     }
 
-    /** Anforderungen an die Anwendungsversion; '' = erfüllt. */
-    private static function requirementProblem(array $p): string
+    /** Anforderungen an die Anwendungs- und PHP-Version; '' = erfüllt. */
+    public static function compatProblem(array $m): string
     {
-        $need = $p['m']['requires_app'];
+        $need = $m['requires_app'] ?? '';
         $have = app_version();
         if ($need !== '' && $have !== '' && version_compare($have, $need, '<')) {
             return t('plugins.err_requires_app', ['need' => $need, 'have' => $have]);
         }
+        // ohne PHP_VERSION: Debian-Zusätze („8.2.12-1+deb12u1“) würden sonst als Vorabversion gelten
+        $php = PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION . '.' . PHP_RELEASE_VERSION;
+        $needPhp = $m['requires_php'] ?? '';
+        if ($needPhp !== '' && version_compare($php, $needPhp, '<')) {
+            return t('plugins.err_requires_php', ['need' => $needPhp, 'have' => $php]);
+        }
         return '';
+    }
+
+    private static function requirementProblem(array $p): string
+    {
+        return self::compatProblem($p['m']);
     }
 
     /** Aktive Plugins, die $slug voraussetzen. @return list<string> */
@@ -531,6 +566,22 @@ final class Plugins
         self::saveState($m['slug'], false);
         self::$all = null;
         return [$m['slug'], ''];
+    }
+
+    /** Prüft eine ZIP-Datei, ohne etwas zu installieren (für die Bestätigungsseite). @return array{0:?array, 1:string} Manifest oder Fehlertext */
+    public static function peek(string $zipFile): array
+    {
+        [$r, $err] = self::readZip($zipFile);
+        return [$r['m'] ?? null, $err];
+    }
+
+    /** Stimmen Kennung und Version im Paket mit dem Erwarteten (Release) überein? @param array{slug?:string, version?:string} $expect */
+    private static function expectProblem(array $m, array $expect): string
+    {
+        if (($expect['slug'] ?? $m['slug']) !== $m['slug'] || ($expect['version'] ?? $m['version']) !== $m['version']) {
+            return t('plugins.err_version_tag', ['slug' => $m['slug'], 'version' => $m['version']]);
+        }
+        return '';
     }
 
     /** Öffnet und prüft eine ZIP-Datei. @return array{0:?array{m:array, content:array<string,string>}, 1:string} */
@@ -656,9 +707,8 @@ final class Plugins
         if (!$update && (is_dir(self::dir() . '/' . $slug) || isset(self::all()[$slug]))) {
             return t('plugins.err_exists', ['name' => $m['name']]);
         }
-        $have = app_version();
-        if ($m['requires_app'] !== '' && $have !== '' && version_compare($have, $m['requires_app'], '<')) {
-            return t('plugins.err_requires_app', ['need' => $m['requires_app'], 'have' => $have]);
+        if (($why = self::compatProblem($m)) !== '') {
+            return $why;
         }
         foreach (self::all() as $s => $o) {
             if ($s !== $slug && $o['ok'] && array_intersect_key($o['m']['stores'], $m['stores'])) {
@@ -754,9 +804,10 @@ final class Plugins
     /**
      * Übernimmt ein geprüftes Paket (z. B. aus einem GitHub-Release) als inaktives Marktplatz-Plugin ins Archiv.
      * @param string $expectedSha SHA-256 aus dem Release (leer = nicht prüfen)
+     * @param array{slug?:string, version?:string} $expect Kennung/Version, die das Manifest im Paket haben muss (Release-Tag)
      * @return array{0:?string, 1:string} Slug oder Fehlertext
      */
-    public static function archive(string $zipFile, string $repo, string $expectedSha = ''): array
+    public static function archive(string $zipFile, string $repo, string $expectedSha = '', array $expect = []): array
     {
         if (!preg_match(self::REPO_RE, $repo)) {
             return [null, t('plugins.err_repo')];
@@ -770,7 +821,7 @@ final class Plugins
             return [null, $err];
         }
         $m = $r['m'];
-        if (($why = self::installProblem($m)) !== '') {
+        if (($why = self::expectProblem($m, $expect) ?: self::installProblem($m)) !== '') {
             return [null, $why];
         }
         if (($e = self::storeArchive($zipFile, $m, $sha)) !== null) {
@@ -790,7 +841,7 @@ final class Plugins
      * vorherige ZIP bleibt als Rückfall im Archiv.
      * @return array{0:?string, 1:string} Slug oder Fehlertext
      */
-    public static function update(string $zipFile, string $repo, string $expectedSha = ''): array
+    public static function update(string $zipFile, string $repo, string $expectedSha = '', array $expect = []): array
     {
         $sha = is_file($zipFile) ? (string)hash_file('sha256', $zipFile) : '';
         if ($expectedSha !== '' && !hash_equals(strtolower($expectedSha), $sha)) {
@@ -813,7 +864,7 @@ final class Plugins
         if (version_compare($m['version'], $old, '<=')) {
             return [null, t('plugins.err_not_newer')];
         }
-        if (($why = self::installProblem($m, true)) !== '') {
+        if (($why = self::expectProblem($m, $expect) ?: self::installProblem($m, true)) !== '') {
             return [null, $why];
         }
         $dir = self::dir() . '/' . $slug;
@@ -848,6 +899,7 @@ final class Plugins
         Store::update('market', function (array &$d) use ($slug, $m, $repo, $sha, $old, $pending) {
             $d['sources'][$slug] = ['repo' => $repo, 'version' => $m['version'], 'sha256' => $sha, 'installed' => now(),
                 'manifest' => $m, 'previous' => $old] + ($pending !== '' ? ['pending_from' => $pending] : []);
+            unset($d['updates'][$slug]);
         });
         self::pruneArchive($slug, [$m['version'], $old]);
         self::$all = null;
