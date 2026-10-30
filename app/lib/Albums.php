@@ -16,7 +16,46 @@ final class Albums
         return t('color.' . ltrim($hex, '#'));
     }
 
-    /** Direkte Unteralben (Heimat und Verweise), nach `sort`. */
+    /** Schlüssel der obersten Ebene in `ord`. */
+    public const ROOT = '_root';
+
+    /**
+     * Alben einer Ebene sortieren: erst die manuell geordneten (`ord[$key]`, `$key` = Eltern-ID oder ROOT),
+     * danach die übrigen (z. B. neue Alben) nach `sort`.
+     */
+    public static function sortLevel(array $list, string $key): array
+    {
+        usort($list, fn($a, $b) => [$a['ord'][$key] ?? PHP_INT_MAX, $a['sort'] ?? 0] <=> [$b['ord'][$key] ?? PHP_INT_MAX, $b['sort'] ?? 0]);
+        return $list;
+    }
+
+    /** Alben einer Ebene in Anzeigereihenfolge (`$key` = Eltern-ID oder ROOT). */
+    public static function level(array $albums, string $key): array
+    {
+        return $key === self::ROOT ? self::roots($albums) : self::children($albums, $key);
+    }
+
+    /** Ebene, in der das Album unter seinem Heimat-Elternalbum steht (Eltern-ID oder ROOT). */
+    public static function homeKey(array $albums, array $al): string
+    {
+        $p = (string)($al['parent'] ?? '');
+        return $p !== '' && find_by_id($albums, $p) ? $p : self::ROOT;
+    }
+
+    /** Speichert die Reihenfolge `$ids` für die Ebene `$key`; nicht genannte Alben der Ebene folgen am Ende. */
+    public static function applyOrder(array &$albums, string $key, array $ids): void
+    {
+        $current = array_column(self::level($albums, $key), 'id');
+        $ids = array_values(array_unique(array_intersect($ids, $current)));
+        $pos = array_flip(array_merge($ids, array_diff($current, $ids)));
+        foreach ($albums as &$al) {
+            if (isset($pos[$al['id']])) {
+                $al['ord'][$key] = $pos[$al['id']];
+            }
+        }
+    }
+
+    /** Direkte Unteralben (Heimat und Verweise), in der Reihenfolge dieses Elternalbums. */
     public static function children(array $albums, string $id): array
     {
         $out = [];
@@ -25,8 +64,7 @@ final class Albums
                 $out[] = $al;
             }
         }
-        usort($out, fn($a, $b) => ($a['sort'] ?? 0) <=> ($b['sort'] ?? 0));
-        return $out;
+        return self::sortLevel($out, $id);
     }
 
     /** ID des Albums und aller Nachfahren. */
@@ -45,14 +83,13 @@ final class Albums
         return array_map('strval', array_keys($seen));
     }
 
-    /** Wurzelalben: ohne Heimat-Elternalbum oder mit nicht mehr vorhandenem. */
+    /** Wurzelalben: ohne Heimat-Elternalbum oder mit nicht mehr vorhandenem, in der Reihenfolge der obersten Ebene. */
     public static function roots(array $albums): array
     {
         $ids = array_column($albums, 'id');
         $out = array_values(array_filter($albums,
             fn($al) => ($al['parent'] ?? '') === '' || !in_array($al['parent'], $ids, true)));
-        usort($out, fn($a, $b) => ($a['sort'] ?? 0) <=> ($b['sort'] ?? 0));
-        return $out;
+        return self::sortLevel($out, self::ROOT);
     }
 
     /** Tiefensuche ab `$rootId` (leer = ganzer Baum): [album, depth, path (Namen inkl. des Albums selbst)]. */

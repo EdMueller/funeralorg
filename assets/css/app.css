@@ -305,6 +305,9 @@ main.app-main { max-width: 1120px; margin: 0 auto; padding: 1.5rem 1rem 5rem; }
 .gallery-grid.sorting .g-item img { pointer-events: none; }
 .gallery-grid.sorting .g-item { touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .g-item.dragging { opacity: .35; }
+.album-bar.sorting a[data-id] { cursor: grab; border-style: dashed; border-color: var(--efeu); touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.album-bar.sorting a.dragging { opacity: .35; }
+.album-bar a.act.active { background: var(--schiefer); color: #fff; border-style: solid; }
 .cart-bar {
   position: fixed; left: 50%; transform: translateX(-50%); bottom: 1rem; z-index: 1030;
   background: var(--schiefer); color: #fff; border-radius: 2rem; padding: .45rem .5rem .45rem 1.1rem;

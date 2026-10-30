@@ -437,52 +437,33 @@
     });
   });
 
-  /* ---------- Galerie: Reihenfolge ändern (Ziehen, Touch: langer Druck, oder Pfeile) ---------- */
-  var sortGrid = document.getElementById('galleryGrid');
-  var sortBtn = $('[data-sort-toggle]');
-  if (sortGrid && sortBtn) {
-    var dragEl = null;
-    var before = '';
-    var order = function () { return $$('.g-item', sortGrid).map(function (i) { return i.dataset.id; }); };
-    var saveOrder = function () {
-      var fd = new FormData();
-      fd.append('album', sortGrid.dataset.orderAlbum);
-      order().forEach(function (id) { fd.append('ids[]', id); });
-      send(u('gallery', 'imgorder'), fd).catch(fail);
-    };
-    sortBtn.addEventListener('click', function () {
-      if (sortGrid.classList.contains('sorting')) { window.location.reload(); return; } // Lightbox-Indizes neu aufbauen
-      sortGrid.classList.add('sorting');
-      sortBtn.classList.add('active');
-      $('[data-sort-label]', sortBtn).textContent = sortBtn.dataset.done;
-      $$('.g-item', sortGrid).forEach(function (it) { it.draggable = true; });
+  /* ---------- Galerie: Reihenfolge ändern (Ziehen, Touch: langer Druck) ---------- */
+  // root = Container, sel = Elemente mit data-id, btn = Umschalter, save(ids) = Speichern der neuen Reihenfolge
+  function makeSortable(root, sel, btn, save, touchAfter) {
+    var dragEl = null, before = '';
+    var order = function () { return $$(sel, root).map(function (i) { return i.dataset.id; }); };
+    btn.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      if (root.classList.contains('sorting')) { window.location.reload(); return; } // Lightbox-Indizes bzw. Links neu aufbauen
+      root.classList.add('sorting');
+      btn.classList.add('active');
+      $('[data-sort-label]', btn).textContent = btn.dataset.done;
+      $$(sel, root).forEach(function (it) { it.draggable = true; });
     });
-    // im Sortiermodus weder Leuchtkasten öffnen noch Bild auswählen
-    sortGrid.addEventListener('click', function (ev) {
-      if (!sortGrid.classList.contains('sorting')) return;
-      var mv = ev.target.closest('[data-move]');
-      if (mv) {
-        var it = mv.closest('.g-item');
-        var dir = +mv.dataset.move;
-        var other = dir < 0 ? it.previousElementSibling : it.nextElementSibling;
-        if (other) { sortGrid.insertBefore(dir < 0 ? it : other, dir < 0 ? other : it); saveOrder(); mv.focus(); }
-      }
-      if (ev.target.closest('.open, .pick') || mv) { ev.stopPropagation(); ev.preventDefault(); }
-    }, true);
-    // Touch/Stift: langer Druck greift das Bild, danach folgt es dem Finger (HTML5-Drag gilt nur für die Maus)
+    // Touch/Stift: langer Druck greift das Element, danach folgt es dem Finger (HTML5-Drag gilt nur für die Maus)
     var touchEl = null, touchId = null, pressTimer = 0, startX = 0, startY = 0, touchType = false;
-    var touchEnd = function (save) {
+    var touchEnd = function (doSave) {
       clearTimeout(pressTimer);
       if (touchEl) {
         touchEl.classList.remove('dragging');
-        if (save && order().join() !== before) saveOrder();
+        if (doSave && order().join() !== before) save(order());
       }
       touchEl = null; touchId = null;
     };
-    sortGrid.addEventListener('pointerdown', function (ev) {
+    root.addEventListener('pointerdown', function (ev) {
       touchType = ev.pointerType !== 'mouse';
-      if (!touchType || !sortGrid.classList.contains('sorting') || ev.target.closest('[data-move]')) return;
-      var it = ev.target.closest('.g-item');
+      if (!touchType || !root.classList.contains('sorting') || ev.target.closest('[data-move]')) return;
+      var it = ev.target.closest(sel);
       if (!it) return;
       startX = ev.clientX; startY = ev.clientY; touchId = ev.pointerId;
       clearTimeout(pressTimer);
@@ -492,7 +473,7 @@
         if (navigator.vibrate) navigator.vibrate(15);
       }, 350);
     });
-    sortGrid.addEventListener('pointermove', function (ev) {
+    root.addEventListener('pointermove', function (ev) {
       if (ev.pointerId !== touchId) return;
       if (!touchEl) {
         // vor dem langen Druck bewegt: Scrollen, kein Greifen
@@ -500,42 +481,102 @@
         return;
       }
       var t = document.elementFromPoint(ev.clientX, ev.clientY);
-      t = t && t.closest('.g-item');
-      if (!t || t === touchEl || t.parentNode !== sortGrid) return;
-      var r = t.getBoundingClientRect();
-      var rowAfter = ev.clientY > r.bottom - r.height / 2 && ev.clientX > r.left + r.width / 2;
-      sortGrid.insertBefore(touchEl, rowAfter ? t.nextSibling : t);
+      t = t && t.closest(sel);
+      if (!t || t === touchEl || t.parentNode !== root) return;
+      root.insertBefore(touchEl, touchAfter(ev, t.getBoundingClientRect()) ? t.nextSibling : t);
     });
     ['pointerup', 'pointercancel'].forEach(function (n) {
-      sortGrid.addEventListener(n, function (ev) { if (ev.pointerId === touchId) touchEnd(n === 'pointerup'); });
+      root.addEventListener(n, function (ev) { if (ev.pointerId === touchId) touchEnd(n === 'pointerup'); });
     });
     // gegriffen: Seite nicht mehr scrollen
-    sortGrid.addEventListener('touchmove', function (ev) { if (touchEl) ev.preventDefault(); }, { passive: false });
-    sortGrid.addEventListener('contextmenu', function (ev) { if (touchType && sortGrid.classList.contains('sorting')) ev.preventDefault(); });
-    sortGrid.addEventListener('dragstart', function (ev) {
-      var it = ev.target.closest && ev.target.closest('.g-item');
-      if (!it || !sortGrid.classList.contains('sorting')) return;
+    root.addEventListener('touchmove', function (ev) { if (touchEl) ev.preventDefault(); }, { passive: false });
+    root.addEventListener('contextmenu', function (ev) { if (touchType && root.classList.contains('sorting')) ev.preventDefault(); });
+    root.addEventListener('dragstart', function (ev) {
+      var it = ev.target.closest && ev.target.closest(sel);
+      if (!it || !root.classList.contains('sorting')) return;
       if (touchType) { ev.preventDefault(); return; }
       dragEl = it; before = order().join();
       ev.dataTransfer.effectAllowed = 'move';
       ev.dataTransfer.setData('text/plain', it.dataset.id);
       setTimeout(function () { it.classList.add('dragging'); }, 0);
     });
-    sortGrid.addEventListener('dragover', function (ev) {
+    root.addEventListener('dragover', function (ev) {
       if (!dragEl) return;
       ev.preventDefault();
-      var t = ev.target.closest('.g-item');
-      if (!t || t === dragEl) return;
+      var t = ev.target.closest(sel);
+      if (!t || t === dragEl || t.parentNode !== root) return;
       var r = t.getBoundingClientRect();
-      var after = ev.clientX > r.left + r.width / 2;
-      sortGrid.insertBefore(dragEl, after ? t.nextSibling : t);
+      root.insertBefore(dragEl, ev.clientX > r.left + r.width / 2 ? t.nextSibling : t);
     });
-    sortGrid.addEventListener('drop', function (ev) { if (dragEl) ev.preventDefault(); });
-    sortGrid.addEventListener('dragend', function () {
+    root.addEventListener('drop', function (ev) { if (dragEl) ev.preventDefault(); });
+    root.addEventListener('dragend', function () {
       if (!dragEl) return;
       dragEl.classList.remove('dragging');
       dragEl = null;
-      if (order().join() !== before) saveOrder();
+      if (order().join() !== before) save(order());
+    });
+    return order;
+  }
+
+  var sortGrid = document.getElementById('galleryGrid');
+  var sortBtn = $('[data-sort-toggle]');
+  if (sortGrid && sortBtn) {
+    var gridSave = function (ids) {
+      var fd = new FormData();
+      fd.append('album', sortGrid.dataset.orderAlbum);
+      ids.forEach(function (id) { fd.append('ids[]', id); });
+      send(u('gallery', 'imgorder'), fd).catch(fail);
+    };
+    makeSortable(sortGrid, '.g-item', sortBtn, gridSave, function (ev, r) {
+      return ev.clientY > r.bottom - r.height / 2 && ev.clientX > r.left + r.width / 2;
+    });
+    // im Sortiermodus weder Leuchtkasten öffnen noch Bild auswählen; Pfeile verschieben um eine Stelle
+    sortGrid.addEventListener('click', function (ev) {
+      if (!sortGrid.classList.contains('sorting')) return;
+      var mv = ev.target.closest('[data-move]');
+      if (mv) {
+        var it = mv.closest('.g-item');
+        var dir = +mv.dataset.move;
+        var other = dir < 0 ? it.previousElementSibling : it.nextElementSibling;
+        if (other) {
+          sortGrid.insertBefore(dir < 0 ? it : other, dir < 0 ? other : it);
+          gridSave($$('.g-item', sortGrid).map(function (i) { return i.dataset.id; }));
+          mv.focus();
+        }
+      }
+      if (ev.target.closest('.open, .pick') || mv) { ev.stopPropagation(); ev.preventDefault(); }
+    }, true);
+  }
+
+  // Album-Leiste (Admin): Reihenfolge der Alben unter dem aktuellen Elternalbum
+  var albBar = $('[data-album-bar]');
+  var albBtn = $('[data-albsort-toggle]');
+  if (albBar && albBtn) {
+    var albSel = 'a[data-id]';
+    var albSave = function (ids) {
+      var fd = new FormData();
+      fd.append('parent', albBar.dataset.orderParent);
+      ids.forEach(function (id) { fd.append('ids[]', id); });
+      send(u('gallery', 'albumorder'), fd).catch(fail);
+    };
+    makeSortable(albBar, albSel, albBtn, albSave, function (ev, r) { return ev.clientX > r.left + r.width / 2; });
+    // im Sortiermodus nicht navigieren
+    albBar.addEventListener('click', function (ev) {
+      if (albBar.classList.contains('sorting') && ev.target.closest(albSel)) { ev.preventDefault(); ev.stopPropagation(); }
+    }, true);
+    // Tastatur: fokussiertes Album mit Pfeil links/rechts verschieben
+    albBar.addEventListener('keydown', function (ev) {
+      if (!albBar.classList.contains('sorting') || (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight')) return;
+      var it = ev.target.closest && ev.target.closest(albSel);
+      if (!it) return;
+      var left = ev.key === 'ArrowLeft';
+      var other = left ? it.previousElementSibling : it.nextElementSibling;
+      while (other && !other.matches(albSel)) other = left ? other.previousElementSibling : other.nextElementSibling;
+      if (!other) return;
+      ev.preventDefault();
+      albBar.insertBefore(left ? it : other, left ? other : it);
+      it.focus();
+      albSave($$(albSel, albBar).map(function (i) { return i.dataset.id; }));
     });
   }
 

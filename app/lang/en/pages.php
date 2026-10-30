@@ -138,6 +138,7 @@ return [
     'gal.to_back' => 'Back',
     'gal.sort_mode' => 'Change order',
     'gal.sort_done' => 'Done',
+    'gal.albums_sort' => 'Sort albums',
     'gal.sort_by' => 'Sort by',
     'gal.sort_uploaded' => 'Upload date (oldest first)',
     'gal.sort_uploaded_desc' => 'Upload date (newest first)',

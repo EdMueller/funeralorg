@@ -218,28 +218,43 @@ function ctrl_gallery(string $r, string $a): void
                 if (!$me) {
                     return null;
                 }
-                // Geschwister (gleiches Elternalbum) in aktueller Reihenfolge, dann tauschen und neu nummerieren
-                $keys = [];
-                foreach ($g['albums'] as $k => $al) {
-                    if (($al['parent'] ?? '') === ($me['parent'] ?? '')) {
-                        $keys[] = $k;
-                    }
-                }
-                usort($keys, fn($a, $b) => [$g['albums'][$a]['sort'] ?? 0, $a] <=> [$g['albums'][$b]['sort'] ?? 0, $b]);
-                $pos = array_search(array_search($id, array_column($g['albums'], 'id', null)), $keys, true);
+                // Geschwister unter dem Heimat-Elternalbum in aktueller Reihenfolge, dann tauschen
+                $key = Albums::homeKey($g['albums'], $me);
+                $ids = array_column(Albums::level($g['albums'], $key), 'id');
+                $pos = array_search($id, $ids, true);
                 $to = $pos + $dir;
-                if ($to >= 0 && $to < count($keys)) {
-                    [$keys[$pos], $keys[$to]] = [$keys[$to], $keys[$pos]];
+                if ($pos !== false && $to >= 0 && $to < count($ids)) {
+                    [$ids[$pos], $ids[$to]] = [$ids[$to], $ids[$pos]];
                 }
-                foreach ($keys as $n => $k) {
-                    $g['albums'][$k]['sort'] = $n;
-                }
+                Albums::applyOrder($g['albums'], $key, $ids);
                 return $me['name'];
             });
             if ($name !== null) {
                 Log::add('admin', 'Album verschoben (Reihenfolge): ' . $name);
             }
             redirect_back('gallery');
+
+        case 'albumorder':
+            if (!$isPost) {
+                abort(400);
+            }
+            Perm::needAdmin();
+            // Reihenfolge der Alben unter einem Elternalbum (leer = oberste Ebene); Verweise zählen mit
+            $parent = (string)post('parent');
+            $key = $parent === '' || $parent === Albums::ROOT ? Albums::ROOT : $parent;
+            $ids = array_map('strval', (array)($_POST['ids'] ?? []));
+            $done = Store::update('gallery', function (array &$g) use ($key, $ids) {
+                if ($key !== Albums::ROOT && !find_by_id($g['albums'], $key)) {
+                    return false;
+                }
+                Albums::applyOrder($g['albums'], $key, $ids);
+                return true;
+            });
+            if (!$done) {
+                abort(404);
+            }
+            Log::add('admin', 'Albenreihenfolge geändert' . ($key === Albums::ROOT ? '' : ': ' . find_by_id(Store::read('gallery')['albums'], $key)['name']));
+            json_out(['ok' => true]);
 
         case 'imgorder':
         case 'imgsortby':

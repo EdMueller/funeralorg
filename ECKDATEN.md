@@ -221,7 +221,8 @@ in `.htaccess` gesetzt) und nginx leiten selbstständig um.
 | `gallery` | `imgorder` | POST | Galerie hochladen | Bildreihenfolge eines Albums (`album`=ID oder `_none`, `ids[]` in neuer Reihenfolge), Antwort JSON |
 | `gallery` | `imgsortby` | POST | Galerie hochladen | Album sortieren (`by`=uploaded/uploaded_desc/name/caption) |
 | `gallery` | `edit` | POST | Admin oder Hochlader | Bildunterschrift, Album, `links[]` (weitere Alben), (Admin:) Anmeldeseite |
-| `gallery` | `albummove` (`dir`=up/down als Query) | POST | A | Album unter Geschwistern (gleiches `parent`) nach vorn/hinten, `sort` wird neu nummeriert |
+| `gallery` | `albummove` (`dir`=up/down als Query) | POST | A | Album unter Geschwistern (gleiches Heimat-Elternalbum) um eine Stelle nach vorn/hinten (Fallback ohne JS) |
+| `gallery` | `albumorder` | POST | A | Reihenfolge der Alben unter einem Elternalbum (`parent`=ID oder leer/`_root` für die oberste Ebene, `ids[]` in neuer Reihenfolge), Antwort JSON |
 | `gallery` | `delete` / `albumsave` / `albumdelete` | POST | A | Löschen, Alben (`parent`, `links[]`; Album löschen behält Unteralben und Bilder) |
 | `img` | – (`id`, `s`=thumb/medium/orig) | GET | Galerie ansehen; `orig` braucht Herunterladen | Bildauslieferung mit ETag |
 | `admin` | – (`days`) | GET | A | Dashboard |
@@ -334,7 +335,7 @@ Lebensdaten sind **Freitext** (Formatfreiheit, z. B. nur Jahr). `frame` ist eine
 ```json
 { "albums": [ { "id": "…", "name": "Kindheit", "sort": 0, "created": "…",
                   "cat": "Wohnorte|''", "color": "#4a5d4f|''",
-                  "parent": "<album-id>|''", "links": ["<album-id>", …], "hidden": false } ],
+                  "parent": "<album-id>|''", "links": ["<album-id>", …], "hidden": false, "ord": { "<eltern-id>|_root": 0 } } ],
   "images": [ { "id": "…", "ext": "jpg|png|gif|webp", "mime": "image/jpeg", "w": 1600, "h": 1200,
                 "size": 123456, "orig_name": "IMG_1234.jpg", "animated": false, "alpha": false,
                 "album": "<album-id>|''", "links": ["<album-id>", …], "caption": "", "login": false,
@@ -343,6 +344,8 @@ Lebensdaten sind **Freitext** (Formatfreiheit, z. B. nur Jahr). `frame` ist eine
 ```
 
 **Album-Hierarchie** (`app/lib/Albums.php`, alle Durchläufe schleifensicher): `parent` = Heimat-Elternalbum (leer = oberste Ebene, fehlend = leer), `links` = zusätzliche Eltern (Album erscheint auch dort, wird nicht kopiert). Bild: `album` = Heimatalbum, `links` = weitere Alben, in denen es erscheint. Beim Speichern sind Eltern/Verweise im eigenen Teilbaum gesperrt (Server und Modal). Ansicht eines Albums: Raster = direkte Bilder, Diashow/Leuchtkasten und „Dieses Album als ZIP“ = rekursiv inkl. Unteralben (ZIP mit Unterordnern; ein Bild liegt im Ordner seines Heimatalbums, Verweise nur als Rückfall). „Alle“ zeigt alle Bilder, Chips = oberste Alben. Album löschen: Unteralben und Bilder rücken in das Elternalbum auf, Verweise darauf entfallen. Verschieben setzt nur das Heimatalbum (`links` auf das Ziel entfallen).
+
+**Albenreihenfolge:** `ord[<eltern-id>|_root]` = Position des Albums unter diesem Elternalbum (`Albums::sortLevel()`/`level()`/`applyOrder()`); jedes Elternalbum hat seine eigene Reihenfolge, auch für Verweise (`links`). Alben ohne Eintrag (neu angelegt) folgen nach `sort`. Ändern im Sortiermodus der Album-Leiste (Admin, „Alben sortieren“): Ziehen (Maus), langer Druck und Ziehen (Touch/Stift) oder Pfeil links/rechts am fokussierten Album, gespeichert über `albumorder`. `sort` ist nur noch Rückfall.
 
 **Versteckte Alben:** `hidden` (nur Admin, `albumsave`/API `hidden`) macht ein Album samt Unteralben (über die Heimat-Eltern, `Albums::hiddenIds()`) für alle außer Admins unsichtbar. `Albums::forViewer($g)` filtert Alben und Bilder und wird überall dort vor dem Lesen angewandt: Übersicht/Zähler/Chips, Leuchtkasten/Diashow, `img` (404), `seen`, `select`, `cart`, `move`, `zip`, Upload-Ziel, `imgorder`/`imgsortby`, „Zuletzt hinzugefügt“ der Startseite, Stationen-Plugin (Bild/Diashow-Link, Albumliste) und Web-API/MCP (Token wirken mit den Rechten ihres Benutzers). Ein Bild bleibt sichtbar, wenn es zusätzlich (`links`) in einem sichtbaren Album erscheint; sein Heimatalbum ist dann das erste sichtbare. Nicht betroffen: Login-/Portraitbild (`pubimg`, bewusste Admin-Entscheidung). Admins sehen versteckte Alben mit Augen-Symbol (`bi-eye-slash`).
 
@@ -484,6 +487,7 @@ Format je Zeile (`data/logs/JJJJ-MM.jsonl`):
 | `data-pick="<bild-id>"`, `data-select-all` | Auswahl |
 | `data-open="<index>"`, `data-slideshow` | Leuchtkasten / Diashow |
 | `data-copy="<text>"` | in Zwischenablage kopieren |
+| `[data-album-bar]` (`data-order-parent`), `[data-albsort-toggle]`, `a[data-id]` | Album-Leiste: Sortiermodus für die Alben der aktuellen Ebene (`albumorder`); gemeinsame Logik `makeSortable()` mit dem Bildraster |
 | `table[data-sortable]` | Spaltenkopf-Klick sortiert die Tabelle (auf-/absteigend, `aria-sort`); `data-v` an einer Zelle liefert einen numerischen Sortierwert (z. B. Zeitstempel). Aktuell: Verwaltung → Protokoll |
 | `data-ct` (`#ctable`), `data-ct-search`, `data-ct-ids` (form) | Kontakt-Tabelle: Sortieren, Spaltenfilter, Spaltenauswahl (Rechtsklick auf Kopf), Breite ziehen, Inline-Bearbeitung (Doppelklick), Auswahl, Fußleiste, Rückgängig. Spalten kommen als JSON aus `#ctCols`; `data-ct-ids` hängt die Auswahl als `ids[]` an das Formular |
 | `data-view="cards\|table"` (Link) | merkt die Kontakt-Ansicht im Cookie `gdk_cview` |
