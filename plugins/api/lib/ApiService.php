@@ -615,9 +615,11 @@ final class ApiService
 
     private static function albumOut(array $al, array $g): array
     {
+        // `sort` = Position unter dem Heimat-Elternalbum, `ord` = Position je Elternalbum (`_root` = oberste Ebene), auch für Verweise
+        $pos = array_search($al['id'], array_column(Albums::level($g['albums'], Albums::homeKey($g['albums'], $al)), 'id'), true);
         return [
             'id' => $al['id'], 'name' => $al['name'], 'parent' => $al['parent'] ?? '', 'links' => array_values($al['links'] ?? []),
-            'cat' => $al['cat'] ?? '', 'color' => $al['color'] ?? '', 'sort' => $al['sort'] ?? 0,
+            'cat' => $al['cat'] ?? '', 'color' => $al['color'] ?? '', 'sort' => $pos === false ? 0 : $pos, 'ord' => (object)($al['ord'] ?? []),
             'hidden' => !empty($al['hidden']),
             'images' => count(Albums::images($g['images'], Albums::subtree($g['albums'], $al['id']))),
         ];
@@ -627,8 +629,9 @@ final class ApiService
     {
         self::needGallery();
         $g = Albums::forViewer(Store::read('gallery'));
-        usort($g['albums'], fn($x, $y) => ($x['sort'] ?? 0) <=> ($y['sort'] ?? 0));
-        return ['items' => array_map(fn($al) => self::albumOut($al, $g), $g['albums']),
+        // Baumreihenfolge: Elternalben vor ihren Unteralben, je Ebene in deren Reihenfolge
+        $items = array_map(fn($n) => self::albumOut($n['album'], $g), Albums::walk($g['albums']));
+        return ['items' => $items,
                 'unassigned' => count(array_filter($g['images'], fn($i) => $i['album'] === ''))];
     }
 
@@ -725,6 +728,24 @@ final class ApiService
         $order === null && self::missing();
         Log::change('gallery', 'Bildreihenfolge geändert', $key);
         return ['album' => $key, 'ids' => $order];
+    }
+
+    public static function albumOrder(array $a): array
+    {
+        self::needAdmin();
+        $key = (string)$a['id'];
+        $key = $key === '' ? Albums::ROOT : $key;
+        $ids = array_map('strval', (array)($a['ids'] ?? []));
+        $order = Store::update('gallery', function (array &$g) use ($key, $ids) {
+            if ($key !== Albums::ROOT && !find_by_id($g['albums'], $key)) {
+                return null;
+            }
+            Albums::applyOrder($g['albums'], $key, $ids);
+            return array_column(Albums::level($g['albums'], $key), 'id');
+        });
+        $order === null && self::missing();
+        Log::add('admin', 'Albenreihenfolge geändert');
+        return ['parent' => $key, 'ids' => $order];
     }
 
     public static function images(array $a): array

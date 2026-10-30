@@ -227,7 +227,13 @@ apicheck "Gedenkseite ändern" 200 "$TW" -X PATCH -H 'Content-Type: application/
 apicheck "Gedenkseite lesen" 200 "$TR" "$BASE?r=api&p=/memorial"
 [ "$(jq_ '$d["data"]["name"]')" = "Maria Muster" ] && ok "Gedenkseite aktualisiert" || fail "Gedenkseite unerwartet"
 apicheck "Album anlegen" 200 "$TW" -H 'Content-Type: application/json' -d '{"name":"Kindheit"}' "$BASE?r=api&p=/gallery/albums"
+AL1=$(jq_ '$d["data"]["id"]')
+apicheck "Zweites Album anlegen" 200 "$TW" -H 'Content-Type: application/json' -d '{"name":"Jugend"}' "$BASE?r=api&p=/gallery/albums"
+AL2=$(jq_ '$d["data"]["id"]')
+apicheck "Albenreihenfolge setzen" 200 "$TW" -X PUT -H 'Content-Type: application/json' -d "{\"ids\":[\"$AL2\",\"$AL1\"]}" "$BASE?r=api&p=/gallery/albums/_root/albums-order"
 apicheck "Alben lesen" 200 "$TR" "$BASE?r=api&p=/gallery/albums"
+[ "$(jq_ '$d["data"]["items"][0]["id"]')" = "$AL2" ] && ok "Alben in neuer Reihenfolge" || fail "Albenreihenfolge unerwartet"
+apicheck "Albenreihenfolge unter unbekanntem Album: 404" 404 "$TW" -X PUT -H 'Content-Type: application/json' -d '{"ids":[]}' "$BASE?r=api&p=/gallery/albums/gibtsnicht/albums-order"
 apicheck "Bilder lesen" 200 "$TR" "$BASE?r=api&p=/gallery/images"
 apicheck "Stationen lesen" 200 "$TR" "$BASE?r=api&p=/stations"
 apicheck "Kontakt löschen" 200 "$TW" -X DELETE "$BASE?r=api&p=/contacts/$CID"
