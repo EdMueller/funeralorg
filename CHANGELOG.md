@@ -5,6 +5,8 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+## [0.0.17] - 2026-10-30
+
 ### Added
 
 - Plugin marketplace on GitHub (Administration → Plugins → "Find plugins"): search repositories with the topic
@@ -211,7 +213,8 @@ First public release.
   `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `THIRD-PARTY.md`
 - GitHub Actions (syntax check, language files, smoke test on PHP 8.2 to 8.4) and issue/pull request templates
 
-[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.16...HEAD
+[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.17...HEAD
+[0.0.17]: https://github.com/EdMueller/funeralorg/compare/v0.0.16...v0.0.17
 [0.0.16]: https://github.com/EdMueller/funeralorg/compare/v0.0.15...v0.0.16
 [0.0.15]: https://github.com/EdMueller/funeralorg/compare/v0.0.14...v0.0.15
 [0.0.14]: https://github.com/EdMueller/funeralorg/compare/v0.0.13...v0.0.14

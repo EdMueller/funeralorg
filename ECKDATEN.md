@@ -1,7 +1,7 @@
 # ECKDATEN – Gedenkseite
 
 Technische Referenz für die Weiterentwicklung (PHPStorm, Claude Code).
-Stand: 30.10.2026 · Version 0.0.16
+Stand: 30.10.2026 · Version 0.0.17
 
 ---
 
