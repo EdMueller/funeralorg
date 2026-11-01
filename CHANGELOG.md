@@ -5,11 +5,7 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
-### Changed
-
-- Only administrators can change the order of pictures in an album (drag and drop, arrows, "sort by", and the web
-  API/MCP operation `gallery.order`). Uploads by other users are appended at the end of the album. Existing orders are
-  kept.
+## [0.0.18] - 2026-11-01
 
 ### Added
 
@@ -20,6 +16,12 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
   allowed. New groups start with the new options off; the default groups created by the setup get sensible values.
 - Plugin manifests can provide a display name and description per language (`i18n`); the Stations plugin is now
   called "Stations" in the English interface.
+
+### Changed
+
+- Only administrators can change the order of pictures in an album (drag and drop, arrows, "sort by", and the web
+  API/MCP operation `gallery.order`). Uploads by other users are appended at the end of the album. Existing orders are
+  kept.
 
 ## [0.0.17] - 2026-10-30
 
@@ -229,7 +231,8 @@ First public release.
   `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `THIRD-PARTY.md`
 - GitHub Actions (syntax check, language files, smoke test on PHP 8.2 to 8.4) and issue/pull request templates
 
-[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.17...HEAD
+[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.18...HEAD
+[0.0.18]: https://github.com/EdMueller/funeralorg/compare/v0.0.17...v0.0.18
 [0.0.17]: https://github.com/EdMueller/funeralorg/compare/v0.0.16...v0.0.17
 [0.0.16]: https://github.com/EdMueller/funeralorg/compare/v0.0.15...v0.0.16
 [0.0.15]: https://github.com/EdMueller/funeralorg/compare/v0.0.14...v0.0.15
