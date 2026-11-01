@@ -54,7 +54,7 @@
 <?php if ($recent): ?>
   <div class="d-flex align-items-baseline justify-content-between mt-4 mb-2">
     <h2 class="h3 m-0"><?= e(t('home.recent')) ?></h2>
-    <a href="<?= e(url('gallery')) ?>"><?= e(t('home.all_pictures')) ?></a>
+    <a href="<?= e(url('gallery')) ?>"><?= e(t(Perm::gallery('all') ? 'home.all_pictures' : 'home.to_gallery')) ?></a>
   </div>
   <div class="thumb-strip">
     <?php foreach ($recent as $img): ?>

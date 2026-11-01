@@ -165,7 +165,8 @@ final class Albums
     /**
      * Galerie-Daten aus Sicht des angemeldeten Benutzers: Admins sehen alles, alle anderen weder versteckte Alben
      * noch Bilder, die nur in versteckten Alben erscheinen. Ein Bild mit sichtbarem Verweis bleibt sichtbar;
-     * sein Heimatalbum ist dann das erste sichtbare.
+     * sein Heimatalbum ist dann das erste sichtbare. Ohne das Gruppenrecht „Alle Bilder“ (`Perm::gallery('all')`)
+     * entfallen zusätzlich Bilder ohne Album.
      */
     public static function forViewer(array $g): array
     {
@@ -173,7 +174,9 @@ final class Albums
             return $g;
         }
         $hidden = self::hiddenIds($g['albums']);
-        if (!$hidden) {
+        // Ohne das Gruppenrecht „Alle Bilder“ sind Bilder ohne Album unsichtbar (nur Alben und ihre Bilder)
+        $albumsOnly = !Perm::gallery('all');
+        if (!$hidden && !$albumsOnly) {
             return $g;
         }
         $g['albums'] = array_values(array_filter($g['albums'], fn($al) => !in_array($al['id'], $hidden, true)));
@@ -181,7 +184,7 @@ final class Albums
         foreach ($g['images'] as $i) {
             $all = self::ofImage($i);
             $vis = array_values(array_diff($all, $hidden));
-            if ($all && !$vis) {
+            if (($all || $albumsOnly) && !$vis) {
                 continue;
             }
             if ($all) {

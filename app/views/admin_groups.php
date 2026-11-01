@@ -37,10 +37,19 @@ foreach (array_merge([$blank], $groups) as $g):
     </div>
     <div class="col-sm-6 col-lg-3">
       <p class="fw-semibold small mb-2"><?= e(t('groups.gallery_title')) ?> <span class="fw-normal text-muted"><?= e(t('groups.login_only')) ?></span></p>
-      <?php foreach (['view' => t('groups.gal_view'), 'upload' => t('groups.gal_upload'), 'download' => t('groups.gal_download')] as $k => $lbl): ?>
-        <div class="form-check"><input class="form-check-input" type="checkbox" id="gal-<?= e($g['id'] . $k) ?>" name="gallery[<?= $k ?>]" value="1" <?= !empty($g['gallery'][$k]) ? 'checked' : '' ?>>
+      <?php foreach (Perm::galleryRights() as $k => $lbl):
+          $on = isset($g['gallery'][$k]) ? !empty($g['gallery'][$k]) : (!$isNew && in_array($k, Perm::GALLERY_DEFAULT_ON, true)); ?>
+        <div class="form-check"><input class="form-check-input" type="checkbox" id="gal-<?= e($g['id'] . $k) ?>" name="gallery[<?= $k ?>]" value="1" <?= $on ? 'checked' : '' ?>>
           <label class="form-check-label" for="gal-<?= e($g['id'] . $k) ?>"><?= e($lbl) ?></label></div>
       <?php endforeach; ?>
+      <p class="small text-muted mt-1 mb-0"><?= e(t('groups.gal_all_hint')) ?></p>
+      <p class="fw-semibold small mt-3 mb-2"><?= e(t('groups.plugins_title')) ?></p>
+      <?php foreach ($plugins as $slug => $pname):
+          $on = isset($g['plugins'][$slug]) ? !empty($g['plugins'][$slug]) : !$isNew; ?>
+        <div class="form-check"><input class="form-check-input" type="checkbox" id="plg-<?= e($g['id'] . $slug) ?>" name="plugin[<?= e($slug) ?>]" value="1" <?= $on ? 'checked' : '' ?>>
+          <label class="form-check-label" for="plg-<?= e($g['id'] . $slug) ?>"><?= e($pname) ?></label></div>
+      <?php endforeach; ?>
+      <p class="small text-muted mt-1 mb-0"><?= e(t($plugins ? 'groups.plugins_hint' : 'groups.plugins_none')) ?></p>
     </div>
   </div>
   <div class="d-flex gap-2 mt-3">

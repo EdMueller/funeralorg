@@ -152,6 +152,7 @@ return [
     'home.thanks_open' => ['one' => 'Dankeskarte noch zu schreiben', 'other' => 'Dankeskarten noch zu schreiben'],
     'home.recent' => 'Zuletzt hinzugefügte Bilder',
     'home.all_pictures' => 'Alle Bilder',
+    'home.to_gallery' => 'Zur Galerie',
     'person.no_name' => '(ohne Namen)',
     'person.landline' => 'Festnetz',
     'person.mobile' => 'Mobil',

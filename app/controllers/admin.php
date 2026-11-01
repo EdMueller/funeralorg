@@ -140,7 +140,7 @@ function ctrl_admin(string $r, string $a): void
             foreach (array_merge($users, $shares) as $x) {
                 $usage[$x['group_id'] ?? ''] = ($usage[$x['group_id'] ?? ''] ?? 0) + 1;
             }
-            view('admin_groups', ['groups' => Store::read('groups'), 'usage' => $usage]);
+            view('admin_groups', ['groups' => Store::read('groups'), 'usage' => $usage, 'plugins' => admin_group_plugins()]);
             return;
 
         case 'groupsave':
@@ -158,20 +158,24 @@ function ctrl_admin(string $r, string $a): void
             foreach (Perm::FIELDS as $f) {
                 $fields[$f] = !empty($_POST['field'][$f]);
             }
-            $gallery = [
-                'view'     => !empty($_POST['gallery']['view']),
-                'upload'   => !empty($_POST['gallery']['upload']),
-                'download' => !empty($_POST['gallery']['download']),
-            ];
+            $gallery = [];
+            foreach (Perm::GALLERY_RIGHTS as $k) {
+                $gallery[$k] = !empty($_POST['gallery'][$k]);
+            }
+            // nur die angezeigten (aktiven) Plugins; Werte inaktiver Plugins bleiben unverändert erhalten
+            $pluginFlags = [];
+            foreach (array_keys(admin_group_plugins()) as $slug) {
+                $pluginFlags[$slug] = !empty($_POST['plugin'][$slug]);
+            }
             $data = compact('name', 'perms', 'fields', 'gallery');
-            Store::update('groups', function (array &$groups) use ($id, $data) {
+            Store::update('groups', function (array &$groups) use ($id, $data, $pluginFlags) {
                 foreach ($groups as &$g) {
                     if ($g['id'] === $id) {
-                        $g = array_merge($g, $data);
+                        $g = array_merge($g, $data, ['plugins' => array_merge($g['plugins'] ?? [], $pluginFlags)]);
                         return;
                     }
                 }
-                $groups[] = $data + ['id' => new_id()];
+                $groups[] = $data + ['plugins' => $pluginFlags, 'id' => new_id()];
             });
             Log::add('admin', 'Gruppe gespeichert: ' . $name);
             flash(t('groups.saved', ['name' => $name]));
@@ -439,6 +443,18 @@ function ctrl_admin(string $r, string $a): void
         'images' => $images,
         'users'  => Store::read('users'),
     ]);
+}
+
+/** Aktive, geladene Plugins für die Gruppenrechte: Slug => Anzeigename. @return array<string, string> */
+function admin_group_plugins(): array
+{
+    $out = [];
+    foreach (Plugins::all() as $slug => $p) {
+        if ($p['ok'] && Plugins::isActive($slug)) {
+            $out[$slug] = (string)($p['m']['name'] ?? $slug);
+        }
+    }
+    return $out;
 }
 
 function log_details(array $r): string

@@ -81,6 +81,23 @@ final class Perm
         return Auth::check() && !Auth::isShare();
     }
 
+    /**
+     * Galerierechte einer Gruppe (`group.gallery`). `recent` und `all` sind Einschränkungen: Fehlt der Schlüssel
+     * (Gruppe vor ihrer Einführung gespeichert), gilt das Recht als erteilt, bestehende Gruppen ändern sich nicht.
+     */
+    public const GALLERY_RIGHTS = ['view', 'upload', 'download', 'recent', 'all'];
+    public const GALLERY_DEFAULT_ON = ['recent', 'all'];
+
+    /** @return array<string, string> Recht => übersetzte Beschriftung */
+    public static function galleryRights(): array
+    {
+        return array_combine(self::GALLERY_RIGHTS, array_map(fn($k) => t('groups.gal_' . $k), self::GALLERY_RIGHTS));
+    }
+
+    /**
+     * Galerie: `view`, `upload`, `download`, `recent` (Block „Zuletzt hinzugefügte Bilder“),
+     * `all` (Gesamtübersicht aller Bilder; ohne das Recht nur Alben).
+     */
     public static function gallery(string $what = 'view'): bool
     {
         if (!Auth::check() || Auth::isShare()) {
@@ -93,7 +110,28 @@ final class Perm
         if (empty($g['view'])) {
             return false;
         }
-        return $what === 'view' ? true : !empty($g[$what]);
+        if ($what === 'view') {
+            return true;
+        }
+        if (in_array($what, self::GALLERY_DEFAULT_ON, true)) {
+            return (bool)($g[$what] ?? true);
+        }
+        return !empty($g[$what]);
+    }
+
+    /**
+     * Darf die Gruppe des Benutzers das Plugin nutzen? Fehlt der Eintrag (Gruppe vor dem Plugin gespeichert), gilt
+     * das Plugin als freigegeben. Admins dürfen immer.
+     */
+    public static function plugin(string $slug): bool
+    {
+        if (!Auth::check()) {
+            return false;
+        }
+        if (Auth::isAdmin()) {
+            return true;
+        }
+        return (bool)(self::group()['plugins'][$slug] ?? true);
     }
 
     public static function needAdmin(): void

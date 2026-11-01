@@ -85,7 +85,8 @@ final class ApiService
             'permissions' => [
                 'modules' => $levels, // 0 keine, 1 lesen, 2 abhaken, 3 bearbeiten
                 'fields' => $fields,
-                'gallery' => ['view' => Perm::gallery(), 'upload' => Perm::gallery('upload'), 'download' => Perm::gallery('download')],
+                'gallery' => ['view' => Perm::gallery(), 'upload' => Perm::gallery('upload'), 'download' => Perm::gallery('download'),
+                              'recent' => Perm::gallery('recent'), 'all' => Perm::gallery('all')],
                 'memorial' => Perm::memorial(),
             ],
         ];
@@ -761,6 +762,7 @@ final class ApiService
             $list = Albums::images($g['images'], $rec ? Albums::subtree($g['albums'], $album) : [$album]);
             $list = $rec ? $list : Albums::sortIn($list, $album);
         } else {
+            Perm::gallery('all') || self::deny(t('gal.denied_all'));
             $list = $g['images'];
         }
         [$limit, $offset] = self::page($a);
@@ -795,6 +797,9 @@ final class ApiService
                 }
                 if (array_key_exists('album', $a)) {
                     $alb = (string)$a['album'];
+                    if ($alb === '' && !Perm::gallery('all')) {
+                        $alb = (string)$i['album']; // ohne „Alle Bilder“ nicht in „Ohne Album“ verschieben
+                    }
                     $i['album'] = in_array($alb, array_column($g['albums'], 'id'), true) ? $alb : '';
                 }
                 if (array_key_exists('links', $a) || array_key_exists('album', $a)) {

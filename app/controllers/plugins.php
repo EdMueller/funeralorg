@@ -8,6 +8,9 @@ function ctrl_plugins(string $r, string $a): void
     if ($file === null) {
         abort(404);
     }
+    if (!Perm::plugin((string)get('p'))) {
+        abort(403, t('perm.denied'));
+    }
     $etag = '"' . md5($file . filemtime($file) . filesize($file)) . '"';
     header('Content-Type: ' . Plugins::ASSET_MIME[strtolower(pathinfo($file, PATHINFO_EXTENSION))]);
     header('Cache-Control: private, max-age=2592000');

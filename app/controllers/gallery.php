@@ -99,6 +99,10 @@ function ctrl_gallery(string $r, string $a): void
                 abort(403);
             }
             $target = (string)post('album');
+            if ($target === '' && !Perm::gallery('all')) {
+                flash(t('gal.err_need_album'), 'warning');
+                redirect_back('gallery');
+            }
             $isAdmin = Auth::isAdmin();
             $seen = Albums::forViewer(Store::read('gallery'));
             $sel = array_values(array_intersect(Store::read('selections')[$uid] ?? [], array_column($seen['images'], 'id')));
@@ -166,6 +170,9 @@ function ctrl_gallery(string $r, string $a): void
         case 'zip':
             if (!Perm::gallery('download')) {
                 abort(403);
+            }
+            if (get('what') === 'all' && !Perm::gallery('all')) {
+                abort(403, t('gal.denied_all'));
             }
             gallery_zip((string)get('what'), (string)get('album'), $uid);
 
@@ -341,6 +348,9 @@ function ctrl_gallery(string $r, string $a): void
                     if ($i['id'] === $id) {
                         $i['caption'] = mb_substr((string)post('caption'), 0, 300);
                         $alb = (string)post('album');
+                        if ($alb === '' && !Perm::gallery('all')) {
+                            $alb = (string)$i['album']; // ohne „Alle Bilder“ nicht in „Ohne Album“ verschieben
+                        }
                         $i['album'] = in_array($alb, $albumIds, true) ? $alb : '';
                         $i['links'] = Albums::cleanLinks($g['albums'], $_POST['links'] ?? [], [$i['album']]);
                         if (Auth::isAdmin()) {
@@ -390,7 +400,11 @@ function ctrl_gallery(string $r, string $a): void
         $album = '';
     }
     // Raster: Bilder direkt in diesem Album; Diashow/Leuchtkasten: zusätzlich alle Unteralben (rekursiv)
-    $images = $slides = $g['images'];
+    $canAll = Perm::gallery('all');
+    $images = $slides = $canAll ? $g['images'] : []; // ohne „Alle Bilder“: auf der obersten Ebene nur die Alben
+    if ($album === '_none' && !$canAll) {
+        $album = '';
+    }
     if ($album === '_none') {
         $images = $slides = Albums::sortIn(array_values(array_filter($g['images'], fn($i) => $i['album'] === '')), '_none');
     } elseif ($album !== '') {
@@ -416,6 +430,7 @@ function ctrl_gallery(string $r, string $a): void
         'counts'    => $counts,
         'total'     => count($g['images']),
         'selected'  => array_values(array_intersect($sel, array_column($g['images'], 'id'))),
+        'canAll'    => $canAll,
         'canUpload' => Perm::gallery('upload'),
         'canDl'     => Perm::gallery('download'),
         'uid'       => $uid,
@@ -474,6 +489,9 @@ function gallery_upload(): never
     $g = Albums::forViewer(Store::read('gallery'));
     if ($album !== '' && !find_by_id($g['albums'], $album)) {
         $album = '';
+    }
+    if ($album === '' && !Perm::gallery('all')) {
+        json_out(['ok' => false, 'error' => t('gal.err_need_album')], 400);
     }
     $max = (int)cfg('upload_max_mb', 40) * 1024 * 1024;
     $u = Auth::user();

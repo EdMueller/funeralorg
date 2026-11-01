@@ -59,15 +59,18 @@ final class Setup
                 $all = array_fill_keys(Perm::MODULES, Perm::EDIT);
                 $allFields = array_fill_keys(Perm::FIELDS, true);
                 $g[] = ['id' => new_id(), 'name' => t('setup.group_family'), 'perms' => $all, 'fields' => $allFields,
-                        'gallery' => ['view' => true, 'upload' => true, 'download' => true]];
+                        'gallery' => ['view' => true, 'upload' => true, 'download' => true, 'recent' => true, 'all' => true],
+                        'plugins' => ['stations' => true]];
                 $g[] = ['id' => new_id(), 'name' => t('setup.group_helpers'),
                         'perms' => ['checklist' => Perm::CHECK, 'contacts' => Perm::CHECK, 'rsvp' => Perm::CHECK, 'condolences' => Perm::NONE],
                         'fields' => ['address' => false, 'phone' => true, 'mobile' => true, 'email' => false],
-                        'gallery' => ['view' => true, 'upload' => true, 'download' => false]];
+                        'gallery' => ['view' => true, 'upload' => true, 'download' => false, 'recent' => true, 'all' => true],
+                        'plugins' => ['stations' => true]];
                 $g[] = ['id' => new_id(), 'name' => t('setup.group_caterer'),
                         'perms' => ['checklist' => Perm::NONE, 'contacts' => Perm::NONE, 'rsvp' => Perm::READ, 'condolences' => Perm::NONE],
                         'fields' => ['address' => false, 'phone' => false, 'mobile' => false, 'email' => false],
-                        'gallery' => ['view' => false, 'upload' => false, 'download' => false]];
+                        'gallery' => ['view' => false, 'upload' => false, 'download' => false, 'recent' => false, 'all' => false],
+                        'plugins' => ['stations' => false]];
             }
             return $g;
         });

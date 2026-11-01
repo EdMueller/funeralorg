@@ -388,6 +388,57 @@ C=$(csrf home)
 check "Logout beendet nur die Übernahme" 302 -d "_csrf=$C" "$BASE?r=logout"
 check "Danach wieder Administrator" 200 "$BASE?r=admin&a=users"
 
+echo "Gruppenrechte: Galerie und Plugins"
+gq() { php -r '$d = json_decode(file_get_contents($argv[1]), true); eval($argv[2]);' "$TMP/app/data/$1.json" "$2"; }
+C=$(csrf gallery)
+check "Album anlegen" 302 -d "_csrf=$C&name=Album-A" "$BASE?r=gallery&a=albumsave"
+ALB=$(gq gallery 'echo $d["albums"][0]["id"];')
+check "Bild im Album hochladen" 200 -H 'X-Requested-With: fetch' -F "_csrf=$C" -F "album=$ALB" -F "files[]=@$TMP/pic.jpg" "$BASE?r=gallery&a=upload"
+check "Bild ohne Album hochladen" 200 -H 'X-Requested-With: fetch' -F "_csrf=$C" -F "album=" -F "files[]=@$TMP/pic.jpg" "$BASE?r=gallery&a=upload"
+IMG_A=$(gq gallery 'foreach ($d["images"] as $i) { if ($i["album"] !== "") echo $i["id"]; }')
+IMG_N=$(gq gallery 'foreach ($d["images"] as $i) { if ($i["album"] === "") echo $i["id"]; }')
+C=$(csrf "admin&a=groups")
+check "Eingeschränkte Gruppe anlegen" 302 -d "_csrf=$C&name=Eingeschraenkt&perm[checklist]=1&gallery[view]=1&gallery[upload]=1&gallery[download]=1" "$BASE?r=admin&a=groupsave"
+GID=$(gq groups 'foreach ($d as $g) { if ($g["name"] === "Eingeschraenkt") echo $g["id"]; }')
+[ "$(gq groups 'foreach ($d as $g) { if ($g["id"] === "'$GID'") echo json_encode([$g["gallery"]["recent"], $g["gallery"]["all"], $g["plugins"]["stations"]]); }')" = "[false,false,false]" ] \
+  && ok "Neue Gruppe: Häkchen für Block, Gesamtübersicht und Plugin sind aus" || fail "Neue Gruppe: Rechte falsch gespeichert"
+P=$(curl -s -b "$JAR" "$BASE?r=admin&a=groups")
+has "$P" 'name="gallery[recent]"' "Gruppenformular: Block „Zuletzt hinzugefügte Bilder“"
+has "$P" 'name="gallery[all]"' "Gruppenformular: Gesamtübersicht"
+has "$P" 'name="plugin[stations]"' "Gruppenformular: Plugin Stationen"
+PA=$(curl -s -b "$JAR" "$BASE?r=home")
+has "$PA" "Zuletzt hinzugefügte Bilder" "Admin sieht den Block „Zuletzt hinzugefügte Bilder“"
+has "$PA" 'r=stations"' "Admin sieht Stationen im Menü"
+C=$(csrf "admin&a=users")
+check "Eingeschränkten Benutzer anlegen" 302 -d "_csrf=$C&username=bert&name=Bert&password=bertbert-1234&role=user&group_id=$GID&active=1" "$BASE?r=admin&a=usersave"
+JAR_ADMIN=$JAR; JAR="$TMP/cookies-bert.txt"
+C=$(csrf login)
+check "Anmeldung als eingeschränkter Benutzer" 302 -d "_csrf=$C&username=bert&password=bertbert-1234" "$BASE?r=login"
+P=$(curl -s -b "$JAR" "$BASE?r=home")
+hasnot "$P" "Zuletzt hinzugefügte Bilder" "Ohne Recht kein Block „Zuletzt hinzugefügte Bilder“"
+hasnot "$P" 'r=stations"' "Ohne Plugin-Recht kein Menüpunkt Stationen"
+check "Stationen ohne Plugin-Recht: 403" 403 "$BASE?r=stations"
+check "Plugin-Asset ohne Plugin-Recht: 403" 403 "$BASE?r=pluginasset&p=stations&f=css/stations.css"
+P=$(curl -s -b "$JAR" "$BASE?r=gallery")
+has "$P" "Album-A" "Galerie: Album ist erreichbar"
+has "$P" "Wähle ein Album" "Galerie ohne Gesamtübersicht: Hinweis auf die Alben"
+hasnot "$P" "$IMG_A" "Galerie: oberste Ebene zeigt keine Bilder"
+P=$(curl -s -b "$JAR" "$BASE?r=gallery&album=$ALB")
+has "$P" "$IMG_A" "Album zeigt seine Bilder"
+check "Gesamt-ZIP ohne Recht: 403" 403 "$BASE?r=gallery&a=zip&what=all"
+check "Bild im Album: erreichbar" 200 "$BASE?r=img&id=$IMG_A&s=thumb"
+check "Bild ohne Album: nicht erreichbar" 404 "$BASE?r=img&id=$IMG_N&s=thumb"
+C=$(csrf gallery)
+check "Upload ohne Album abgelehnt" 400 -H 'X-Requested-With: fetch' -F "_csrf=$C" -F "album=" -F "files[]=@$TMP/pic.jpg" "$BASE?r=gallery&a=upload"
+check "Upload in ein Album" 200 -H 'X-Requested-With: fetch' -F "_csrf=$C" -F "album=$ALB" -F "files[]=@$TMP/pic.jpg" "$BASE?r=gallery&a=upload"
+# Gruppen ohne die neuen Schlüssel (vor dieser Version gespeichert): alles bleibt erlaubt
+php -r '$f = $argv[1]; $d = json_decode(file_get_contents($f), true); foreach ($d as &$g) { if ($g["id"] === $argv[2]) { unset($g["gallery"]["recent"], $g["gallery"]["all"], $g["plugins"]); } } file_put_contents($f, json_encode($d));' "$TMP/app/data/groups.json" "$GID"
+check "Alte Gruppe ohne Plugin-Eintrag: Stationen erlaubt" 200 "$BASE?r=stations"
+has "$(curl -s -b "$JAR" "$BASE?r=home")" "Zuletzt hinzugefügte Bilder" "Alte Gruppe: Block bleibt sichtbar"
+check "Alte Gruppe: Bild ohne Album sichtbar" 200 "$BASE?r=img&id=$IMG_N&s=thumb"
+JAR=$JAR_ADMIN
+check "Admin: Stationen unverändert erreichbar" 200 "$BASE?r=stations"
+
 echo "Abmelden"
 C=$(csrf home)
 check "Logout" 302 -d "_csrf=$C" "$BASE?r=logout"

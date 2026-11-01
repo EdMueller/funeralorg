@@ -266,6 +266,10 @@ final class Plugins
         if (!$rt || !$base || !$file || !is_file($file) || !str_starts_with($file, $base . DIRECTORY_SEPARATOR)) {
             abort(404);
         }
+        // Gruppenrecht je Plugin; API-Routen authentifizieren sich selbst (Token) und stehen außerhalb der Gruppenprüfung
+        if (empty($rt['api']) && !Perm::plugin($rt['slug'])) {
+            abort(403, t('perm.denied'));
+        }
         require_once $file;
         if (!is_callable($rt['fn'])) {
             abort(404);
@@ -277,7 +281,7 @@ final class Plugins
     public static function applyNav(array $nav): array
     {
         foreach (self::$nav as $n) {
-            if (isset($nav[$n['route']]) || ($n['visible'] !== null && !($n['visible'])())) {
+            if (isset($nav[$n['route']]) || !Perm::plugin($n['slug']) || ($n['visible'] !== null && !($n['visible'])())) {
                 continue;
             }
             $entry = [t($n['label']), $n['icon']];
@@ -314,7 +318,7 @@ final class Plugins
             $json = @file_get_contents($d . '/plugin.json');
             [$m, $err] = self::parseManifest($json === false ? '' : $json, $slug);
             $out[$slug] = ['slug' => $slug, 'dir' => $d, 'ok' => $m !== null, 'error' => $err,
-                'm' => $m ?? self::blankManifest($slug), 'archived' => false];
+                'm' => self::localize($m ?? self::blankManifest($slug)), 'archived' => false];
         }
         // Marktplatz-Plugins, die inaktiv nur als ZIP im Archiv liegen (Manifest aus der Herkunft, ohne die ZIP zu öffnen)
         foreach (self::sources() as $slug => $src) {
@@ -325,17 +329,32 @@ final class Plugins
             }
             $m = is_array($src['manifest'] ?? null) ? array_replace(self::blankManifest($slug), $src['manifest']) : null;
             $out[$slug] = ['slug' => $slug, 'dir' => '', 'ok' => $m !== null, 'error' => $m === null ? t('plugins.err_manifest_json') : '',
-                'm' => $m ?? self::blankManifest($slug), 'archived' => true];
+                'm' => self::localize($m ?? self::blankManifest($slug)), 'archived' => true];
         }
         ksort($out);
         return self::$all = $out;
+    }
+
+    /** Setzt Name und Beschreibung in der aktiven Sprache ein, wenn das Manifest sie unter `i18n.<sprache>` liefert. */
+    private static function localize(array $m): array
+    {
+        $t = $m['i18n'][I18n::lang()] ?? null;
+        if (is_array($t)) {
+            foreach (['name', 'description'] as $k) {
+                if (!empty($t[$k]) && is_string($t[$k])) {
+                    $m[$k] = $t[$k];
+                }
+            }
+        }
+        return $m;
     }
 
     private static function blankManifest(string $slug): array
     {
         return ['slug' => $slug, 'name' => $slug, 'version' => '', 'description' => '', 'author' => '',
             'requires_app' => '', 'requires' => [], 'stores' => [], 'core' => false, 'default_active' => false,
-            'requires_php' => '', 'permissions' => [], 'repository' => '', 'license' => '', 'audit' => ['commit' => '', 'report' => '']];
+            'requires_php' => '', 'permissions' => [], 'repository' => '', 'license' => '', 'audit' => ['commit' => '', 'report' => ''],
+            'i18n' => []];
     }
 
     /** @return array{0:?array, 1:string} Manifest oder Fehlertext */
@@ -401,8 +420,20 @@ final class Plugins
             || ($report !== '' && !preg_match('~^[A-Za-z0-9_][A-Za-z0-9_./-]{0,98}$~', $report))) {
             return [null, t('plugins.err_manifest_field', ['field' => 'audit'])];
         }
+        // optional: Anzeigename und Beschreibung je Sprache (`i18n.<sprache>.name|description`); Unbrauchbares wird ignoriert
+        $i18n = [];
+        foreach (is_array($d['i18n'] ?? null) ? $d['i18n'] : [] as $lang => $texts) {
+            if (!isset(I18n::LANGS[$lang]) || !is_array($texts)) {
+                continue;
+            }
+            $n = trim((string)($texts['name'] ?? ''));
+            $desc = trim((string)($texts['description'] ?? ''));
+            if (($n !== '' && mb_strlen($n) <= 80) || $desc !== '') {
+                $i18n[$lang] = array_filter(['name' => mb_strlen($n) <= 80 ? $n : '', 'description' => mb_substr($desc, 0, 400)], fn($x) => $x !== '');
+            }
+        }
         return [[
-            'requires_php' => $reqPhp, 'permissions' => array_values(array_unique($perms)), 'repository' => $repo,
+            'i18n' => $i18n, 'requires_php' => $reqPhp, 'permissions' => array_values(array_unique($perms)), 'repository' => $repo,
             'license' => mb_substr(trim((string)($d['license'] ?? '')), 0, 40), 'audit' => ['commit' => $commit, 'report' => $report],
             'slug' => $slug, 'name' => $name, 'version' => $version,
             'description' => mb_substr(trim((string)($d['description'] ?? '')), 0, 400),

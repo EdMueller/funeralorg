@@ -69,7 +69,7 @@ Beim Apache wird der `Authorization`-Header per `.htaccess` an PHP durchgereicht
 | `DELETE` | `/gallery/albums/{id}` | schreiben | Album löschen; Unteralben und Bilder rücken in das übergeordnete Album auf |
 | `PUT` | `/gallery/albums/{id}/albums-order` | schreiben | Reihenfolge der Alben unter einem Elternalbum setzen (`id` = Album-ID oder `_root` für die oberste Ebene, `ids` in neuer Reihenfolge; Verweise zählen mit); nur Administratoren |
 | `PUT` | `/gallery/albums/{id}/order` | schreiben | Reihenfolge der Bilder eines Albums setzen (`id` = Album-ID oder `_none`); Recht „Galerie hochladen“ |
-| `GET` | `/gallery/images` | lesen | Bilder auflisten (Metadaten, ohne Bilddaten) |
+| `GET` | `/gallery/images` | lesen | Bilder auflisten (Metadaten, ohne Bilddaten); ohne `album` nur mit dem Gruppenrecht „Alle Bilder“ (sonst 403), Bilder ohne Album sieht dann niemand ohne dieses Recht |
 | `GET` | `/gallery/images/{id}` | lesen | Bild-Metadaten lesen |
 | `PATCH` | `/gallery/images/{id}` | schreiben | Bildunterschrift/Album/Verweise ändern (Administratoren oder Hochlader des Bildes); `login` nur Administratoren |
 | `DELETE` | `/gallery/images/{id}` | schreiben | Bild samt Dateien löschen (nur Administratoren) |

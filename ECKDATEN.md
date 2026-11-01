@@ -261,15 +261,16 @@ Regel: **Jede zustandsändernde Aktion ist POST** (CSRF-geschützt). GET-Aktione
 - Bereiche (`Perm::MODULES`): `checklist`, `contacts`, `rsvp`, `condolences`.
 - Feldrechte (`Perm::FIELDS`): `address` (Straße/PLZ/Ort/Bundesland/Land), `phone`, `mobile`, `email`.
   Nicht erlaubte Felder werden **nicht ausgegeben, nicht exportiert und beim Speichern nicht überschrieben** (`Contacts::fromForm`).
-- Galerie (`group.gallery`): `view`, `upload`, `download`. Gedenkseite sichtbar für alle angemeldeten Benutzer.
+- Galerie (`group.gallery`): `view`, `upload`, `download` sowie die Einschränkungen `recent` (Block „Zuletzt hinzugefügte Bilder“ auf der Startseite) und `all` (Gesamtübersicht aller Bilder). **Fehlt `recent`/`all` in einer Gruppe (vor dieser Funktion gespeichert), gilt das Recht als erteilt** (`Perm::gallery()`, `Perm::GALLERY_DEFAULT_ON`). Ohne `all` sehen Mitglieder nur Alben und die Bilder darin: `Albums::forViewer()` entfernt Bilder ohne Album (Raster, Leuchtkasten, `img`, Auswahl, ZIP, API), die oberste Galerieebene zeigt nur die Albenleiste, `zip&what=all` und die Web-API-Liste ohne Album liefern 403, Upload und Verschieben in „Ohne Album“ sind gesperrt. Gedenkseite sichtbar für alle angemeldeten Benutzer.
+- Plugins (`group.plugins`, Slug → bool): `Perm::plugin($slug)`. Fehlt der Eintrag, gilt das Plugin als freigegeben. Die Prüfung steht zentral in `Plugins::call()` (403), `Plugins::applyNav()` (Menüpunkt) und der Route `pluginasset`; Plugins müssen nichts tun. **Ausnahme:** `apiRoute()`-Routen (Token-Zugriff) stehen außerhalb der Gruppenprüfung; die Operation `stations` der Web-API prüft das Recht selbst (`ApiSpec::available()`). Admins dürfen immer.
 - **Freigabelinks** (`Auth::isShare()`): erben Gruppenrechte, sehen **nie** Gedenkseite und Galerie, haben keinen Abmelden-Knopf, sehen einen Hinweisbalken. Ungültig bei `revoked` oder abgelaufenem `expires` (Ende des Tages). Ein angemeldeter Benutzer behält beim Öffnen eines Links seine Sitzung.
 - Standardgruppen aus `Setup::create()`:
 
-| Gruppe | Aufgaben | Kontakte | Zu/Absagen | Kondolenzen | Felder | Galerie |
-|---|---|---|---|---|---|---|
-| Familie | E | E | E | E | alle | ansehen, hochladen, herunterladen |
-| Helfer | C | C | C | – | Festnetz, Mobil | ansehen, hochladen |
-| Gasthaus / Caterer | – | – | R | – | keine | – |
+| Gruppe | Aufgaben | Kontakte | Zu/Absagen | Kondolenzen | Felder | Galerie | Plugin Stationen |
+|---|---|---|---|---|---|---|---|
+| Familie | E | E | E | E | alle | ansehen, hochladen, herunterladen, „Zuletzt“, „Alle Bilder“ | ja |
+| Helfer | C | C | C | – | Festnetz, Mobil | ansehen, hochladen, „Zuletzt“, „Alle Bilder“ | ja |
+| Gasthaus / Caterer | – | – | R | – | keine | – | nein |
 
 ---
 
@@ -291,8 +292,10 @@ Standardinhalte: `Store::DEFAULTS`. Fehlende Felder in Kontakten werden über `C
 { "id": "…", "name": "Familie",
   "perms":   { "checklist": 3, "contacts": 3, "rsvp": 3, "condolences": 3 },
   "fields":  { "address": true, "phone": true, "mobile": true, "email": true },
-  "gallery": { "view": true, "upload": true, "download": true } }
+  "gallery": { "view": true, "upload": true, "download": true, "recent": true, "all": true },
+  "plugins": { "stations": true } }
 ```
+`gallery.recent`, `gallery.all` und `plugins` sind optional (fehlend = erlaubt, siehe §6). Die Gruppenverwaltung zeigt je aktivem Plugin eine Checkbox; Werte inaktiver Plugins bleiben beim Speichern erhalten.
 
 ### shares.json – Liste
 ```json

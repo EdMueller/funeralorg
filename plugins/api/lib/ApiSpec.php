@@ -141,7 +141,7 @@ final class ApiSpec
             'gallery' => Perm::gallery(),
             'memorial' => Perm::memorial(),
             'admin' => Auth::isAdmin(),
-            'stations' => class_exists('Stations') && Perm::memorial(),
+            'stations' => class_exists('Stations') && Perm::memorial() && Perm::plugin('stations'),
             default => true,
         };
     }

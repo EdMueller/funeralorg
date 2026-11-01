@@ -3,7 +3,7 @@ $pageTitle = t('gal.title');
 $isAdmin = Auth::isAdmin();
 $albumNames = array_column($albums, 'name', 'id');
 $albumCats = array_column($albums, null, 'id');
-$current = $album === '' ? t('gal.all_pictures') : ($album === '_none' ? t('gal.no_album') : ($albumNames[$album] ?? t('gal.album')));
+$current = $album === '' ? t($canAll ? 'gal.all_pictures' : 'gal.albums') : ($album === '_none' ? t('gal.no_album') : ($albumNames[$album] ?? t('gal.album')));
 $albumOptions = static function (array $flat, string $selected = '', array $skip = []): string {
     $h = '';
     foreach ($flat as $n) {
@@ -39,7 +39,7 @@ foreach ($slides as $img) {
 }
 ?>
 <div class="page-head">
-  <div><h1><?= e($current) ?></h1><p class="lead-note"><?= e(tn('gal.lead', count($images))) ?><?= count($slides) > count($images) ? e(t('gal.lead_subs', ['n' => count($slides)])) : '' ?></p></div>
+  <div><h1><?= e($current) ?></h1><?php if ($canAll || $album !== ''): ?><p class="lead-note"><?= e(tn('gal.lead', count($images))) ?><?= count($slides) > count($images) ? e(t('gal.lead_subs', ['n' => count($slides)])) : '' ?></p><?php endif; ?></div>
   <div class="d-flex flex-wrap gap-2">
     <?php if ($slides): ?>
       <button class="btn btn-sm btn-primary" type="button" data-slideshow><i class="bi bi-play-fill me-1"></i><?= e(t('gal.slideshow')) ?></button>
@@ -51,7 +51,9 @@ foreach ($slides as $img) {
           <?php if ($album !== ''): ?>
             <li><a class="dropdown-item" href="<?= e(url('gallery', ['a' => 'zip', 'what' => 'album', 'album' => $album])) ?>"><?= e(t($subs ? 'gal.zip_album_subs' : 'gal.zip_album')) ?></a></li>
           <?php endif; ?>
-          <li><a class="dropdown-item" href="<?= e(url('gallery', ['a' => 'zip', 'what' => 'all'])) ?>"><?= e(tn('gal.zip_all', (int)$total)) ?></a></li>
+          <?php if ($canAll): ?>
+            <li><a class="dropdown-item" href="<?= e(url('gallery', ['a' => 'zip', 'what' => 'all'])) ?>"><?= e(tn('gal.zip_all', (int)$total)) ?></a></li>
+          <?php endif; ?>
           <li><hr class="dropdown-divider"></li>
           <li><button class="dropdown-item" type="button" data-select-all><?= e(t('gal.select_all')) ?></button></li>
         </ul>
@@ -79,7 +81,7 @@ foreach ($slides as $img) {
 
 <?php if ($trail || $album === '_none'): ?>
 <nav aria-label="<?= e(t('gal.path')) ?>"><ol class="breadcrumb small mb-2">
-  <li class="breadcrumb-item"><a href="<?= e(url('gallery')) ?>"><?= e(t('gal.crumb_all')) ?></a></li>
+  <li class="breadcrumb-item"><a href="<?= e(url('gallery')) ?>"><?= e(t($canAll ? 'gal.crumb_all' : 'gal.albums')) ?></a></li>
   <?php foreach ($trail as $k => $t): ?>
     <?php if ($k === count($trail) - 1): ?><li class="breadcrumb-item active" aria-current="page"><?= e($t['name']) ?></li>
     <?php else: ?><li class="breadcrumb-item"><a href="<?= e(url('gallery', ['album' => $t['id']])) ?>"><?= e($t['name']) ?></a></li><?php endif; ?>
@@ -88,7 +90,7 @@ foreach ($slides as $img) {
 </ol></nav>
 <?php endif; ?>
 <nav class="album-bar" aria-label="<?= e(t('gal.albums')) ?>" data-album-bar data-order-parent="<?= e($album === '' ? Albums::ROOT : $album) ?>">
-  <?php if ($album === ''): ?>
+  <?php if ($album === '' && $canAll): ?>
     <a href="<?= e(url('gallery')) ?>" class="active"><?= e(t('gal.crumb_all')) ?><small><?= $total ?></small></a>
   <?php endif; ?>
   <?php foreach ($subs as $al): ?>
@@ -118,7 +120,7 @@ foreach ($slides as $img) {
     <div class="d-flex flex-wrap gap-2 justify-content-center align-items-center">
       <label class="small" for="uploadAlbum"><?= e(t('gal.in_album')) ?></label>
       <select class="form-select form-select-sm w-auto" name="album" id="uploadAlbum">
-        <option value=""><?= e(t('gal.no_album')) ?></option>
+        <?php if ($canAll): ?><option value=""><?= e(t('gal.no_album')) ?></option><?php endif; ?>
         <?= $albumOptions($flat, $album) ?>
       </select>
       <button class="btn btn-sm btn-primary" type="submit"><?= e(t('gal.upload')) ?></button>
@@ -130,7 +132,9 @@ foreach ($slides as $img) {
 </div>
 <?php endif; ?>
 
-<?php if (!$images): ?>
+<?php if (!$canAll && $album === '' && $albums): ?>
+  <div class="empty surface"><i class="bi bi-images"></i><?= e(t('gal.pick_album')) ?></div>
+<?php elseif (!$images): ?>
   <div class="empty surface"><i class="bi bi-images"></i><?= e(t($canUpload ? 'gal.empty_upload' : 'gal.empty')) ?>
     <?php if ($canUpload): ?><br><button class="btn btn-sm btn-primary mt-3" type="button" data-bs-toggle="collapse" data-bs-target="#uploadBox"><i class="bi bi-cloud-upload me-1"></i><?= e(t('gal.upload_first')) ?></button><?php endif; ?></div>
 <?php else: ?>

@@ -5,6 +5,16 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+### Added
+
+- Groups & permissions: three new options. "Recently added pictures (home page)" shows or hides that block on the home
+  page, "All pictures (full overview)" limits a group to the albums (no overview, no pictures without an album, no
+  "all as ZIP", no list of all pictures via the web API), and a "Plugins" list lets you restrict access to individual
+  plugins per group (menu entry, route and assets). Existing groups keep their behaviour: a missing setting counts as
+  allowed. New groups start with the new options off; the default groups created by the setup get sensible values.
+- Plugin manifests can provide a display name and description per language (`i18n`); the Stations plugin is now
+  called "Stations" in the English interface.
+
 ## [0.0.17] - 2026-10-30
 
 ### Added

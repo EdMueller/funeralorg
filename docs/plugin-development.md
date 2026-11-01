@@ -41,6 +41,7 @@ plugins/<slug>/
 |---|---|
 | `slug` | Kennung = Ordnername, `[a-z][a-z0-9-]`, 2–40 Zeichen |
 | `name`, `version` | Anzeigename, `x.y.z` |
+| `i18n` | optional: Anzeigename und Beschreibung je Sprache, z. B. `{"en": {"name": "Stations", "description": "…"}}`. Gilt die Sprache der Oberfläche (`de`/`en`) und fehlt der Eintrag, werden `name` und `description` verwendet |
 | `requires_app` | Mindestversion der Anwendung (`VERSION`); sonst lässt sich das Plugin nicht aktivieren |
 | `requires_php` | optional: Mindest-PHP-Version (`8.2` oder `8.2.0`), verglichen ohne Distributionszusatz |
 | `permissions` | optional, rein informativ (wird im Marktplatz angezeigt, schützt nicht – Plugins laufen ohne Sandbox): `network:<host>`, `mail`, `files`, `data:users`, `data:contacts`, `data:gallery`, `data:memorial`, `data:checklist` |
@@ -66,7 +67,7 @@ return function (PluginApi $p): void {
 
 | Aufruf | Wirkung |
 |---|---|
-| `route($route, $datei, $funktion)` | `index.php?r=<route>` (`[a-z]{2,24}`). Die Datei wird erst bei Aufruf geladen und enthält `function ctrl_xyz(string $r, string $a): void`. Routen verlangen immer eine Anmeldung; **Rechte prüft der Controller** (`Perm::…`). Kernrouten haben Vorrang, doppelte Plugin-Routen lassen das später geladene Plugin scheitern |
+| `route($route, $datei, $funktion)` | `index.php?r=<route>` (`[a-z]{2,24}`). Die Datei wird erst bei Aufruf geladen und enthält `function ctrl_xyz(string $r, string $a): void`. Routen verlangen immer eine Anmeldung; **Rechte prüft der Controller** (`Perm::…`). Zusätzlich kann der Administrator den Zugriff je Gruppe auf das ganze Plugin beschränken (Verwaltung → Gruppen & Rechte → „Plugins“): Der Kern prüft `Perm::plugin($slug)` vor dem Aufruf der Route, blendet den Menüpunkt aus und sperrt `pluginasset` (jeweils 403). Das Plugin muss dafür nichts tun; `apiRoute()`-Routen (Token-Zugriff) sind ausgenommen, dort gilt weiterhin die eigene Prüfung. Kernrouten haben Vorrang, doppelte Plugin-Routen lassen das später geladene Plugin scheitern |
 | `apiRoute($route, $datei, $funktion)` | Wie `route()`, aber **ohne** Sitzungsanmeldung und CSRF-Prüfung, für Maschinenzugriff (Web-API, MCP). Der Controller muss selbst authentifizieren (z. B. Token) und danach `Auth::actAs($benutzer)` aufrufen; Sitzungs-Cookies dürfen dort nie als Anmeldung gelten. Vorbild: `plugins/api/` |
 | `nav($route, $sprachschluessel, $icon, ?$sichtbar, $nach)` | Menüpunkt (Bootstrap-Icon `bi-…`); `$sichtbar` ist ein Callback `fn(): bool`, `$nach` eine Route, hinter der der Punkt erscheint |
 | `onActivate($fn)` / `onDeactivate($fn)` | einmalig beim Aktivieren bzw. vor dem Deaktivieren durch einen Admin |
