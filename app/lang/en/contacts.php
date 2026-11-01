@@ -236,6 +236,7 @@ return [
     'access.warn_reset' => 'New passwords, the old ones are invalid.',
     'access.warn_common' => 'Do not reload this page, and print it (or save it as PDF) before closing.',
     'access.skipped' => 'Skipped: {list}',
+    'access.url' => 'URL',
     'access.username' => 'Username',
     'access.password' => 'Password',
     'access.qr_alt' => 'QR code for the login page',

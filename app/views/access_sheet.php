@@ -35,10 +35,9 @@ $sizeClass = static function (string $name) use ($fits): string {
   .cell { display: flex; align-items: center; gap: 2mm; padding: 2mm 5mm 2mm 6mm; overflow: hidden; outline: 1px dashed #ccc; }
   .txt { flex: 1 1 auto; min-width: 0; line-height: 1.25; }
   .k { font-size: 8pt; color: #444; }
-  .v { font: 700 12.5pt/1.25 "DejaVu Sans Mono", Consolas, monospace; overflow-wrap: anywhere; margin-bottom: .8mm; }
+  .v { font: 700 12.5pt/1.25 "DejaVu Sans Mono", Consolas, monospace; overflow-wrap: anywhere; margin-bottom: .4mm; }
   .v.long { font-size: 10pt; }
   .v.xlong { font-size: 8pt; }
-  .url { font-size: 8pt; color: #444; margin-top: .6mm; }
   .qr { flex: none; width: 23mm; height: 23mm; }
   .qr svg { display: block; width: 100%; height: 100%; }
   @media print { body { background: #fff; } .hint { display: none; } .sheet { margin: 0; } .cell { outline: none; } }
@@ -58,11 +57,12 @@ $sizeClass = static function (string $name) use ($fits): string {
       <div class="cell">
         <?php if ($r): ?>
           <div class="txt">
+            <div class="k"><?= e(t('access.url')) ?></div>
+            <div class="v<?= $sizeClass($shown) ?>"><?= e($shown) ?></div>
             <div class="k"><?= e(t('access.username')) ?></div>
             <div class="v<?= $sizeClass((string)$r['username']) ?>"><?= e($r['username']) ?></div>
             <div class="k"><?= e(t('access.password')) ?></div>
             <div class="v"><?= e($r['password']) ?></div>
-            <div class="url"><?= e($shown) ?></div>
           </div>
           <div class="qr"><?= $qr ?></div>
         <?php endif; ?>

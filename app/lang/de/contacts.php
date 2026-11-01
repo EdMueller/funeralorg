@@ -236,6 +236,7 @@ return [
     'access.warn_reset' => 'Neue Passwörter, die alten sind ungültig.',
     'access.warn_common' => 'Diese Seite nicht neu laden und vor dem Schließen drucken (oder als PDF speichern).',
     'access.skipped' => 'Übersprungen: {list}',
+    'access.url' => 'URL',
     'access.username' => 'Benutzername',
     'access.password' => 'Passwort',
     'access.qr_alt' => 'QR-Code zur Anmeldeseite',

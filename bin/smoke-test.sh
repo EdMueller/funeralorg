@@ -454,6 +454,8 @@ SHEET=$(curl -s -b "$JAR" -c "$JAR" -d "_csrf=$C&group_id=$GROUP&format=2x9&star
 has "$SHEET" 'class="v"' "Klebestreifen: kurzer Benutzername in Normalschrift"
 has "$SHEET" 'class="v xlong"' "Klebestreifen: sehr langer Benutzername wird verkleinert"
 has "$SHEET" '<div class="k">' "Klebestreifen: Beschriftung steht in eigener Zeile"
+has "$SHEET" '<div class="k">URL</div>' "Klebestreifen: Adresse mit Beschriftung „URL“"
+hasnot "$SHEET" 'class="url"' "Klebestreifen: keine separate kleine Adresszeile mehr"
 
 echo "Abmelden"
 C=$(csrf home)
