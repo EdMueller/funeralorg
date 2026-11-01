@@ -447,6 +447,14 @@ C=$(csrf gallery)
 check "Admin: Bildreihenfolge ändern" 200 -H 'X-Requested-With: fetch' -d "_csrf=$C&album=$ALB&ids[]=$IMG_A" "$BASE?r=gallery&a=imgorder"
 check "Admin: Bilder sortieren" 302 -d "_csrf=$C&album=$ALB&by=name" "$BASE?r=gallery&a=imgsortby"
 
+echo "Zugangsdaten-Klebestreifen"
+php -r '$f = $argv[1]; $d = is_file($f) ? json_decode(file_get_contents($f), true) : []; $d[] = ["id" => "abc0000000000001", "first" => "Alexander", "last" => "Mustermann-Hohenzollern-Sigmaringen-Hechingen"]; $d[] = ["id" => "abc0000000000002", "first" => "Anna", "last" => "Li"]; file_put_contents($f, json_encode($d));' "$TMP/app/data/contacts.json"
+C=$(csrf contacts)
+SHEET=$(curl -s -b "$JAR" -c "$JAR" -d "_csrf=$C&group_id=$GROUP&format=2x9&start=1&ids[]=abc0000000000001&ids[]=abc0000000000002" "$BASE?r=contacts&a=access&mode=new")
+has "$SHEET" 'class="v"' "Klebestreifen: kurzer Benutzername in Normalschrift"
+has "$SHEET" 'class="v xlong"' "Klebestreifen: sehr langer Benutzername wird verkleinert"
+has "$SHEET" '<div class="k">' "Klebestreifen: Beschriftung steht in eigener Zeile"
+
 echo "Abmelden"
 C=$(csrf home)
 check "Logout" 302 -d "_csrf=$C" "$BASE?r=logout"

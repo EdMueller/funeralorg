@@ -6,8 +6,14 @@ $pages = array_chunk($cells, $perPage) ?: [[]];
 $fmtMm = fn($v) => number_format((float)$v, 2, '.', '') . 'mm';
 $shown = preg_replace('#^https?://#', '', rtrim($addr, '/'));
 $qr = Qr::svg($addr, t('access.qr_alt'));
-// Ab dieser Länge passt der Benutzername in Normalschrift nicht mehr neben Beschriftung und QR-Code
-$maxChars = (int)floor(((float)$fmt['w'] - 59) / 2.65);
+// Breite für den Text neben dem QR-Code: Etikett minus Innenabstand (11 mm), QR-Code (23 mm) und Lücke (2 mm).
+// Zeichenbreite der Festbreitenschrift ≈ 0,2124 mm je pt: Ab diesen Längen wird der Benutzername verkleinert.
+$avail = (float)$fmt['w'] - 36;
+$fits = fn(float $pt): int => (int)floor($avail / ($pt * 0.2124));
+$sizeClass = static function (string $name) use ($fits): string {
+    $len = mb_strlen($name);
+    return $len <= $fits(12.5) ? '' : ($len <= $fits(10) ? ' long' : ' xlong');
+};
 ?><!doctype html>
 <html lang="<?= e(I18n::lang()) ?>">
 <head>
@@ -28,10 +34,10 @@ $maxChars = (int)floor(((float)$fmt['w'] - 59) / 2.65);
            align-content: start; page-break-after: always; }
   .cell { display: flex; align-items: center; gap: 2mm; padding: 2mm 5mm 2mm 6mm; overflow: hidden; outline: 1px dashed #ccc; }
   .txt { flex: 1 1 auto; min-width: 0; line-height: 1.25; }
-  .ln { display: flex; align-items: baseline; gap: 2mm; }
-  .k { font-size: 8pt; color: #444; width: 21mm; flex: none; }
-  .v { font: 700 12.5pt/1.25 "DejaVu Sans Mono", Consolas, monospace; overflow-wrap: anywhere; }
+  .k { font-size: 8pt; color: #444; }
+  .v { font: 700 12.5pt/1.25 "DejaVu Sans Mono", Consolas, monospace; overflow-wrap: anywhere; margin-bottom: .8mm; }
   .v.long { font-size: 10pt; }
+  .v.xlong { font-size: 8pt; }
   .url { font-size: 8pt; color: #444; margin-top: .6mm; }
   .qr { flex: none; width: 23mm; height: 23mm; }
   .qr svg { display: block; width: 100%; height: 100%; }
@@ -52,8 +58,10 @@ $maxChars = (int)floor(((float)$fmt['w'] - 59) / 2.65);
       <div class="cell">
         <?php if ($r): ?>
           <div class="txt">
-            <div class="ln"><span class="k"><?= e(t('access.username')) ?></span><span class="v<?= strlen($r['username']) > $maxChars ? ' long' : '' ?>"><?= e($r['username']) ?></span></div>
-            <div class="ln"><span class="k"><?= e(t('access.password')) ?></span><span class="v"><?= e($r['password']) ?></span></div>
+            <div class="k"><?= e(t('access.username')) ?></div>
+            <div class="v<?= $sizeClass((string)$r['username']) ?>"><?= e($r['username']) ?></div>
+            <div class="k"><?= e(t('access.password')) ?></div>
+            <div class="v"><?= e($r['password']) ?></div>
             <div class="url"><?= e($shown) ?></div>
           </div>
           <div class="qr"><?= $qr ?></div>

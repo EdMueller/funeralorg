@@ -5,6 +5,12 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+### Fixed
+
+- Access data strips: label and value now have their own lines, so long user names no longer break in the middle of the
+  word. The size is chosen from the available width: normal, smaller (10 pt) and, for very long names, 8 pt; only names
+  that are still too long wrap.
+
 ## [0.0.18] - 2026-11-01
 
 ### Added
