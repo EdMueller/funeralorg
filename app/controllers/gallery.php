@@ -268,7 +268,7 @@ function ctrl_gallery(string $r, string $a): void
             if (!$isPost) {
                 abort(400);
             }
-            if (!Perm::gallery('upload')) {
+            if (!Auth::isAdmin()) {
                 abort(403, t('gal.denied_order'));
             }
             $key = (string)post('album');

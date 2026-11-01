@@ -85,7 +85,7 @@ final class ApiSpec
             ['gallery.album.create', 'POST', '/gallery/albums', true, 'admin', 'Album anlegen (nur Administratoren)', ['name!' => $album['name']] + array_diff_key($album, ['name' => 1]), 'albumCreate'],
             ['gallery.album.update', 'PATCH', '/gallery/albums/{id}', true, 'admin', 'Album ändern (nur Administratoren); nur übergebene Felder', $id + $album, 'albumUpdate'],
             ['gallery.album.delete', 'DELETE', '/gallery/albums/{id}', true, 'admin', 'Album löschen; Unteralben und Bilder rücken in das übergeordnete Album auf', $id, 'albumDelete', 'destructive'],
-            ['gallery.order', 'PUT', '/gallery/albums/{id}/order', true, 'gallery', 'Reihenfolge der Bilder eines Albums setzen (`id` = Album-ID oder `_none`); Recht „Galerie hochladen“', $id + ['ids!' => ['array', 'Bild-IDs in der neuen Reihenfolge']], 'galleryOrder'],
+            ['gallery.order', 'PUT', '/gallery/albums/{id}/order', true, 'admin', 'Reihenfolge der Bilder eines Albums setzen (`id` = Album-ID oder `_none`); nur Administratoren', $id + ['ids!' => ['array', 'Bild-IDs in der neuen Reihenfolge']], 'galleryOrder'],
             ['gallery.album.order', 'PUT', '/gallery/albums/{id}/albums-order', true, 'admin', 'Reihenfolge der Alben unter einem Elternalbum setzen (`id` = Album-ID oder `_root` für die oberste Ebene; Verweise zählen mit; nur Administratoren)', $id + ['ids!' => ['array', 'Album-IDs in der neuen Reihenfolge']], 'albumOrder'],
             ['gallery.images', 'GET', '/gallery/images', false, 'gallery', 'Bilder auflisten (Metadaten, ohne Bilddaten)', [
                 'album' => ['string', 'Album-ID, `_none` (ohne Album) oder leer (alle)'], 'recursive' => ['boolean', 'Mit Unteralben'],

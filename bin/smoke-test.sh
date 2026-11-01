@@ -431,6 +431,11 @@ check "Bild ohne Album: nicht erreichbar" 404 "$BASE?r=img&id=$IMG_N&s=thumb"
 C=$(csrf gallery)
 check "Upload ohne Album abgelehnt" 400 -H 'X-Requested-With: fetch' -F "_csrf=$C" -F "album=" -F "files[]=@$TMP/pic.jpg" "$BASE?r=gallery&a=upload"
 check "Upload in ein Album" 200 -H 'X-Requested-With: fetch' -F "_csrf=$C" -F "album=$ALB" -F "files[]=@$TMP/pic.jpg" "$BASE?r=gallery&a=upload"
+check "Bildreihenfolge ändern ohne Admin: 403" 403 -H 'X-Requested-With: fetch' -d "_csrf=$C&album=$ALB&ids[]=$IMG_A" "$BASE?r=gallery&a=imgorder"
+check "Bilder sortieren ohne Admin: 403" 403 -d "_csrf=$C&album=$ALB&by=name" "$BASE?r=gallery&a=imgsortby"
+P=$(curl -s -b "$JAR" "$BASE?r=gallery&album=$ALB")
+hasnot "$P" "data-sort-toggle" "Ohne Admin kein Sortier-Knopf"
+hasnot "$P" 'data-move="1"' "Ohne Admin keine Pfeile an den Bildern"
 # Gruppen ohne die neuen Schlüssel (vor dieser Version gespeichert): alles bleibt erlaubt
 php -r '$f = $argv[1]; $d = json_decode(file_get_contents($f), true); foreach ($d as &$g) { if ($g["id"] === $argv[2]) { unset($g["gallery"]["recent"], $g["gallery"]["all"], $g["plugins"]); } } file_put_contents($f, json_encode($d));' "$TMP/app/data/groups.json" "$GID"
 check "Alte Gruppe ohne Plugin-Eintrag: Stationen erlaubt" 200 "$BASE?r=stations"
@@ -438,6 +443,9 @@ has "$(curl -s -b "$JAR" "$BASE?r=home")" "Zuletzt hinzugefügte Bilder" "Alte G
 check "Alte Gruppe: Bild ohne Album sichtbar" 200 "$BASE?r=img&id=$IMG_N&s=thumb"
 JAR=$JAR_ADMIN
 check "Admin: Stationen unverändert erreichbar" 200 "$BASE?r=stations"
+C=$(csrf gallery)
+check "Admin: Bildreihenfolge ändern" 200 -H 'X-Requested-With: fetch' -d "_csrf=$C&album=$ALB&ids[]=$IMG_A" "$BASE?r=gallery&a=imgorder"
+check "Admin: Bilder sortieren" 302 -d "_csrf=$C&album=$ALB&by=name" "$BASE?r=gallery&a=imgsortby"
 
 echo "Abmelden"
 C=$(csrf home)

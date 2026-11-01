@@ -5,6 +5,12 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+### Changed
+
+- Only administrators can change the order of pictures in an album (drag and drop, arrows, "sort by", and the web
+  API/MCP operation `gallery.order`). Uploads by other users are appended at the end of the album. Existing orders are
+  kept.
+
 ### Added
 
 - Groups & permissions: three new options. "Recently added pictures (home page)" shows or hides that block on the home

@@ -59,7 +59,7 @@ foreach ($slides as $img) {
         </ul>
       </div>
     <?php endif; ?>
-    <?php if ($canUpload && $album !== '' && count($images) > 1): ?>
+    <?php if ($isAdmin && $album !== '' && count($images) > 1): ?>
       <div class="btn-group btn-group-sm">
         <button class="btn btn-outline-primary" type="button" data-sort-toggle data-done="<?= e(t('gal.sort_done')) ?>"><i class="bi bi-arrows-move me-1"></i><span data-sort-label><?= e(t('gal.sort_mode')) ?></span></button>
         <button class="btn btn-outline-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-label="<?= e(t('gal.sort_by')) ?>"></button>
@@ -147,7 +147,7 @@ foreach ($slides as $img) {
       <?php if ($canDl): ?>
         <button class="pick" type="button" data-pick="<?= e($img['id']) ?>" aria-pressed="<?= $picked ? 'true' : 'false' ?>" aria-label="<?= e(t('gal.add_to_sel')) ?>"><i class="bi bi-check-lg"></i></button>
       <?php endif; ?>
-      <?php if ($canUpload && $album !== ''): ?>
+      <?php if ($isAdmin && $album !== ''): ?>
         <span class="mv"><button type="button" data-move="-1" aria-label="<?= e(t('gal.to_front')) ?>"><i class="bi bi-chevron-left"></i></button><button type="button" data-move="1" aria-label="<?= e(t('gal.to_back')) ?>"><i class="bi bi-chevron-right"></i></button></span>
       <?php endif; ?>
       <?php if (!empty($img['animated'])): ?><span class="tag">GIF</span><?php endif; ?>

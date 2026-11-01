@@ -715,7 +715,7 @@ final class ApiService
 
     public static function galleryOrder(array $a): array
     {
-        self::needGallery('upload');
+        self::needAdmin();
         self::galleryLib();
         $key = (string)$a['id'];
         $ids = array_map('strval', (array)($a['ids'] ?? []));

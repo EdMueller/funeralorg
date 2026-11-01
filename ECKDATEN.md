@@ -218,8 +218,8 @@ in `.htaccess` gesetzt) und nginx leiten selbstständig um.
 | `gallery` | `move` (`album`) | POST | Galerie herunterladen | Verschiebt die Auswahl in ein Album; Admin alle, sonst nur eigene Bilder (Rest wird übersprungen), Auswahl bleibt |
 | `gallery` | `bulkdelete` | POST | A | Löscht die ausgewählten Bilder samt Dateien, Portrait-Verweis und Auswahleinträgen |
 | `gallery` | `zip` (`what`=selection/album/all) | GET | Galerie herunterladen | ZIP (unkomprimiert, Originale) |
-| `gallery` | `imgorder` | POST | Galerie hochladen | Bildreihenfolge eines Albums (`album`=ID oder `_none`, `ids[]` in neuer Reihenfolge), Antwort JSON |
-| `gallery` | `imgsortby` | POST | Galerie hochladen | Album sortieren (`by`=uploaded/uploaded_desc/name/caption) |
+| `gallery` | `imgorder` | POST | A | Bildreihenfolge eines Albums (`album`=ID oder `_none`, `ids[]` in neuer Reihenfolge), Antwort JSON |
+| `gallery` | `imgsortby` | POST | A | Album sortieren (`by`=uploaded/uploaded_desc/name/caption) |
 | `gallery` | `edit` | POST | Admin oder Hochlader | Bildunterschrift, Album, `links[]` (weitere Alben), (Admin:) Anmeldeseite |
 | `gallery` | `albummove` (`dir`=up/down als Query) | POST | A | Album unter Geschwistern (gleiches Heimat-Elternalbum) um eine Stelle nach vorn/hinten (Fallback ohne JS) |
 | `gallery` | `albumorder` | POST | A | Reihenfolge der Alben unter einem Elternalbum (`parent`=ID oder leer/`_root` für die oberste Ebene, `ids[]` in neuer Reihenfolge), Antwort JSON |
@@ -354,7 +354,7 @@ Lebensdaten sind **Freitext** (Formatfreiheit, z. B. nur Jahr). `frame` ist eine
 
 **Versteckte Alben:** `hidden` (nur Admin, `albumsave`/API `hidden`) macht ein Album samt Unteralben (über die Heimat-Eltern, `Albums::hiddenIds()`) für alle außer Admins unsichtbar. `Albums::forViewer($g)` filtert Alben und Bilder und wird überall dort vor dem Lesen angewandt: Übersicht/Zähler/Chips, Leuchtkasten/Diashow, `img` (404), `seen`, `select`, `cart`, `move`, `zip`, Upload-Ziel, `imgorder`/`imgsortby`, „Zuletzt hinzugefügt“ der Startseite, Stationen-Plugin (Bild/Diashow-Link, Albumliste) und Web-API/MCP (Token wirken mit den Rechten ihres Benutzers). Ein Bild bleibt sichtbar, wenn es zusätzlich (`links`) in einem sichtbaren Album erscheint; sein Heimatalbum ist dann das erste sichtbare. Nicht betroffen: Login-/Portraitbild (`pubimg`, bewusste Admin-Entscheidung). Admins sehen versteckte Alben mit Augen-Symbol (`bi-eye-slash`).
 
-**Bildreihenfolge:** `ord[<album-id>|_none]` = Position im Raster dieses Albums (`Albums::sortIn()`); Bilder ohne Eintrag folgen in Upload-Reihenfolge. Ändern per Ziehen (Maus), langem Druck und Ziehen (Touch/Stift, Pointer-Events in `app.js`) oder Pfeilen (`imgorder`) oder Sortier-Dropdown (`imgsortby`); in „Alle“ nicht möglich. Wirkt auf Raster, Leuchtkasten und Diashow, nicht auf ZIP.
+**Bildreihenfolge:** `ord[<album-id>|_none]` = Position im Raster dieses Albums (`Albums::sortIn()`); Bilder ohne Eintrag folgen in Upload-Reihenfolge. **Nur Admins** dürfen die Reihenfolge ändern (Controller, Ansicht, Web-API/MCP `gallery.order`); neue Uploads anderer Benutzer landen am Ende des Albums. Ändern per Ziehen (Maus), langem Druck und Ziehen (Touch/Stift, Pointer-Events in `app.js`) oder Pfeilen (`imgorder`) oder Sortier-Dropdown (`imgsortby`); in „Alle“ nicht möglich. Wirkt auf Raster, Leuchtkasten und Diashow, nicht auf ZIP.
 
 Bild-Tooltip: `title` am Vorschaubild, erzeugt von `image_tip()` (`app/helpers.php`) aus Unterschrift/Dateiname, Maßen, Größe, Typ, Album, Hochlader und Datum (EXIF wird beim Upload entfernt).
 
