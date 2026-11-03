@@ -1,4 +1,4 @@
-# Gedenkseite – Trauerfall digital organisieren
+# Gedenkseite – Privaten Trauerfall gemeinsam organisieren
 
 [English](README.md) · **Deutsch**
 

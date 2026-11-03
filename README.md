@@ -1,4 +1,4 @@
-# Memorial page – organise a funeral together
+# Memorial page – organise a private funeral together
 
 [**English**](README.md) · [Deutsch](README.de.md)
 

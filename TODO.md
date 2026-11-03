@@ -85,4 +85,11 @@ Alle KI-Funktionen brauchen einen externen Dienst. Das widerspricht Regel 1 (kei
 ## Bewusst nicht geplant
 
 PWA/Offline, Zwei-Faktor-Anmeldung, Kosten-/Belegmodul, Fristen-/Vertragsmodul mit iCal-Export, Versand von
-Einladungen per E-Mail (siehe ECKDATEN.md §2). Rundschreiben/Newsletter stehen inzwischen unter „Angedacht“.
+Einladungen per E-Mail (siehe ECKDATEN.md §2).
+
+Look at:
+- https://github.com/Coderior/lovingmemory
+- https://github.com/mrozyyev/libre-memorial
+- https://github.com/fin/memorial-page
+- https://github.com/joomplace/joomla-memorials
+-
