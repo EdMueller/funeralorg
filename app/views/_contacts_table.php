@@ -121,13 +121,20 @@ $n = 0;
     <?php if (Auth::isAdmin()): ?>
       <button type="button" class="btn btn-sm btn-outline-light" data-bs-toggle="modal" data-bs-target="#accessModal"><i class="bi bi-key me-1"></i><?= e(t('ct.access')) ?></button>
     <?php endif; ?>
-    <?php if ($canCheck || $canEdit): ?>
+    <?php $canThanks = Perm::can('condolences', Perm::CHECK); ?>
+    <?php if ($canCheck || $canEdit || $canThanks): ?>
     <div class="dropdown dropup">
       <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside"><i class="bi bi-check2-square me-1"></i><?= e(t('ct.set_status')) ?></button>
       <ul class="dropdown-menu">
         <?php if ($canCheck): foreach (['called_1', 'called_0', 'letter_1', 'letter_0'] as $k): $lbl = t('contacts.bulk_' . $k); ?>
           <li><button class="dropdown-item" type="submit" name="what" value="<?= e($k) ?>" formaction="<?= e(url('contacts', ['a' => 'bulkset'])) ?>"><?= e($lbl) ?></button></li>
         <?php endforeach; endif; ?>
+        <?php if ($canThanks): ?>
+          <?php if ($canCheck): ?><li><hr class="dropdown-divider"></li><?php endif; ?>
+          <?php foreach (['thanks_1', 'thanks_0'] as $k): ?>
+            <li><button class="dropdown-item" type="submit" name="what" value="<?= e($k) ?>" formaction="<?= e(url('contacts', ['a' => 'bulkset'])) ?>"><?= e(t('contacts.bulk_' . $k)) ?></button></li>
+          <?php endforeach; ?>
+        <?php endif; ?>
         <?php if ($canEdit): ?>
           <li><hr class="dropdown-divider"></li>
           <li class="px-3 py-1" style="min-width:15rem">

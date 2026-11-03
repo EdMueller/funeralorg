@@ -130,6 +130,12 @@ function ctrl_contacts(string $r, string $a): void
                 $apply = function (array &$c) use ($field, $val) { $c[$field] = $val === '1'; };
                 $label = t('contacts.bulk_' . $field . '_' . $val);
                 $logLabel = I18n::in('de', fn() => t('contacts.bulk_' . $field . '_' . $val));
+            } elseif (in_array($what, ['thanks_1', 'thanks_0'], true)) {
+                Perm::need('condolences', Perm::CHECK);
+                $val = $what === 'thanks_1';
+                $apply = function (array &$c) use ($val) { $c['thanks'] = $val; };
+                $label = t('contacts.bulk_' . $what);
+                $logLabel = I18n::in('de', fn() => t('contacts.bulk_' . $what));
             } elseif ($what === 'relation') {
                 Perm::need('contacts', Perm::EDIT);
                 $rel = mb_substr((string)post('value'), 0, 500);

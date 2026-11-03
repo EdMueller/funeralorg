@@ -82,6 +82,8 @@ return [
     'contacts.bulk_called_0' => 'Angerufen: nein',
     'contacts.bulk_letter_1' => 'Brief versendet: ja',
     'contacts.bulk_letter_0' => 'Brief versendet: nein',
+    'contacts.bulk_thanks_1' => 'Dankeskarte versendet: ja',
+    'contacts.bulk_thanks_0' => 'Dankeskarte versendet: nein',
     'contacts.bulk_relation' => 'Beziehung gesetzt',
     'contacts.saved_noname' => 'Kontakt gespeichert (ohne Namen).',
     'contacts.saved' => 'Kontakt „{name}“ gespeichert.',

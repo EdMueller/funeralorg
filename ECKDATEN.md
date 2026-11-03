@@ -204,7 +204,7 @@ in `.htaccess` gesetzt) und nginx leiten selbstständig um.
 | `contacts` | `toggle` (`field`=called/letter) | POST | contacts C | Umschalter (AJAX) |
 | `contacts` | `cellset` (`id`, `field`, `value`) | POST | contacts E + Feldrecht | Inline-Bearbeitung eines Textfelds aus `Contacts::TEXT_FIELDS` (AJAX, JSON) |
 | `contacts` | `bulkdelete` (`ids[]`) | POST | contacts E | mehrere Kontakte löschen, Protokolleintrag je Kontakt |
-| `contacts` | `bulkset` (`ids[]`, `what`=called_1/called_0/letter_1/letter_0/relation, `value`) | POST | contacts C (Beziehung: E) | Sammelstatus bzw. Beziehung setzen |
+| `contacts` | `bulkset` (`ids[]`, `what`=called_1/called_0/letter_1/letter_0/thanks_1/thanks_0/relation, `value`) | POST | contacts C (Dankeskarte: condolences C, Beziehung: E) | Sammelstatus bzw. Beziehung setzen |
 | `condolences` | `toggle` (`field`=card/flowers/wreath/donation/thanks) | POST | condolences C | Umschalter (AJAX) |
 | `condolences` | `condset` | POST | condolences C | Betrag, Notiz |
 | `rsvp` | `rsvpset` | POST | rsvp C | Status, Erwachsene, Kinder (AJAX, liefert Summen) |

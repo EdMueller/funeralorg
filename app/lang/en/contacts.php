@@ -82,6 +82,8 @@ return [
     'contacts.bulk_called_0' => 'Called: no',
     'contacts.bulk_letter_1' => 'Letter sent: yes',
     'contacts.bulk_letter_0' => 'Letter sent: no',
+    'contacts.bulk_thanks_1' => 'Thank-you card sent: yes',
+    'contacts.bulk_thanks_0' => 'Thank-you card sent: no',
     'contacts.bulk_relation' => 'Relationship set',
     'contacts.saved_noname' => 'Contact saved (without name).',
     'contacts.saved' => 'Contact “{name}” saved.',
