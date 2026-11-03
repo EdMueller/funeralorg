@@ -6,6 +6,7 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 ## [Unreleased]
 
 ## [0.0.21] - 2026-11-03
+
 ### Added
 
 - Stations: optional place lookup ("Find coordinates" next to the place field, also for birth and death). It is off by
