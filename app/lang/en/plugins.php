@@ -160,4 +160,8 @@ return [
     'market.selftest_unknown' => 'The check was not possible (the application address is not reachable). Check the base URL or open the address manually.',
     'market.exposed_h' => 'Plugin directory reachable from outside.',
     'market.exposed' => 'Plugin code and packages can be downloaded. Apache: check AllowOverride All and the .htaccess in plugins/. Nginx: block plugins/ (see docs/nginx-ispconfig.conf) or keep the folder outside the web root. Reachable were:',
+    'plugins.cfg_h' => 'Settings',
+    'plugins.cfg_save' => 'Save settings',
+    'plugins.cfg_saved' => 'Settings for “{name}” saved.',
+    'plugins.cfg_none' => 'This plugin has no settings or is not active.',
 ];

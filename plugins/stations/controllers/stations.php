@@ -9,6 +9,21 @@ function ctrl_stations(string $r, string $a): void
     $isAdmin = Auth::isAdmin();
     $isPost = $_SERVER['REQUEST_METHOD'] === 'POST';
 
+    if ($a === 'geocode') {
+        // Ortssuche über Nominatim (nur Admin, nur wenn in den Plugin-Einstellungen eingeschaltet)
+        if (!$isPost) {
+            abort(400);
+        }
+        Perm::needAdmin();
+        try {
+            $hit = Geocoder::lookup((string)post('place'));
+        } catch (RuntimeException $e) {
+            json_out(['ok' => false, 'error' => $e->getMessage()], 400);
+        }
+        Log::add('admin', 'Ortssuche (Stationen): ' . mb_substr(trim((string)post('place')), 0, 120));
+        json_out($hit ? ['ok' => true] + $hit : ['ok' => false, 'error' => t('st.geo_none')], $hit ? 200 : 404);
+    }
+
     if ($a === 'save' || $a === 'delete') {
         if (!$isPost) {
             abort(400);
@@ -134,6 +149,8 @@ function ctrl_stations(string $r, string $a): void
         ];
     }
     view('@stations/stations', [
+        'geocode' => $isAdmin && Geocoder::enabled(),
+        'geoHost' => Geocoder::host(),
         'items'   => $items,
         'albums'  => $albums,
         'images'  => $isAdmin ? $images : [],

@@ -5,6 +5,14 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+### Added
+
+- Stations: optional place lookup ("Find coordinates" next to the place field, also for birth and death). It is off by
+  default, administrators switch it on under Administration → Plugins → Stations → Settings (notice about the data
+  sent to nominatim.openstreetmap.org). Lookup only on button press; coordinates remain editable. Also available as
+  `GET /stations/geocode` and as an MCP tool (administrators only).
+- Plugins: manifests can declare settings (`settings`, type `bool`); the plugin list shows them for active plugins.
+
 ## [0.0.20] - 2026-11-03
 
 ### Added

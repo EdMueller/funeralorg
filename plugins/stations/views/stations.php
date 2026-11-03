@@ -1,5 +1,5 @@
 <?php
-/** @var array $items @var array $albums @var array $images @var bool $isAdmin */
+/** @var array $items @var array $albums @var array $images @var bool $isAdmin @var bool $geocode @var string $geoHost */
 $pageTitle = t('st.title');
 $wide = true;
 $styles = [plugin_asset('stations', 'css/stations.css')];
@@ -130,7 +130,16 @@ $json = array_map(function ($it) {
             <input class="form-control" id="st-date" name="date" maxlength="40" placeholder="<?= e(t('st.f_date_ph')) ?>">
             <div class="form-text"><?= e(t('st.f_date_hint')) ?></div></div>
           <div class="col-12"><label class="form-label" for="st-place"><?= e(t('st.f_place')) ?></label>
-            <input class="form-control" id="st-place" name="place" maxlength="120" placeholder="<?= e(t('st.f_place_ph')) ?>"></div>
+            <?php if ($geocode): ?>
+              <div class="input-group">
+                <input class="form-control" id="st-place" name="place" maxlength="120" placeholder="<?= e(t('st.f_place_ph')) ?>">
+                <button class="btn btn-outline-secondary" type="button" data-geocode="<?= e(url('stations', ['a' => 'geocode'])) ?>"
+                        title="<?= e(t('st.geo_hint', ['host' => $geoHost])) ?>"><i class="bi bi-search me-1"></i><?= e(t('st.geo_find')) ?></button>
+              </div>
+              <div class="form-text" data-geocode-msg role="status"><?= e(t('st.geo_hint', ['host' => $geoHost])) ?></div>
+            <?php else: ?>
+              <input class="form-control" id="st-place" name="place" maxlength="120" placeholder="<?= e(t('st.f_place_ph')) ?>">
+            <?php endif; ?></div>
           <div class="col-6 col-md-3"><label class="form-label" for="st-lat"><?= e(t('st.f_lat')) ?></label>
             <input class="form-control" id="st-lat" name="lat" inputmode="decimal" placeholder="53.55"></div>
           <div class="col-6 col-md-3"><label class="form-label" for="st-lon"><?= e(t('st.f_lon')) ?></label>

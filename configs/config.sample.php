@@ -43,6 +43,7 @@ return [
     'api_allow_http'       => false,         // Plugin „api“: Token-Zugriff auch ohne HTTPS erlauben (nur für Tests im internen Netz)
     'plugins_safe_mode'    => false,         // true: kein Plugin-Code wird ausgeführt (Notausgang, siehe docs/plugin-development.md)
     // 'github_token'     => '',        // Plugin-Marktplatz: GitHub-Token (mehr API-Anfragen/h); hat Vorrang vor dem in der Verwaltung gespeicherten
+    // 'geocode_api'      => '',        // nur für Tests: andere Adresse für die Ortssuche des Stationen-Plugins (statt Nominatim; dieser Ursprung ist auch ohne HTTPS erlaubt)
     // 'market_api'       => '',        // nur für Tests: andere GitHub-API-Adresse (dieser Ursprung ist dann auch ohne HTTPS erlaubt)
     'image_memory_limit'   => '768M',        // GD braucht bei großen Fotos viel RAM
 

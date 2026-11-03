@@ -108,7 +108,7 @@ data/
 ├── users.json  groups.json  shares.json  contacts.json  checklist.json
 ├── memorial.json  gallery.json  selections.json  ratelimit.json
 ├── stations.json               gehört dem Plugin „stations“ (Manifest `stores`); weitere Plugin-Dateien analog
-├── settings.json               Einstellungen: `base_url` (öffentliche Adresse, Basis für Reset-Mail-Links, aus der Ersteinrichtung), `sender` (Absenderadresse, Zeilen-Array), `plugins` (`<slug>` → `{active, changed}`)
+├── settings.json               Einstellungen: `base_url` (öffentliche Adresse, Basis für Reset-Mail-Links, aus der Ersteinrichtung), `sender` (Absenderadresse, Zeilen-Array), `plugins` (`<slug>` → `{active, changed, config}`; `config` = Einstellungen laut Manifest `settings`, Schlüssel → bool)
 ├── resets.json                 flüchtig: Reset-Tokens (Hash), Anfragen, Zähler – nicht in Snapshots/Backup-Download
 ├── *.lock                      Lock-Dateien (flock), dürfen gelöscht werden, wenn nichts läuft
 ├── logs/JJJJ-MM.jsonl          Ereignisprotokoll
@@ -183,6 +183,7 @@ in `.htaccess` gesetzt) und nginx leiten selbstständig um.
 | `home` | `edit` | GET/POST | A | Gedenkseite bearbeiten |
 | `stations` (Plugin) | – | GET | Benutzer (kein Link) | Zeitstrahl + Weltkarte; Bild/Diashow-Link nur mit Galerie-Recht |
 | `stations` (Plugin) | `save` / `delete` | POST | A | Station anlegen/ändern/löschen (Geburt/Tod sind fest, nicht löschbar) |
+| `stations` (Plugin) | `geocode` (`place`) | POST (JSON) | A | Koordinaten zu einem Ortsnamen über Nominatim; nur bei eingeschalteter Plugin-Einstellung `geocode` (sonst 400 mit Hinweis), Protokolleintrag je Aufruf; speichert nichts |
 | `checklist` | – (`show=open`) | GET | checklist R | Übersicht |
 | `checklist` | `toggle` | POST | checklist C | Aufgabe erledigt/offen (AJAX) |
 | `checklist` | `save` / `delete` | POST | checklist E | Aufgabe/Unteraufgabe (`parent`) anlegen/ändern/löschen (Löschen entfernt Unteraufgaben) |
@@ -236,7 +237,7 @@ in `.htaccess` gesetzt) und nginx leiten selbstständig um.
 | `admin` | `transferexport` | POST | A | Export-Paket (ZIP) der gewählten Bereiche (`parts[]`) |
 | `admin` | `transferimport` / `transferpreview` (`token`) | POST/GET | A | Paket hochladen und prüfen (Entpacken nach `data/tmp/import-<token>/`), Vorschau mit Bereichsauswahl |
 | `admin` | `transferapply` / `transferdrop` | POST | A | Gewählte Bereiche ersetzen (nach Sicherung) bzw. Paket verwerfen |
-| `admin` | `plugins` / `pluginset` (`slug`, `state`=on/off) / `pluginimport` (`plugin_zip`, multipart) / `pluginexport` (`p`, GET) / `plugindelete` (`slug`, `delete_data`) | GET/POST | A | Plugin-Verwaltung (§17) |
+| `admin` | `plugins` / `pluginset` (`slug`, `state`=on/off) / `pluginconfig` (`slug`, `cfg[<schlüssel>]`; POST, nur aktive Plugins mit `settings`, Protokolleintrag je geänderter Einstellung) / `pluginimport` (`plugin_zip`, multipart) / `pluginexport` (`p`, GET) / `plugindelete` (`slug`, `delete_data`) | GET/POST | A | Plugin-Verwaltung (§17) |
 | `admin` | `pluginsearch` (`q`) / `plugindetail` (`repo`) / `pluginconfirm` (`id`) | GET | A | Marktplatz: Suche (GitHub-Topic), Releases eines Repos, Bestätigungsseite vor Installation/Update (Berechtigungen, Audit-Status, Hash) |
 | `admin` | `pluginscheck` / `pluginupdate` (`slug`) / `pluginsupdateall` / `pluginprepare` (`repo`, `version`) / `pluginapply` (`id`) / `plugincancel` (`id`) / `pluginrollback` (`slug`) / `pluginmarkettoken` (`token`, `remove`) | POST | A | Marktplatz: Aktualisierungen prüfen, einzeln oder alle aktualisieren (Plugins mit neuen Berechtigungen werden übersprungen und brauchen die Bestätigungsseite), Paket laden und prüfen (`prepare` → Bestätigung), übernehmen, abbrechen, auf die vorherige Version zurücksetzen, GitHub-Token speichern/entfernen. Alle mit Protokolleintrag; Controller: `app/controllers/admin_market.php` |
 | `pluginasset` | – (`p`, `f`, `v`) | GET | Benutzer | Datei aus `assets/` eines **aktiven** Plugins (Whitelist der Endungen, Pfadprüfung, ETag) |
@@ -367,6 +368,7 @@ Bild-Tooltip: `title` am Vorschaubild, erzeugt von `image_tip()` (`app/helpers.p
 - **Geburt/Tod** sind feste Stationen (`id`/`type` = `birth`/`death`). Sie existieren erst nach dem ersten Speichern in der Datei; bis dahin liefert `Stations::all()` leere Platzhalter. Titel und **Datum werden bei jeder Anzeige aus `memorial.json` (`born`/`died`, Freitext) gelesen** (`Stations::parseDate`: „12. März 1941“, „12.03.1941“, „März 1941“, „3/1941“, „1941“ …); das Datum wird nicht gespeichert.
 - **Datum** normaler Stationen wird beim Speichern aus Freitext gelesen und als ISO-Teilformat abgelegt; ungenaue Angaben liegen in der Mitte ihres Zeitraums.
 - **Farbe und Kategorie** kommen vom Album (`color` aus `Stations::COLORS`, `cat` frei; leere Werte werden vom nächsten Heimat-Vorfahren geerbt, Fallback Albumname; ohne Album grau „Ohne Album“). Die Diashow der Station umfasst auch Unteralben. Die Legende filtert Zeitstrahl und Karte.
+- **Ortssuche** (Plugin-Einstellung `geocode`, standardmäßig aus): Button „Koordinaten suchen“ neben dem Ortsfeld (nur Admin, nur auf Knopfdruck, nie automatisch beim Speichern); `Geocoder::lookup()` fragt serverseitig `https://nominatim.openstreetmap.org/search` ab (Ortsname, Server-IP und App-Version verlassen den Server; Hinweis in den Plugin-Einstellungen und am Button). Treffer 1 Jahr, Fehlschläge 1 Tag in `stationsgeo.json` zwischengespeichert (`e`, höchstens 500 Einträge; `last` = Zeitpunkt der letzten Anfrage, mindestens 1,1 s Abstand), keine Weiterleitungen, Antwort ≤ 64 KB. Manuelle Korrektur und Karten-Klick überschreiben den Treffer. Web-API/MCP: `stations.geocode` (`GET /stations/geocode?place=`, nur Admin-Token und eingeschaltete Einstellung, speichert nichts). Nur für Tests: `configs/config.php → geocode_api` (andere Basis-Adresse, auch ohne HTTPS).
 - Ohne `lat`/`lon` erscheint die Station nur im Zeitstrahl. Ohne Datum nur auf der Karte (Geburt/Tod mit nicht lesbarem Freitext).
 - Karte: `assets/vendor/worldmap/world.svg` (Natural Earth 1:50m, gemeinfrei; Winkel Tripel 84°N–58°S, viewBox 400×208,989; erzeugt mit `php bin/make-worldmap.php <ne_50m_admin_0_countries.geojson>`). Pins in Prozent über `wt()` in `stations.js` (Konstanten `WT_X0/Y0/XS/YS` aus dem Skript); Klick → Breite/Länge über `unproject()` (Newton-Verfahren, `null` außerhalb des Umrisses). Kein Kachelserver, keine externen Anfragen.
 - Popup/Zeitstrahl: `plugins/stations/assets/js/stations.js` (Auslieferung über `pluginasset`; füllt auch den Dialog „Station“) (Daten aus `<script type="application/json" id="stationsData">`). Klick (Maus) bzw. zweiter Tipp (Touch) öffnet `gallery&album=<id>&play=1`, ohne Album das einzelne Bild per `gallery&open=<bild-id>`.
@@ -506,6 +508,7 @@ Format je Zeile (`data/logs/JJJJ-MM.jsonl`):
 | `app_name` | In Erinnerung | Titel, falls kein Name hinterlegt |
 | `timezone` | Europe/Berlin | |
 | `data_dir` | `dirname(__DIR__).'/data'` | möglichst außerhalb des Webroots |
+| `geocode_api` | – | nur für Tests: andere Basis-Adresse der Ortssuche des Stationen-Plugins (statt Nominatim); dieser Ursprung ist dann auch ohne HTTPS erlaubt |
 | `base_url` | `''` | öffentliche Basis-URL ohne `index.php`; hat Vorrang vor `settings.json → base_url` (Ersteinrichtung). Leer und nicht gespeichert: Freigabelinks aus der Anfrage, **keine Reset-Mails** |
 | `session_name`, `session_idle_minutes` | gdk_session, 240 | |
 | `login_max_attempts`, `login_window_minutes`, `login_lock_minutes` | 5, 15, 15 | Rate-Limit je IP |
@@ -580,6 +583,7 @@ Entwicklerleitfaden: `docs/plugin-guide.md` (Anleitung), Referenz `docs/plugin-d
 - **Ordner** `plugins/<slug>/` mit Pflichtdateien `plugin.json` (Manifest, `Plugins::parseManifest`) und `plugin.php`
   (`return function (PluginApi $p): void`). Der Slug ist die Ordnerkennung (`^[a-z][a-z0-9-]{1,39}$`).
 - **Zustand**: `settings.json → plugins.<slug>.active`; fehlt der Eintrag, gilt `default_active` des Manifests.
+- **Einstellungen**: Manifest `settings.<schlüssel>` = `{type: "bool", default, label, notice}` (`label`/`notice` = Sprachschlüssel des Plugins). Gespeichert in `settings.json → plugins.<slug>.config.<schlüssel>`; Lesen mit `Plugins::config($slug, $key)` (Manifest-Default, unbekannte Schlüssel = false), Schreiben mit `Plugins::setConfig()` über `admin&a=pluginconfig`. Die Verwaltung zeigt den Bereich „Einstellungen“ nur bei aktiven Plugins. Ein- und Ausschalten des Plugins lässt `config` unberührt.
   `Plugins::boot()` (in `dispatch()`, vor dem Routing) lädt alle aktiven Plugins in Abhängigkeitsreihenfolge (`requires`),
   prüft `requires_app` und fängt Ausnahmen aus `plugin.php` ab (das Plugin gilt dann als „nicht geladen“, Grund in der Verwaltung).
   `plugins_safe_mode` überspringt das Laden.

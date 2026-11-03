@@ -76,6 +76,7 @@ Beim Apache wird der `Authorization`-Header per `.htaccess` an PHP durchgereicht
 | `GET` | `/gallery/images/{id}/file` | lesen | Bilddatei ausliefern (binär) |
 | `POST` | `/gallery/images` | schreiben | Bilder hochladen (multipart/form-data: `files[]`, optional `album`) |
 | `GET` | `/stations` | lesen | Stationen (Plugin „Stationen“), nur lesend |
+| `GET` | `/stations/geocode` | lesen | Koordinaten zu einem Ortsnamen (`place`) über Nominatim/OpenStreetMap; nur Administratoren und nur bei eingeschalteter Plugin-Einstellung „Koordinaten aus dem Ortsnamen suchen“ (sonst 403). Der Ortsname wird dabei an den Fremddienst gesendet; es wird nichts gespeichert. 404 = kein Treffer, 502 = Dienst nicht erreichbar |
 
 Details zu Parametern: OpenAPI-Beschreibung. Besonderheiten:
 

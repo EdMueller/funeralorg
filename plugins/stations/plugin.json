@@ -1,7 +1,7 @@
 {
     "slug": "stations",
     "name": "Stationen",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Zeitstrahl und Weltkarte mit den Lebensstationen. Ein Klick startet die Diashow des verknüpften Albums.",
     "i18n": {
         "en": {
@@ -14,6 +14,18 @@
     "core": true,
     "default_active": true,
     "stores": {
-        "stations": []
+        "stations": [],
+        "stationsgeo": []
+    },
+    "permissions": [
+        "network:nominatim.openstreetmap.org"
+    ],
+    "settings": {
+        "geocode": {
+            "type": "bool",
+            "default": false,
+            "label": "st.set_geocode",
+            "notice": "st.set_geocode_notice"
+        }
     }
 }

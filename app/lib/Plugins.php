@@ -27,6 +27,7 @@ final class Plugins
     public const MAX_FILES = 300;
     public const VERSION_RE = '/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/';
     /** Erlaubte Einträge in `permissions` (rein informativ, kein Schutz – Plugins laufen ohne Sandbox). */
+    public const LANGKEY_RE = '/^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+$/';
     public const PERMISSION_RE = '/^(network:[a-z0-9]([a-z0-9.-]*[a-z0-9])?|mail|files|data:(users|contacts|gallery|memorial|checklist))$/';
     /** GitHub-Repository `besitzer/name`: Besitzer nur Buchstaben, Ziffern, Bindestrich; Name nie `.` oder `..` (kein Pfadtrick in API-Adressen). */
     public const REPO_RE = '~^[A-Za-z0-9][A-Za-z0-9-]{0,38}/(?!\.{1,2}$)[A-Za-z0-9_.-]{1,100}$~';
@@ -352,7 +353,7 @@ final class Plugins
     private static function blankManifest(string $slug): array
     {
         return ['slug' => $slug, 'name' => $slug, 'version' => '', 'description' => '', 'author' => '',
-            'requires_app' => '', 'requires' => [], 'stores' => [], 'core' => false, 'default_active' => false,
+            'requires_app' => '', 'requires' => [], 'stores' => [], 'settings' => [], 'core' => false, 'default_active' => false,
             'requires_php' => '', 'permissions' => [], 'repository' => '', 'license' => '', 'audit' => ['commit' => '', 'report' => ''],
             'i18n' => []];
     }
@@ -401,6 +402,20 @@ final class Plugins
                 return [null, t('plugins.err_store', ['store' => (string)$sn])];
             }
         }
+        // optional: Einstellungen (`settings.<schlüssel>` = {type: bool, default, label, notice}); label/notice sind Sprachschlüssel
+        $settings = [];
+        $rawSettings = $d['settings'] ?? [];
+        if (!is_array($rawSettings)) {
+            return [null, t('plugins.err_manifest_field', ['field' => 'settings'])];
+        }
+        foreach ($rawSettings as $key => $def) {
+            if (!is_string($key) || !preg_match('/^[a-z][a-z0-9_]{1,39}$/', $key) || !is_array($def) || ($def['type'] ?? '') !== 'bool'
+                || !is_string($def['label'] ?? null) || !preg_match(self::LANGKEY_RE, $def['label'])
+                || (($def['notice'] ?? '') !== '' && (!is_string($def['notice']) || !preg_match(self::LANGKEY_RE, $def['notice'])))) {
+                return [null, t('plugins.err_manifest_field', ['field' => 'settings.' . $key])];
+            }
+            $settings[$key] = ['type' => 'bool', 'default' => !empty($def['default']), 'label' => $def['label'], 'notice' => (string)($def['notice'] ?? '')];
+        }
         $reqPhp = (string)($d['requires_php'] ?? '');
         if ($reqPhp !== '' && !preg_match('/^\d+\.\d+(\.\d+)?$/', $reqPhp)) {
             return [null, t('plugins.err_manifest_field', ['field' => 'requires_php'])];
@@ -439,7 +454,7 @@ final class Plugins
             'description' => mb_substr(trim((string)($d['description'] ?? '')), 0, 400),
             'author' => mb_substr(trim((string)($d['author'] ?? '')), 0, 80),
             'requires_app' => $reqApp, 'requires' => array_values(array_unique($requires)),
-            'stores' => $stores, 'core' => !empty($d['core']), 'default_active' => !empty($d['default_active']),
+            'stores' => $stores, 'settings' => $settings, 'core' => !empty($d['core']), 'default_active' => !empty($d['default_active']),
         ], ''];
     }
 
@@ -460,10 +475,49 @@ final class Plugins
         return (bool)(self::all()[$slug]['m']['default_active'] ?? false);
     }
 
+    /**
+     * Wert einer im Manifest unter `settings` deklarierten Einstellung (Admin-Verwaltung → Plugins → Einstellungen).
+     * Unbekannte Schlüssel liefern false.
+     */
+    public static function config(string $slug, string $key): bool
+    {
+        $def = self::all()[$slug]['m']['settings'][$key] ?? null;
+        if ($def === null) {
+            return false;
+        }
+        $v = self::settings()['plugins'][$slug]['config'][$key] ?? null;
+        return is_bool($v) ? $v : (bool)$def['default'];
+    }
+
+    /**
+     * Speichert alle deklarierten Einstellungen eines Plugins aus `$values` (Schlüssel → Wert; fehlt einer, gilt er als aus).
+     * @param array<string, mixed> $values
+     * @return list<string>|null Schlüssel, deren Wert sich geändert hat (leer = nichts geändert); null, wenn das Plugin keine Einstellungen hat
+     */
+    public static function setConfig(string $slug, array $values): ?array
+    {
+        $decl = self::all()[$slug]['m']['settings'] ?? [];
+        if (!$decl || !(self::all()[$slug]['ok'] ?? false)) {
+            return null;
+        }
+        $old = [];
+        foreach (array_keys($decl) as $key) {
+            $old[$key] = self::config($slug, $key);
+        }
+        $new = [];
+        foreach (array_keys($decl) as $key) {
+            $new[$key] = !empty($values[$key]);
+        }
+        Store::update('settings', function (array &$s) use ($slug, $new) {
+            $s['plugins'][$slug]['config'] = $new;
+        });
+        return array_keys(array_filter($new, fn($v, $k) => $v !== $old[$k], ARRAY_FILTER_USE_BOTH));
+    }
+
     private static function saveState(string $slug, bool $active): void
     {
         Store::update('settings', function (array &$s) use ($slug, $active) {
-            $s['plugins'][$slug] = ['active' => $active, 'changed' => now()];
+            $s['plugins'][$slug] = ['active' => $active, 'changed' => now()] + ($s['plugins'][$slug] ?? []); // config bleibt erhalten
         });
     }
 

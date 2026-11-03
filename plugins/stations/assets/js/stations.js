@@ -343,6 +343,34 @@
     }
     lat.addEventListener('change', function () { syncMarker(true); });
     lon.addEventListener('change', function () { syncMarker(true); });
+    /* Koordinaten aus dem Ortsnamen (nur sichtbar, wenn der Admin die Ortssuche eingeschaltet hat) */
+    var geoBtn = $('[data-geocode]', modal), geoMsg = $('[data-geocode-msg]', modal);
+    if (geoBtn) {
+      var geoHint = geoMsg.textContent;
+      geoBtn.addEventListener('click', function () {
+        var place = String(form.elements.place.value).trim();
+        if (!place) { geoMsg.textContent = tr('st_geo_empty'); form.elements.place.focus(); return; }
+        var meta = document.querySelector('meta[name="csrf"]');
+        var fd = new FormData();
+        fd.set('place', place);
+        fd.set('_csrf', meta ? meta.content : '');
+        geoBtn.disabled = true;
+        geoMsg.textContent = tr('st_geo_busy');
+        fetch(geoBtn.dataset.geocode, { method: 'POST', body: fd, credentials: 'same-origin',
+          headers: { 'X-Requested-With': 'fetch', 'X-CSRF-Token': meta ? meta.content : '' } })
+          .then(function (r) { return r.json().catch(function () { return { ok: false, error: tr('st_geo_failed') }; }); })
+          .then(function (j) {
+            if (!j.ok) { geoMsg.textContent = j.error || tr('st_geo_failed'); return; }
+            lat.value = j.lat.toFixed(4);
+            lon.value = j.lon.toFixed(4);
+            syncMarker(true);
+            geoMsg.textContent = tr('st_geo_found', { label: j.label });
+          })
+          .catch(function () { geoMsg.textContent = tr('st_geo_failed'); })
+          .then(function () { geoBtn.disabled = false; });
+      });
+      modal.addEventListener('show.bs.modal', function () { geoMsg.textContent = geoHint; });
+    }
     modal.addEventListener('shown.bs.modal', function () {
       picker.world(false);
       syncMarker(true);

@@ -120,6 +120,20 @@ $pageTitle = t('plugins.title');
         <a class="btn btn-sm btn-outline-primary" href="<?= e(url('admin', ['a' => 'pluginexport', 'p' => $slug])) ?>"><i class="bi bi-download me-1"></i><?= e(t('plugins.export')) ?></a>
       </div>
     </div>
+    <?php if ($p['ok'] && $p['active'] && $m['settings']): ?>
+      <form method="post" action="<?= e(url('admin', ['a' => 'pluginconfig'])) ?>" class="mt-2 pt-2 border-top">
+        <?= Csrf::field() ?><input type="hidden" name="slug" value="<?= e($slug) ?>">
+        <div class="fw-semibold small mb-1"><i class="bi bi-sliders me-1"></i><?= e(t('plugins.cfg_h')) ?></div>
+        <?php foreach ($m['settings'] as $key => $def): ?>
+          <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" id="cfg-<?= e($slug . '-' . $key) ?>" name="cfg[<?= e($key) ?>]" value="1"<?= Plugins::config($slug, $key) ? ' checked' : '' ?>>
+            <label class="form-check-label" for="cfg-<?= e($slug . '-' . $key) ?>"><?= e(t($def['label'])) ?></label>
+            <?php if ($def['notice'] !== ''): ?><div class="form-text"><i class="bi bi-info-circle me-1"></i><?= e(t($def['notice'])) ?></div><?php endif; ?>
+          </div>
+        <?php endforeach; ?>
+        <button class="btn btn-sm btn-primary" type="submit"><?= e(t('plugins.cfg_save')) ?></button>
+      </form>
+    <?php endif; ?>
     <?php if (!$m['core'] && !$p['active']): ?>
       <form method="post" action="<?= e(url('admin', ['a' => 'plugindelete'])) ?>" class="d-flex flex-wrap align-items-center gap-3 mt-2 pt-2 border-top"
             data-confirm="<?= e(t('plugins.delete_confirm', ['name' => $m['name']])) ?>">

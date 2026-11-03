@@ -6,7 +6,7 @@ function ctrl_admin(string $r, string $a): void
     Perm::needAdmin();
     $isPost = $_SERVER['REQUEST_METHOD'] === 'POST';
     if (in_array($a, ['usersave', 'userdelete', 'groupsave', 'groupdelete', 'sharesave', 'sharerevoke',
-        'sharedelete', 'snapshot', 'requestdone', 'impersonate', 'sendersave', 'pluginset', 'pluginimport',
+        'sharedelete', 'snapshot', 'requestdone', 'impersonate', 'sendersave', 'pluginset', 'pluginconfig', 'pluginimport',
         'plugindelete', 'transferexport', 'transferimport', 'transferapply', 'transferdrop'], true) && !$isPost) {
         abort(400);
     }
@@ -306,6 +306,20 @@ function ctrl_admin(string $r, string $a): void
                 $name = Plugins::all()[$slug]['m']['name'] ?? $slug;
                 Log::add('admin', ($on ? 'Plugin aktiviert: ' : 'Plugin deaktiviert: ') . $name);
                 flash(t($on ? 'plugins.activated' : 'plugins.deactivated', ['name' => $name]));
+            }
+            redirect('admin', ['a' => 'plugins']);
+
+        case 'pluginconfig':
+            $slug = (string)post('slug');
+            $name = Plugins::all()[$slug]['m']['name'] ?? $slug;
+            $changed = Plugins::isActive($slug) ? Plugins::setConfig($slug, (array)($_POST['cfg'] ?? [])) : null;
+            if ($changed === null) {
+                flash(t('plugins.cfg_none'), 'warning');
+            } else {
+                foreach ($changed as $key) {
+                    Log::add('admin', 'Plugin-Einstellung ' . $name . ' / ' . $key . ': ' . (Plugins::config($slug, $key) ? 'an' : 'aus'));
+                }
+                flash(t('plugins.cfg_saved', ['name' => $name]));
             }
             redirect('admin', ['a' => 'plugins']);
 

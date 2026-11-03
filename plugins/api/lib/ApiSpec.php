@@ -5,7 +5,7 @@ declare(strict_types=1);
  * Tabelle aller Operationen. Einzige Quelle für REST-Routen, MCP-Tools und die OpenAPI-Beschreibung.
  *
  * Eintrag: id (z. B. contacts.list), method, path (mit {platzhaltern}), write (ändert Daten), mod (Bereich für die
- * Sichtbarkeit: contacts|rsvp|checklist|gallery|memorial|admin|stations|''), doc, in (Parameter), fn (ApiService-Methode),
+ * Sichtbarkeit: contacts|rsvp|checklist|gallery|memorial|admin|stations|stations_admin|''), doc, in (Parameter), fn (ApiService-Methode),
  * optional raw (Antwort sendet die Methode selbst, nur REST), destructive.
  * Parameter: Name (Endung ! = Pflicht) => [Typ, Beschreibung, optional Aufzählung].
  */
@@ -101,6 +101,9 @@ final class ApiSpec
             ['gallery.image.upload', 'POST', '/gallery/images', true, 'gallery', 'Bilder hochladen (multipart/form-data: `files[]`, optional `album`)', [], 'imageUpload', 'raw'],
 
             ['stations.list', 'GET', '/stations', false, 'stations', 'Stationen (Plugin „Stationen“), nur lesend', [], 'stations'],
+            ['stations.geocode', 'GET', '/stations/geocode', false, 'stations_admin', 'Koordinaten zu einem Ortsnamen suchen (Nominatim/OpenStreetMap; nur Administratoren, nur wenn die Plugin-Einstellung „Ortssuche“ eingeschaltet ist). Der Ortsname wird dabei an den Fremddienst gesendet; es werden keine Daten gespeichert', [
+                'place!' => ['string', 'Ortsname, z. B. „Hamburg“ (höchstens 120 Zeichen)'],
+            ], 'stationsGeocode'],
         ];
         $out = [];
         foreach ($ops as $o) {
@@ -142,6 +145,7 @@ final class ApiSpec
             'memorial' => Perm::memorial(),
             'admin' => Auth::isAdmin(),
             'stations' => class_exists('Stations') && Perm::memorial() && Perm::plugin('stations'),
+            'stations_admin' => class_exists('Geocoder') && Auth::isAdmin() && Perm::plugin('stations') && Geocoder::enabled(),
             default => true,
         };
     }

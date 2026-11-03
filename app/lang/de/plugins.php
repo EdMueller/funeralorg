@@ -160,4 +160,8 @@ return [
     'market.selftest_unknown' => 'Die Prüfung war nicht möglich (Adresse der Anwendung nicht erreichbar). Prüfe die Basis-URL oder rufe die Adresse manuell auf.',
     'market.exposed_h' => 'Plugin-Verzeichnis von außen erreichbar.',
     'market.exposed' => 'Plugin-Code und Pakete können heruntergeladen werden. Apache: AllowOverride All und die .htaccess im Ordner plugins/ prüfen. Nginx: plugins/ sperren (siehe docs/nginx-ispconfig.conf) oder den Ordner außerhalb des Webroots ablegen. Erreichbar waren:',
+    'plugins.cfg_h' => 'Einstellungen',
+    'plugins.cfg_save' => 'Einstellungen speichern',
+    'plugins.cfg_saved' => 'Einstellungen für „{name}“ gespeichert.',
+    'plugins.cfg_none' => 'Dieses Plugin hat keine Einstellungen oder ist nicht aktiv.',
 ];

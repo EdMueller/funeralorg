@@ -881,4 +881,22 @@ final class ApiService
         $keep = array_flip(['id', 'type', 'title', 'date', 'place', 'lat', 'lon', 'text', 'album', 'image']);
         return ['items' => array_map(fn($s) => array_intersect_key($s, $keep), Stations::all())];
     }
+
+    /** Ortssuche des Stationen-Plugins: nur Administratoren, nur bei eingeschalteter Plugin-Einstellung; speichert nichts. */
+    public static function stationsGeocode(array $a): array
+    {
+        if (!class_exists('Geocoder') || !Auth::isAdmin() || !Perm::plugin('stations')) {
+            self::deny();
+        }
+        Geocoder::enabled() || self::deny(t('st.geo_off'));
+        trim((string)($a['place'] ?? '')) !== '' || self::invalid(t('st.geo_empty'));
+        try {
+            $hit = Geocoder::lookup((string)($a['place'] ?? ''));
+        } catch (RuntimeException $e) {
+            throw new ApiError(502, $e->getMessage());
+        }
+        $hit !== null || self::missing(t('st.geo_none'));
+        Log::add('admin', 'Ortssuche (Stationen, API): ' . mb_substr(trim((string)($a['place'] ?? '')), 0, 120));
+        return $hit;
+    }
 }

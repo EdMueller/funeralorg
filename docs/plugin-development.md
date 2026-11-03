@@ -49,6 +49,7 @@ plugins/<slug>/
 | `audit` | optional: `{"commit": "<40-stelliger Git-SHA>", "report": "AUDIT.md"}`; der Marktplatz vergleicht den Commit mit dem des Release-Tags |
 | `requires` | Slugs anderer Plugins, die aktiv sein müssen; solange ein aktives Plugin ein anderes braucht, lässt dieses sich nicht deaktivieren |
 | `stores` | Datendateien `data/<name>.json` mit Standardinhalt (`[a-z_]`, nicht die des Kerns). Sie gehören zu den Snapshots und Backups. Löschen mit „Daten ebenfalls löschen“ entfernt genau diese Dateien |
+| `settings` | optional: Einstellungen für Admins, `{"schluessel": {"type": "bool", "default": false, "label": "x.set_label", "notice": "x.set_notice"}}` (`label` und `notice` sind Sprachschlüssel des Plugins, `notice` optional, z. B. Datenschutzhinweis). Die Verwaltung zeigt bei aktiven Plugins einen Bereich „Einstellungen“; Lesen im Plugin mit `Plugins::config('<slug>', '<schluessel>')` (bool, sonst `default`). Bisher nur `type: bool` |
 | `core` | Teil der Anwendung: lässt sich deaktivieren, aber nicht löschen |
 | `default_active` | Zustand, solange ein Admin nichts entschieden hat (importierte Plugins starten immer inaktiv) |
 
