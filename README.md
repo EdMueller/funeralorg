@@ -1,4 +1,4 @@
-# Gedenkseite – organise a funeral together
+# Memorial page – organise a funeral together
 
 [**English**](README.md) · [Deutsch](README.de.md)
 
