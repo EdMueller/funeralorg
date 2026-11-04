@@ -6,6 +6,7 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 ## [Unreleased]
 
 ## [0.0.22] - 2026-11-04
+
 ### Added
 
 - Gallery: administrators can obscure faces, licence plates and similar areas in a picture ("Obscure" in the
