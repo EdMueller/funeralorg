@@ -5,6 +5,7 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+## [0.0.22] - 2026-11-04
 ### Added
 
 - Gallery: administrators can obscure faces, licence plates and similar areas in a picture ("Obscure" in the
@@ -270,7 +271,8 @@ First public release.
   `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `THIRD-PARTY.md`
 - GitHub Actions (syntax check, language files, smoke test on PHP 8.2 to 8.4) and issue/pull request templates
 
-[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.21...HEAD
+[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.22...HEAD
+[0.0.22]: https://github.com/EdMueller/funeralorg/compare/v0.0.21...v0.0.22
 [0.0.21]: https://github.com/EdMueller/funeralorg/compare/v0.0.20...v0.0.21
 [0.0.20]: https://github.com/EdMueller/funeralorg/compare/v0.0.19...v0.0.20
 [0.0.19]: https://github.com/EdMueller/funeralorg/compare/v0.0.18...v0.0.19
