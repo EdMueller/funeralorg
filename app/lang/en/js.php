@@ -43,4 +43,7 @@ return [
     'js.ct_cols_aria' => 'Choose columns',
     'js.ct_cols_title' => 'Show columns',
     'js.ct_cols_reset' => 'Restore defaults',
+    'js.mask_region' => 'Area {n}',
+    'js.mask_count' => ['one' => '{n} area', 'other' => '{n} areas'],
+    'js.mask_reset_confirm' => 'Remove all areas and show the picture unchanged again?',
 ];

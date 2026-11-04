@@ -119,6 +119,7 @@ return [
     'groups.gal_download' => 'Bilder herunterladen',
     'groups.gal_recent' => 'Zuletzt hinzugefügte Bilder (Startseite)',
     'groups.gal_all' => 'Alle Bilder (Gesamtübersicht)',
+    'groups.gal_download_hint' => 'Liefert auch die unmaskierten Originale.',
     'groups.gal_all_hint' => 'Ohne „Alle Bilder“ sehen Mitglieder nur die Alben und ihre Bilder, keine Gesamtübersicht und keine Bilder ohne Album.',
     'groups.plugins_title' => 'Plugins',
     'groups.plugins_hint' => 'Ohne Häkchen ist das Plugin für diese Gruppe weder im Menü noch über die Adresse erreichbar.',

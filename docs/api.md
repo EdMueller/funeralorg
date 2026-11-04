@@ -72,6 +72,7 @@ Beim Apache wird der `Authorization`-Header per `.htaccess` an PHP durchgereicht
 | `GET` | `/gallery/images` | lesen | Bilder auflisten (Metadaten, ohne Bilddaten); ohne `album` nur mit dem Gruppenrecht „Alle Bilder“ (sonst 403), Bilder ohne Album sieht dann niemand ohne dieses Recht |
 | `GET` | `/gallery/images/{id}` | lesen | Bild-Metadaten lesen |
 | `PATCH` | `/gallery/images/{id}` | schreiben | Bildunterschrift/Album/Verweise ändern (Administratoren oder Hochlader des Bildes); `login` nur Administratoren |
+| `PUT` | `/gallery/images/{id}/masks` | schreiben | Gesichter/Kennzeichen unkenntlich machen (nur Administratoren): `masks` = Liste von `{x, y, w, h, shape: rect\|ellipse, mode: blur\|pixel\|black}` (relativ 0–1, Ursprung oben links, höchstens 50), ersetzt alle Bereiche, leere Liste hebt auf. Wirkt auf `thumb`/`medium`; `orig` bleibt unmaskiert. Nicht für animierte GIFs |
 | `DELETE` | `/gallery/images/{id}` | schreiben | Bild samt Dateien löschen (nur Administratoren) |
 | `GET` | `/gallery/images/{id}/file` | lesen | Bilddatei ausliefern (binär) |
 | `POST` | `/gallery/images` | schreiben | Bilder hochladen (multipart/form-data: `files[]`, optional `album`) |

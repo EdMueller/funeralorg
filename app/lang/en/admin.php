@@ -119,6 +119,7 @@ return [
     'groups.gal_download' => 'Download pictures',
     'groups.gal_recent' => 'Recently added pictures (home page)',
     'groups.gal_all' => 'All pictures (full overview)',
+    'groups.gal_download_hint' => 'Also delivers the unmasked originals.',
     'groups.gal_all_hint' => 'Without “All pictures”, members only see the albums and their pictures, not the full overview and no pictures without an album.',
     'groups.plugins_title' => 'Plugins',
     'groups.plugins_hint' => 'Without a tick, the plugin is neither in the menu nor reachable by address for this group.',

@@ -43,4 +43,7 @@ return [
     'js.ct_cols_aria' => 'Spalten auswählen',
     'js.ct_cols_title' => 'Spalten anzeigen',
     'js.ct_cols_reset' => 'Standard wiederherstellen',
+    'js.mask_region' => 'Bereich {n}',
+    'js.mask_count' => ['one' => '{n} Bereich', 'other' => '{n} Bereiche'],
+    'js.mask_reset_confirm' => 'Alle Bereiche entfernen und das Bild wieder unverändert anzeigen?',
 ];

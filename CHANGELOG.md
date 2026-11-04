@@ -5,6 +5,15 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+### Added
+
+- Gallery: administrators can obscure faces, licence plates and similar areas in a picture ("Obscure" in the
+  lightbox): draw ellipses or rectangles and choose strong blur, pixelate or black. The areas are burned into the
+  thumbnail and the large view, so every place that shows the picture (gallery, login page, stations, API/MCP) shows
+  the obscured version. The original file stays untouched and remains available to users with the "Download pictures"
+  right. Resetting restores the normal views. Not available for animated GIFs. Also available as
+  `PUT /gallery/images/{id}/masks` and as an MCP tool.
+
 ## [0.0.21] - 2026-11-03
 
 ### Added

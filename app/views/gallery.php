@@ -21,11 +21,17 @@ $linkBoxes = static function (array $flat, string $name = 'links[]'): string {
     }
     return $h ?: '<p class="small text-muted mb-0">' . e(t('gal.no_albums')) . '</p>';
 };
+// Bild-URL; bei maskierten Bildern mit Versionsangabe, damit neue Maskierungen den Browser-Cache umgehen
+$imgUrl = static fn(array $img, string $size): string => url('img', ['id' => $img['id'], 's' => $size]
+    + (!empty($img['masks']) ? ['v' => (string)strtotime((string)($img['masked_at'] ?? '')) ] : []));
 $items = [];
 foreach ($slides as $img) {
     $items[] = [
         'id'      => $img['id'],
-        'src'     => url('img', ['id' => $img['id'], 's' => 'medium']),
+        'src'     => $imgUrl($img, 'medium'),
+        'raw'     => $isAdmin && Image::maskable($img) ? url('img', ['id' => $img['id'], 's' => 'raw']) : '',
+        'masks'   => $isAdmin ? array_values($img['masks'] ?? []) : [],
+        'masked'  => !empty($img['masks']),
         'dl'      => $canDl ? url('img', ['id' => $img['id'], 's' => 'orig']) : '',
         'caption' => $img['caption'],
         'album'   => $img['album'],
@@ -142,7 +148,7 @@ foreach ($slides as $img) {
   <?php foreach ($images as $n => $img): $picked = in_array($img['id'], $selected, true); ?>
     <div class="g-item<?= $picked ? ' picked' : '' ?>" data-id="<?= e($img['id']) ?>">
       <button class="open" type="button" data-open="<?= $n ?>" title="<?= e(image_tip($img, $albumNames)) ?>" aria-label="<?= e(t('gal.open_pic') . ($img['caption'] ? ': ' . $img['caption'] : '')) ?>">
-        <img src="<?= e(url('img', ['id' => $img['id'], 's' => 'thumb'])) ?>" alt="<?= e($img['caption']) ?>" loading="lazy">
+        <img src="<?= e($imgUrl($img, 'thumb')) ?>" alt="<?= e($img['caption']) ?>" loading="lazy">
       </button>
       <?php if ($canDl): ?>
         <button class="pick" type="button" data-pick="<?= e($img['id']) ?>" aria-pressed="<?= $picked ? 'true' : 'false' ?>" aria-label="<?= e(t('gal.add_to_sel')) ?>"><i class="bi bi-check-lg"></i></button>
@@ -151,6 +157,7 @@ foreach ($slides as $img) {
         <span class="mv"><button type="button" data-move="-1" aria-label="<?= e(t('gal.to_front')) ?>"><i class="bi bi-chevron-left"></i></button><button type="button" data-move="1" aria-label="<?= e(t('gal.to_back')) ?>"><i class="bi bi-chevron-right"></i></button></span>
       <?php endif; ?>
       <?php if (!empty($img['animated'])): ?><span class="tag">GIF</span><?php endif; ?>
+      <?php if ($isAdmin && !empty($img['masks'])): ?><span class="tag" style="left:auto;right:.4rem;top:.4rem;bottom:auto" title="<?= e(t('gal.tag_masked_tip')) ?>"><i class="bi bi-eye-slash me-1"></i><?= e(t('gal.tag_masked')) ?></span><?php endif; ?>
       <?php if ($isAdmin && (!empty($img['login']) || $img['id'] === $portrait)): ?><span class="tag" style="left:auto;right:.4rem;bottom:.4rem"><?= e(t($img['id'] === $portrait ? 'gal.tag_portrait' : 'gal.tag_login')) ?></span><?php endif; ?>
     </div>
   <?php endforeach; ?>
@@ -204,11 +211,48 @@ foreach ($slides as $img) {
         <button class="lb-btn" type="button" id="lbPick"><i class="bi bi-check-circle"></i> <?= e(t('gal.pick')) ?></button>
         <a class="lb-btn" id="lbDl" href="#"><i class="bi bi-download"></i> <?= e(t('gal.original')) ?></a>
       <?php endif; ?>
+      <?php if ($isAdmin): ?>
+        <button class="lb-btn" type="button" id="lbMask" hidden><i class="bi bi-eye-slash"></i> <?= e(t('gal.mask')) ?></button>
+      <?php endif; ?>
       <button class="lb-btn" type="button" id="lbEdit" hidden><i class="bi bi-pencil"></i> <?= e(t('gal.edit')) ?></button>
     </div>
   </div>
 </div>
 <script type="application/json" id="galleryData"><?= json_encode(['items' => $items, 'open' => (string)get('open'), 'play' => !empty($play)], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?></script>
+
+<?php if ($isAdmin): ?>
+<!-- Gesichter/Kennzeichen unkenntlich machen -->
+<div class="modal fade" id="maskModal" tabindex="-1" aria-labelledby="maskTitle" aria-hidden="true" style="z-index:1070">
+  <div class="modal-dialog modal-dialog-centered modal-xl modal-fullscreen-lg-down">
+    <div class="modal-content">
+      <div class="modal-header"><h2 class="modal-title h5" id="maskTitle"><?= e(t('gal.mask_title')) ?></h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= e(t('common.close')) ?>"></button></div>
+      <div class="modal-body">
+        <div class="d-flex flex-wrap gap-2 align-items-end mb-2">
+          <div><label class="form-label small mb-0" for="mk-shape"><?= e(t('gal.mask_shape')) ?></label>
+            <select class="form-select form-select-sm" id="mk-shape">
+              <option value="ellipse"><?= e(t('gal.mask_ellipse')) ?></option>
+              <option value="rect"><?= e(t('gal.mask_rect')) ?></option></select></div>
+          <div><label class="form-label small mb-0" for="mk-mode"><?= e(t('gal.mask_mode')) ?></label>
+            <select class="form-select form-select-sm" id="mk-mode">
+              <option value="blur"><?= e(t('gal.mask_blur')) ?></option>
+              <option value="pixel"><?= e(t('gal.mask_pixel')) ?></option>
+              <option value="black"><?= e(t('gal.mask_black')) ?></option></select></div>
+          <button class="btn btn-sm btn-outline-danger" type="button" id="mkDelete" disabled><i class="bi bi-x-lg me-1"></i><?= e(t('gal.mask_delete')) ?></button>
+          <span class="small text-muted ms-auto" id="mkCount" role="status"></span>
+        </div>
+        <div class="mask-stage" id="mkStage"><img id="mkImg" alt=""><div class="mask-layer" id="mkLayer"></div></div>
+        <p class="small text-muted mt-2 mb-0"><i class="bi bi-info-circle me-1"></i><?= e(t('gal.mask_hint')) ?></p>
+        <p class="small text-warning-emphasis mt-1 mb-0"><i class="bi bi-exclamation-triangle me-1"></i><?= e(t('gal.mask_orig_hint')) ?></p>
+      </div>
+      <div class="modal-footer justify-content-between">
+        <button class="btn btn-outline-secondary" type="button" id="mkReset"><?= e(t('gal.mask_reset')) ?></button>
+        <button class="btn btn-primary" type="button" id="mkSave"><?= e(t('gal.mask_save')) ?></button>
+      </div>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
 
 <!-- Bild bearbeiten -->
 <div class="modal fade" id="imgModal" tabindex="-1" aria-labelledby="imgModalTitle" aria-hidden="true" style="z-index:1070">

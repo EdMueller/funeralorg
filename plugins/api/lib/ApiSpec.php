@@ -96,6 +96,9 @@ final class ApiSpec
                 'caption' => ['string', 'Unterschrift (max. 300 Zeichen)'], 'album' => ['string', 'Heimatalbum-ID oder leer'],
                 'links' => ['array', 'Weitere Album-IDs'], 'login' => ['boolean', 'Auf der Anmeldeseite zeigen (nur Administratoren)'],
             ], 'imageUpdate'],
+            ['gallery.image.masks', 'PUT', '/gallery/images/{id}/masks', true, 'admin', 'Gesichter/Kennzeichen unkenntlich machen (nur Administratoren): ersetzt alle Bereiche eines Bildes und brennt sie in Vorschau und Großansicht ein; das Original bleibt unverändert und ist weiter für Benutzer mit dem Recht „Herunterladen“ abrufbar. Leere Liste hebt die Maskierung auf. Nicht für animierte GIFs', $id + [
+                'masks!' => ['array', 'Liste von Bereichen {x, y, w, h, shape (rect|ellipse), mode (blur|pixel|black)}; x/y/w/h relativ zum Bild (0–1, Ursprung oben links), höchstens 50'],
+            ], 'imageMasks'],
             ['gallery.image.delete', 'DELETE', '/gallery/images/{id}', true, 'admin', 'Bild samt Dateien löschen (nur Administratoren)', $id, 'imageDelete', 'destructive'],
             ['gallery.image.file', 'GET', '/gallery/images/{id}/file', false, 'gallery', 'Bilddatei ausliefern (binär)', $id + ['size' => ['string', 'thumb, medium oder orig (orig verlangt das Recht „Herunterladen“)', ['thumb', 'medium', 'orig']]], 'imageFile', 'raw'],
             ['gallery.image.upload', 'POST', '/gallery/images', true, 'gallery', 'Bilder hochladen (multipart/form-data: `files[]`, optional `album`)', [], 'imageUpload', 'raw'],

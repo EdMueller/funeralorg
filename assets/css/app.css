@@ -448,3 +448,18 @@ main.app-main.app-main-wide { max-width: none; }
 .frame-opt:has(input:checked) { border-color: var(--efeu); box-shadow: 0 0 0 2px var(--efeu); background: var(--efeu-hell); }
 .frame-opt:has(input:focus-visible) { outline: 2px solid var(--efeu); outline-offset: 2px; }
 .frame-opt .portrait-frame { --pw: 64px; }
+
+/* Unkenntlich machen (Editor im Leuchtkasten) */
+.mask-stage { position: relative; display: inline-block; max-width: 100%; line-height: 0; background: #15191b; border-radius: .3rem; overflow: hidden; margin: 0 auto; }
+.mask-stage img { display: block; max-width: 100%; max-height: 70vh; width: auto; height: auto; -webkit-user-select: none; user-select: none; -webkit-user-drag: none; }
+.mask-layer { position: absolute; inset: 0; touch-action: none; cursor: crosshair; }
+.mask-r { position: absolute; box-sizing: border-box; border: 2px solid #fff; background: rgba(0,0,0,.42); box-shadow: 0 0 0 1px rgba(0,0,0,.6); cursor: move; outline-offset: 2px; }
+.mask-r.ellipse { border-radius: 50%; }
+.mask-r.sel { border-color: var(--efeu, #4a5d4f); border-style: dashed; background: rgba(0,0,0,.28); }
+.mask-h { position: absolute; width: 1.25rem; height: 1.25rem; background: #fff; border: 2px solid var(--efeu, #4a5d4f); border-radius: 50%; }
+.mask-h.nw { left: -.65rem; top: -.65rem; cursor: nwse-resize; }
+.mask-h.ne { right: -.65rem; top: -.65rem; cursor: nesw-resize; }
+.mask-h.sw { left: -.65rem; bottom: -.65rem; cursor: nesw-resize; }
+.mask-h.se { right: -.65rem; bottom: -.65rem; cursor: nwse-resize; }
+#maskModal .modal-body { text-align: center; }
+#maskModal .modal-body > div:first-child, #maskModal .modal-body > p { text-align: left; }

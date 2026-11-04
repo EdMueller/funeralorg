@@ -42,7 +42,7 @@ foreach (array_merge([$blank], $groups) as $g):
         <div class="form-check"><input class="form-check-input" type="checkbox" id="gal-<?= e($g['id'] . $k) ?>" name="gallery[<?= $k ?>]" value="1" <?= $on ? 'checked' : '' ?>>
           <label class="form-check-label" for="gal-<?= e($g['id'] . $k) ?>"><?= e($lbl) ?></label></div>
       <?php endforeach; ?>
-      <p class="small text-muted mt-1 mb-0"><?= e(t('groups.gal_all_hint')) ?></p>
+      <p class="small text-muted mt-1 mb-0"><?= e(t('groups.gal_all_hint')) ?> <?= e(t('groups.gal_download_hint')) ?></p>
       <p class="fw-semibold small mt-3 mb-2"><?= e(t('groups.plugins_title')) ?></p>
       <?php foreach ($plugins as $slug => $pname):
           $on = isset($g['plugins'][$slug]) ? !empty($g['plugins'][$slug]) : !$isNew; ?>

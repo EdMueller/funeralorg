@@ -656,6 +656,7 @@
       var dl = $('#lbDl'); if (dl) dl.href = it.dl;
       var pb = $('#lbPick'); if (pb) pb.classList.toggle('on', !!isPicked(it.id));
       var eb = $('#lbEdit'); if (eb) eb.hidden = !it.edit;
+      var mb = $('#lbMask'); if (mb) mb.hidden = !it.raw;
       preload(idx + 1);
       if (!seen[it.id]) { seen[it.id] = 1; send(u('gallery', 'seen'), { id: it.id }).catch(function () {}); }
     }
@@ -718,6 +719,122 @@
       if (document.fullscreenElement) document.exitFullscreen().catch(function () {});
       bootstrap.Modal.getOrCreateInstance(imgModalEl).show();
     });
+
+    /* ---------- Gesichter/Kennzeichen unkenntlich machen (Admin) ---------- */
+    var maskEl = document.getElementById('maskModal');
+    var maskBtn = $('#lbMask');
+    if (maskEl && maskBtn) {
+      var mkLayer = $('#mkLayer'), mkImg = $('#mkImg');
+      var mkShape = $('#mk-shape'), mkMode = $('#mk-mode'), mkDel = $('#mkDelete'), mkCount = $('#mkCount');
+      var regs = [], sel = -1, drag = null, mkItem = null;
+      var clamp01 = function (v) { return Math.min(1, Math.max(0, v)); };
+
+      function mkRender() {
+        mkLayer.textContent = '';
+        regs.forEach(function (r, i) {
+          var d = document.createElement('div');
+          d.className = 'mask-r ' + r.shape + (i === sel ? ' sel' : '');
+          d.dataset.i = i;
+          d.tabIndex = 0;
+          d.setAttribute('aria-label', tr('mask_region', { n: i + 1 }));
+          d.style.left = (r.x * 100) + '%'; d.style.top = (r.y * 100) + '%';
+          d.style.width = (r.w * 100) + '%'; d.style.height = (r.h * 100) + '%';
+          if (i === sel) ['nw', 'ne', 'sw', 'se'].forEach(function (h) {
+            var k = document.createElement('span'); k.className = 'mask-h ' + h; k.dataset.h = h; d.appendChild(k);
+          });
+          mkLayer.appendChild(d);
+        });
+        mkDel.disabled = sel < 0;
+        mkCount.textContent = tr('mask_count', { n: regs.length }, regs.length);
+        if (sel >= 0) { mkShape.value = regs[sel].shape; mkMode.value = regs[sel].mode; }
+      }
+      function pt(ev) {
+        var b = mkLayer.getBoundingClientRect();
+        return { x: clamp01((ev.clientX - b.left) / b.width), y: clamp01((ev.clientY - b.top) / b.height) };
+      }
+      mkLayer.addEventListener('pointerdown', function (ev) {
+        if (ev.button > 0) return;
+        var p = pt(ev), tgt = ev.target.closest('.mask-r'), h = ev.target.dataset.h;
+        mkLayer.setPointerCapture(ev.pointerId);
+        if (tgt) {
+          sel = +tgt.dataset.i;
+          var r = regs[sel];
+          drag = { type: h ? 'resize' : 'move', h: h, p0: p, r0: { x: r.x, y: r.y, w: r.w, h: r.h } };
+        } else {
+          regs.push({ x: p.x, y: p.y, w: 0, h: 0, shape: mkShape.value, mode: mkMode.value });
+          sel = regs.length - 1;
+          drag = { type: 'draw', p0: p, r0: null };
+        }
+        ev.preventDefault();
+        mkRender();
+      });
+      mkLayer.addEventListener('pointermove', function (ev) {
+        if (!drag) return;
+        var p = pt(ev), r = regs[sel];
+        if (drag.type === 'draw') {
+          r.x = Math.min(drag.p0.x, p.x); r.y = Math.min(drag.p0.y, p.y);
+          r.w = Math.abs(p.x - drag.p0.x); r.h = Math.abs(p.y - drag.p0.y);
+        } else if (drag.type === 'move') {
+          r.x = Math.min(1 - r.w, Math.max(0, drag.r0.x + p.x - drag.p0.x));
+          r.y = Math.min(1 - r.h, Math.max(0, drag.r0.y + p.y - drag.p0.y));
+        } else {
+          var o = drag.r0, x1 = o.x, y1 = o.y, x2 = o.x + o.w, y2 = o.y + o.h;
+          if (drag.h.indexOf('w') >= 0) x1 = Math.min(p.x, x2 - 0.01); else x2 = Math.max(p.x, x1 + 0.01);
+          if (drag.h.indexOf('n') >= 0) y1 = Math.min(p.y, y2 - 0.01); else y2 = Math.max(p.y, y1 + 0.01);
+          r.x = x1; r.y = y1; r.w = x2 - x1; r.h = y2 - y1;
+        }
+        mkRender();
+      });
+      function mkEnd() {
+        if (!drag) return;
+        var r = regs[sel];
+        if (drag.type === 'draw' && (r.w < 0.01 || r.h < 0.01)) { regs.splice(sel, 1); sel = -1; }
+        drag = null;
+        mkRender();
+      }
+      mkLayer.addEventListener('pointerup', mkEnd);
+      mkLayer.addEventListener('pointercancel', mkEnd);
+      mkLayer.addEventListener('keydown', function (ev) {
+        var tgt = ev.target.closest && ev.target.closest('.mask-r');
+        if (!tgt) return;
+        sel = +tgt.dataset.i;
+        var r = regs[sel], st = ev.shiftKey ? 0.05 : 0.01, ch = true;
+        if (ev.key === 'Delete' || ev.key === 'Backspace') { regs.splice(sel, 1); sel = -1; }
+        else if (ev.key === 'ArrowLeft') r.x = Math.max(0, r.x - st);
+        else if (ev.key === 'ArrowRight') r.x = Math.min(1 - r.w, r.x + st);
+        else if (ev.key === 'ArrowUp') r.y = Math.max(0, r.y - st);
+        else if (ev.key === 'ArrowDown') r.y = Math.min(1 - r.h, r.y + st);
+        else ch = false;
+        if (ch) { ev.preventDefault(); mkRender(); var n = mkLayer.querySelector('.mask-r.sel'); if (n) n.focus(); }
+      });
+      mkShape.addEventListener('change', function () { if (sel >= 0) { regs[sel].shape = mkShape.value; mkRender(); } });
+      mkMode.addEventListener('change', function () { if (sel >= 0) { regs[sel].mode = mkMode.value; mkRender(); } });
+      mkDel.addEventListener('click', function () { if (sel >= 0) { regs.splice(sel, 1); sel = -1; mkRender(); } });
+
+      function mkSave(list, btn) {
+        btn.disabled = true;
+        send(u('gallery', 'masks'), { id: mkItem.id, masks: JSON.stringify(list) }).then(function () {
+          var url = new URL(window.location.href);
+          url.searchParams.set('open', mkItem.id);
+          window.location.href = url.toString();
+        }).catch(function (e) { btn.disabled = false; fail(e); });
+      }
+      $('#mkSave').addEventListener('click', function () { mkSave(regs, this); });
+      $('#mkReset').addEventListener('click', function () {
+        if (window.confirm(tr('mask_reset_confirm'))) mkSave([], this);
+      });
+
+      maskBtn.addEventListener('click', function () {
+        mkItem = items[idx];
+        regs = (mkItem.masks || []).map(function (m) { return { x: m.x, y: m.y, w: m.w, h: m.h, shape: m.shape, mode: m.mode }; });
+        sel = -1;
+        mkImg.src = mkItem.raw;
+        mkRender();
+        stopPlay();
+        if (document.fullscreenElement) document.exitFullscreen().catch(function () {});
+        bootstrap.Modal.getOrCreateInstance(maskEl).show();
+      });
+    }
 
     lb.addEventListener('keydown', function (ev) {
       if (document.querySelector('.modal.show')) return;

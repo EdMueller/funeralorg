@@ -12,7 +12,7 @@ function ctrl_gallery(string $r, string $a): void
             abort(404);
         }
         $v = get('s') === 'thumb' ? 'thumb' : 'medium';
-        Image::send(Image::path($img, $v), Image::variantMime($img, $v));
+        Image::send(Image::path($img, $v), Image::variantMime($img, $v), null, !empty($img['masks']));
     }
 
     if (!Perm::gallery()) {
@@ -36,6 +36,41 @@ function ctrl_gallery(string $r, string $a): void
                 Log::add('img_view', $img['id'], ['c' => mb_substr($img['caption'] ?: $img['orig_name'], 0, 80)]);
             }
             json_out(['ok' => true]);
+
+        case 'masks':
+            // Bereiche unkenntlich machen (Gesichter, Kennzeichen …): brennt sie in thumb/medium ein, das Original bleibt
+            if (!$isPost) {
+                abort(400);
+            }
+            Perm::needAdmin();
+            $id = (string)post('id');
+            $img = find_by_id(Store::read('gallery')['images'], $id);
+            if (!$img) {
+                abort(404);
+            }
+            if (!Image::maskable($img)) {
+                json_out(['ok' => false, 'error' => t('img.err_mask_type')], 400);
+            }
+            $masks = Image::cleanMasks(post('masks'));
+            try {
+                Image::rerender($img, $masks);
+            } catch (RuntimeException $e) {
+                json_out(['ok' => false, 'error' => $e->getMessage()], 500);
+            }
+            Store::update('gallery', function (array &$g) use ($id, $masks) {
+                foreach ($g['images'] as &$i) {
+                    if ($i['id'] === $id) {
+                        if ($masks) {
+                            $i['masks'] = $masks;
+                            $i['masked_at'] = now();
+                        } else {
+                            unset($i['masks'], $i['masked_at']);
+                        }
+                    }
+                }
+            });
+            Log::change('gallery', $masks ? 'Bild unkenntlich gemacht' : 'Unkenntlichmachung aufgehoben', $id);
+            json_out(['ok' => true, 'count' => count($masks)]);
 
         case 'upload':
             if (!$isPost) {
@@ -468,8 +503,13 @@ function gallery_serve(): never
         abort(404);
     }
     $v = (string)get('s', 'thumb');
-    if (!in_array($v, ['thumb', 'medium', 'orig'], true)) {
+    if (!in_array($v, ['thumb', 'medium', 'orig', 'raw'], true)) {
         abort(400);
+    }
+    if ($v === 'raw') {
+        // unmaskierte Vorschau für den Editor; zählt nicht als Download
+        Perm::needAdmin();
+        Image::sendRaw($img);
     }
     if ($v === 'orig') {
         if (!Perm::gallery('download')) {
@@ -479,7 +519,7 @@ function gallery_serve(): never
         Log::add('img_download', $img['id'], ['c' => mb_substr($img['caption'] ?: $img['orig_name'], 0, 80)]);
         Image::send(Image::path($img, 'orig'), $img['mime'], $name);
     }
-    Image::send(Image::path($img, $v), Image::variantMime($img, $v));
+    Image::send(Image::path($img, $v), Image::variantMime($img, $v), null, !empty($img['masks']));
 }
 
 function gallery_upload(): never

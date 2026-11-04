@@ -608,8 +608,10 @@ final class ApiService
             'uploaded_at' => $i['uploaded_at'] ?? '',
             'file' => url('api', ['p' => '/gallery/images/' . $i['id'] . '/file']) . '&size=',
         ];
+        $out['masked'] = !empty($i['masks']);
         if (Auth::isAdmin()) {
             $out['login'] = !empty($i['login']);
+            $out['masks'] = array_values($i['masks'] ?? []);
         }
         return $out;
     }
@@ -813,6 +815,39 @@ final class ApiService
             return null;
         });
         Log::change('gallery', 'Bild bearbeitet', $id);
+        return self::imageOut($res);
+    }
+
+    /** Bereiche unkenntlich machen (nur Administratoren): brennt sie in thumb/medium ein, das Original bleibt. */
+    public static function imageMasks(array $a): array
+    {
+        self::needAdmin();
+        self::galleryLib();
+        $id = (string)$a['id'];
+        $img = find_by_id(Store::read('gallery')['images'], $id);
+        $img || self::missing();
+        Image::maskable($img) || self::invalid(t('img.err_mask_type'));
+        $masks = Image::cleanMasks($a['masks'] ?? []);
+        try {
+            Image::rerender($img, $masks);
+        } catch (RuntimeException $e) {
+            throw new ApiError(500, $e->getMessage());
+        }
+        $res = Store::update('gallery', function (array &$g) use ($id, $masks) {
+            foreach ($g['images'] as &$i) {
+                if ($i['id'] === $id) {
+                    if ($masks) {
+                        $i['masks'] = $masks;
+                        $i['masked_at'] = now();
+                    } else {
+                        unset($i['masks'], $i['masked_at']);
+                    }
+                    return $i;
+                }
+            }
+            return null;
+        });
+        Log::change('gallery', $masks ? 'Bild unkenntlich gemacht' : 'Unkenntlichmachung aufgehoben', $id);
         return self::imageOut($res);
     }
 
