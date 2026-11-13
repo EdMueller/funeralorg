@@ -445,7 +445,7 @@ Format je Zeile (`data/logs/JJJJ-MM.jsonl`):
 - **CSV:** UTF-8 mit BOM, Trennzeichen `;`, Beträge mit Komma – öffnet direkt in Excel (DE) und eignet sich als Serienbrief-Quelle in Word/LibreOffice. Zellen, die mit `=`, `+`, `-` oder `@` beginnen, erhalten ein führendes `'` (`csv_safe()`, Schutz vor Formel-Ausführung; auch bei Telefonnummern mit `+`).
 - **XLSX:** eine Tabelle, fette hinterlegte Kopfzeile, fixierte erste Zeile, Autofilter, Spaltenbreite nach Inhalt, Zahlen als Zahlen. Getestet mit Excel-kompatiblen Lesern (openpyxl, LibreOffice).
 - **Spalten** (`Contacts::exportTable`): Anrede, Vorname, Nachname, Beziehung, [Adresse], [Festnetz], [Mobil], [E-Mail] + bereichsspezifisch (Kontakte: Angerufen/Brief/Notiz · Zu-/Absagen: Status/Erwachsene/Kinder/Notiz · Kondolenzen: Karte/Blumen/Kranz/Spende/Betrag/Dankeskarte/Notiz).
-- **Etiketten:** A4 ohne Seitenränder, Formate in `configs/config.php → label_formats` (mm). Start-Etikett für angebrochene Bögen. Nur Kontakte mit Straße und Ort.
+- **Etiketten:** A4 ohne Seitenränder, Formate in `configs/config.php → label_formats` (mm). Start-Etikett für angebrochene Bögen. Alle gefilterten bzw. ausgewählten Kontakte (`ids[]`) werden gedruckt, auch nur mit Namen (leere Adresszeilen entfallen).
 
 ---
 
@@ -473,7 +473,8 @@ Format je Zeile (`data/logs/JJJJ-MM.jsonl`):
 - Spalten: `Contacts::tableColumns()` (rechte- und feldrechteabhängig, Textfelder in `Contacts::TEXT_FIELDS`). Neues Kontaktfeld → dort eintragen, dann erscheint es in der Tabelle.
 - Spalte „Dankeskarte versendet“ (`thanks`, Ja/Nein): nur mit Leserecht auf Kondolenzen, standardmäßig ausgeblendet; umschaltbar nur mit Recht „Abhaken“ auf Kondolenzen, sonst schreibgeschützt.
 - Nur für Admins: schreibgeschützte Spalte „Zugang“ (Benutzername des mit `contact_id` verknüpften Zugangs, standardmäßig ausgeblendet; der Controller ergänzt `access` je Zeile). Knopf „Zugänge“ in der Auswahlleiste öffnet den Dialog (Gruppe, Klebepapier, Startstreifen).
-- Browser-Speicher (`localStorage`): `gdk.ct.cols` (sichtbare Spalten), `gdk.ct.w` (Breiten), `gdk.ct.filters` (Filterzeile).
+- Browser-Speicher (`localStorage`): `gdk.ct.cols` (sichtbare Spalten), `gdk.ct.w` (Breiten), `gdk.ct.filters` (Filterzeile), `gdk.ct.sort` (Sortierung als Liste `[{key, dir}]`); in `sessionStorage` `gdk.ct.scroll` (Scrollposition von Tabelle und Seite, gilt nur im selben Tab).
+- Mehrspaltige Sortierung: Klick sortiert nur nach dieser Spalte (erneut = Richtung umkehren), Shift+Klick hängt die Spalte als weiteres Kriterium an bzw. kehrt deren Richtung um; bei mehreren Kriterien zeigt der Kopf die Rangziffer. Auf Touch-Geräten nur einspaltig. Die Sortierung wird in `gdk.ct.sort` gemerkt.
 - Sortierung, Spaltenfilter, Suche und laufende Nummer arbeiten nur im Browser auf den geladenen Zeilen; die Nummer wird nicht gespeichert.
 - Bearbeiten nur mit Recht „Kontakte bearbeiten“, Rückmeldung nur mit Recht „Zu-/Absagen abhaken“; Spalten ohne Feldrecht fehlen komplett.
 

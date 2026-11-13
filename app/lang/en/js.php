@@ -31,7 +31,7 @@ return [
     'js.server_error' => 'Server error ({status})',
     'js.conn_lost' => 'Connection lost',
     'js.confirm_delete_pics' => ['one' => 'Delete the selected picture permanently? The original is removed from the server.', 'other' => 'Delete the {n} selected pictures permanently? The originals are removed from the server.'],
-    'js.label_scope_sel' => ['one' => 'The selected contact is printed with a complete address.', 'other' => 'The {n} selected contacts are printed with a complete address.'],
+    'js.label_scope_sel' => ['one' => 'The selected contact is printed even if no address is known.', 'other' => 'The {n} selected contacts are printed even if no address is known.'],
     'js.access_scope' => ['one' => '{n} contact selected. Contacts that already have an account are skipped.', 'other' => '{n} contacts selected. Contacts that already have an account are skipped.'],
     'js.rsvp_none' => 'Not invited',
     'js.rsvp_open' => 'Open',

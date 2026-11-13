@@ -46,7 +46,7 @@ $n = 0;
           <th class="ct-num" title="<?= e(t('ct.nr_title')) ?>"><?= e(t('ct.nr')) ?></th>
           <?php foreach ($cols as $col): ?>
             <th scope="col" data-col="<?= e($col['key']) ?>" data-type="<?= e($col['type']) ?>"<?= $col['on'] ? '' : ' hidden' ?> aria-sort="none">
-              <button type="button" class="ct-th" data-sort="<?= e($col['key']) ?>"><?= e($col['label']) ?><i class="bi ct-arrow"></i></button>
+              <button type="button" class="ct-th" data-sort="<?= e($col['key']) ?>" title="<?= e(t('ct.sort_hint')) ?>"><?= e($col['label']) ?><sup class="ct-sortno"></sup><i class="bi ct-arrow"></i></button>
               <span class="ct-grip" data-grip="<?= e($col['key']) ?>" role="separator" aria-label="<?= e(t('ct.resize')) ?>"></span>
             </th>
           <?php endforeach; ?>

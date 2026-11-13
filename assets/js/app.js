@@ -977,7 +977,7 @@
     COLS.forEach(function (c) { visible[c.key] = Array.isArray(storedCols) ? storedCols.indexOf(c.key) >= 0 : c.on; });
     if (!COLS.some(function (c) { return visible[c.key]; })) COLS.forEach(function (c) { visible[c.key] = c.on; });
     var widths = store.get('w', {}) || {};
-    var sort = { key: null, dir: 1 };
+    var sort = [];   // Sortierkriterien: [{ key, dir }, …]
     var filters = {}, query = '';
     var undoStack = [], undoing = false;
     var rows = function () { return $$('tr', tbody); };
@@ -1020,23 +1020,32 @@
     }
     function renumber() { visibleRows().forEach(function (tr, i) { $('.ct-num', tr).textContent = i + 1; }); }
     function applySort() {
-      var key = sort.key;
       $$('th[data-col]', headRow).forEach(function (th) {
-        var on = th.dataset.col === key;
-        th.setAttribute('aria-sort', on ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none');
-        $('.ct-arrow', th).className = 'bi ct-arrow' + (on ? (sort.dir === 1 ? ' bi-caret-up-fill' : ' bi-caret-down-fill') : '');
+        var pos = -1;
+        sort.forEach(function (s, i) { if (s.key === th.dataset.col) pos = i; });
+        var on = pos >= 0, dir = on ? sort[pos].dir : 1;
+        th.setAttribute('aria-sort', on ? (dir === 1 ? 'ascending' : 'descending') : 'none');
+        $('.ct-arrow', th).className = 'bi ct-arrow' + (on ? (dir === 1 ? ' bi-caret-up-fill' : ' bi-caret-down-fill') : '');
+        var no = $('.ct-sortno', th);
+        if (no) no.textContent = on && sort.length > 1 ? pos + 1 : '';
       });
-      if (!key) return;
-      var num = colByKey[key].type === 'num';
+      if (!sort.length) return;
+      var crit = sort.map(function (s) { return { key: s.key, dir: s.dir, num: colByKey[s.key].type === 'num' }; });
       var list = rows().map(function (tr, i) {
-        var td = cell(tr, key);
-        return { tr: tr, i: i, s: td ? (td.dataset.s !== undefined ? td.dataset.s : td.dataset.v) : '' };
+        return { tr: tr, i: i, s: crit.map(function (c) {
+          var td = cell(tr, c.key);
+          return td ? (td.dataset.s !== undefined ? td.dataset.s : td.dataset.v) : '';
+        }) };
       });
       list.sort(function (a, b) {
-        if (a.s === '' && b.s !== '') return 1;       // Leere immer ans Ende
-        if (b.s === '' && a.s !== '') return -1;
-        var c = num ? (parseFloat(a.s) - parseFloat(b.s)) : collator.compare(a.s, b.s);
-        return (c * sort.dir) || (a.i - b.i);
+        for (var k = 0; k < crit.length; k++) {
+          var x = a.s[k], y = b.s[k];
+          if (x === '' && y !== '') return 1;         // Leere immer ans Ende
+          if (y === '' && x !== '') return -1;
+          var c = crit[k].num ? (parseFloat(x) - parseFloat(y)) : collator.compare(x, y);
+          if (c) return c * crit[k].dir;
+        }
+        return a.i - b.i;
       });
       list.forEach(function (x) { tbody.appendChild(x.tr); });
       renumber();
@@ -1119,7 +1128,13 @@
     headRow.addEventListener('click', function (ev) {
       var b = ev.target.closest('[data-sort]');
       if (!b) return;
-      sort = { key: b.dataset.sort, dir: sort.key === b.dataset.sort ? -sort.dir : 1 };
+      var key = b.dataset.sort, cur = sort.filter(function (x) { return x.key === key; })[0];
+      if (ev.shiftKey) {                      // weiteres Kriterium anhängen bzw. Richtung umkehren
+        if (cur) cur.dir = -cur.dir; else sort.push({ key: key, dir: 1 });
+      } else {
+        sort = [{ key: key, dir: cur && sort.length === 1 ? -cur.dir : 1 }];
+      }
+      store.set('sort', sort);
       applySort();
     });
 
@@ -1322,9 +1337,34 @@
       if (ev.key === 'Enter') { ev.preventDefault(); document.getElementById('ctRelBtn').click(); }
     });
 
+    var storedSort = store.get('sort', []);
+    if (Array.isArray(storedSort)) sort = storedSort.filter(function (x) {
+      return x && colByKey[x.key] && (x.dir === 1 || x.dir === -1);
+    }).map(function (x) { return { key: x.key, dir: x.dir }; });
     applyCols();
     showFilters(!!store.get('filters', false));
     refresh();
+    applySort();
+
+    /* --- Scrollposition merken (Rückkehr von „Kontakt bearbeiten“) --- */
+    var scrollKey = 'gdk.ct.scroll';
+    try {
+      var pos = JSON.parse(sessionStorage.getItem(scrollKey) || 'null');
+      if (pos && typeof pos === 'object') {
+        scroller.scrollTop = +pos.t || 0;
+        scroller.scrollLeft = +pos.l || 0;
+        window.scrollTo(0, +pos.y || 0);
+      }
+    } catch (e) { /* ohne Speicher */ }
+    var scrollTimer = null;
+    var saveScroll = function () {
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(function () {
+        try { sessionStorage.setItem(scrollKey, JSON.stringify({ t: scroller.scrollTop, l: scroller.scrollLeft, y: window.pageYOffset })); } catch (e) { /* ohne Speicher */ }
+      }, 150);
+    };
+    scroller.addEventListener('scroll', saveScroll, { passive: true });
+    window.addEventListener('scroll', saveScroll, { passive: true });
   }
 
   /* ---------- Admin: Diagramm ---------- */

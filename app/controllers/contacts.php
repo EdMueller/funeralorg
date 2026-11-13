@@ -360,9 +360,9 @@ function ctrl_contacts(string $r, string $a): void
             $fk = array_key_exists((string)($in['format'] ?? ''), $formats) ? (string)$in['format'] : (string)array_key_first($formats);
             $list = Contacts::filter(Contacts::all(), (string)($in['filter'] ?? ''), (string)($in['rel'] ?? ''));
             if ($ids = contacts_selected()) {
+                // Alle Kontakte werden gedruckt, auch nur mit Namen (z. B. zur persönlichen Übergabe)
                 $list = array_values(array_filter($list, fn($c) => in_array($c['id'], $ids, true)));
             }
-            $list = array_values(array_filter($list, fn($c) => $c['street'] !== '' && $c['city'] !== ''));
             if ($r === 'condolences' && ($in['filter'] ?? '') === '') {
                 $list = Contacts::filter($list, 'cond_any');
             }

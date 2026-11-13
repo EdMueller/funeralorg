@@ -385,6 +385,7 @@ main.app-main.app-main-wide { max-width: none; }
 .ctable .ct-filters th { top: var(--ct-head-h); padding: .25rem .35rem; font-weight: 400; }
 .ct-th { all: unset; box-sizing: border-box; display: block; width: 100%; padding: .5rem 1rem .5rem .6rem; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ct-th:focus-visible { outline: 2px solid var(--efeu); outline-offset: -2px; }
+.ct-sortno { margin-left: .2rem; font-size: .65rem; color: var(--efeu); }
 .ct-arrow { position: absolute; right: .55rem; top: 50%; transform: translateY(-50%); font-size: .7rem; color: var(--efeu); }
 .ct-grip { position: absolute; right: 0; top: 0; bottom: 0; width: 7px; cursor: col-resize; }
 .ct-grip:hover, .ct-grip:active { background: rgba(156, 133, 88, .45); }
@@ -415,7 +416,7 @@ main.app-main.app-main-wide { max-width: none; }
   .app-nav, .toolbar, .flags, .no-print, .cart-bar { display: none !important; }
   body { background: #fff; }
   .person { break-inside: avoid; }
-  .ct-tools, .ct-actions, .ct-filters, .ct-summary, .ct-sel, .ct-act, .ct-grip, .ct-arrow, .page-head .btn, .page-head .btn-group { display: none !important; }
+  .ct-tools, .ct-actions, .ct-filters, .ct-summary, .ct-sel, .ct-act, .ct-grip, .ct-arrow, .ct-sortno, .page-head .btn, .page-head .btn-group { display: none !important; }
   .ct-scroll { max-height: none; overflow: visible; border: 0; }
   .ctable { table-layout: auto; width: 100% !important; font-size: 9pt; }
   .ctable th, .ctable td { white-space: normal; position: static; }

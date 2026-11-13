@@ -40,8 +40,8 @@ $fmtMm = fn($v) => number_format((float)$v, 2, '.', '') . 'mm';
         <?php elseif ($c): ?>
           <?php if ($c['salutation']): ?><div><?= e($c['salutation']) ?></div><?php endif; ?>
           <div class="name"><?= e(Contacts::fullName($c)) ?></div>
-          <div><?= e($c['street']) ?></div>
-          <div><?= e(trim($c['zip'] . ' ' . $c['city'])) ?></div>
+          <?php if ($c['street'] !== ''): ?><div><?= e($c['street']) ?></div><?php endif; ?>
+          <?php if (trim($c['zip'] . $c['city']) !== ''): ?><div><?= e(trim($c['zip'] . ' ' . $c['city'])) ?></div><?php endif; ?>
           <?php if ($c['country']): ?><div><?= e(mb_strtoupper($c['country'])) ?></div><?php endif; ?>
         <?php endif; ?>
       </div>

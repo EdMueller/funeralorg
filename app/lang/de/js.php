@@ -31,7 +31,7 @@ return [
     'js.server_error' => 'Serverfehler ({status})',
     'js.conn_lost' => 'Verbindung abgebrochen',
     'js.confirm_delete_pics' => ['one' => 'Das ausgewählte Bild endgültig löschen? Das Original wird vom Server entfernt.', 'other' => 'Die {n} ausgewählten Bilder endgültig löschen? Die Originale werden vom Server entfernt.'],
-    'js.label_scope_sel' => ['one' => 'Der ausgewählte Kontakt wird mit vollständiger Adresse gedruckt.', 'other' => 'Es werden die {n} ausgewählten Kontakte mit vollständiger Adresse gedruckt.'],
+    'js.label_scope_sel' => ['one' => 'Der ausgewählte Kontakt wird gedruckt, auch wenn keine Adresse bekannt ist.', 'other' => 'Die {n} ausgewählten Kontakte werden gedruckt, auch wenn keine Adresse bekannt ist.'],
     'js.access_scope' => ['one' => '{n} Kontakt ausgewählt. Kontakte mit bestehendem Zugang werden übersprungen.', 'other' => '{n} Kontakte ausgewählt. Kontakte mit bestehendem Zugang werden übersprungen.'],
     'js.rsvp_none' => 'Nicht eingeladen',
     'js.rsvp_open' => 'Offen',
