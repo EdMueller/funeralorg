@@ -23,6 +23,11 @@ die mit der GPL-3.0 kompatibel sind.
   Text der SIL Open Font License 1.1 mit den Urheberzeilen der Schriften.
 - **Weltkarte:** Quelle und Erzeugung stehen in `assets/vendor/worldmap/README.txt`.
 
+## Beispielbilder der Ersteinrichtung
+
+Die Bilder unter `app/demo/images/` (Option „Beispieldaten anlegen“) hat der Maintainer mit einem KI-Bildgenerator
+erzeugt und für den Einsatz im Projekt auf 1600 px verkleinert.
+
 ## Bilder in den Screenshots
 
 Die Screenshots unter `docs/screenshots/` zeigen erfundene Daten und KI-generierte Beispielbilder. Das Portrait

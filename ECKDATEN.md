@@ -79,7 +79,9 @@ gedenkseite/                    ← Webroot (gesamter Projektordner)
 │   │   ├── Qr.php              QR-Code-Generator (Byte-Modus, Stufe M, Version 1–10) → SVG, ohne Abhängigkeiten
 │   │   ├── VCard.php           vCard 2.1/3.0/4.0-Parser
 │   │   ├── Xlsx.php            XLSX-Writer
-│   │   └── Setup.php           Ersteinrichtung: Verzeichnisse, Standardgruppen, Start-Checkliste, erster Admin
+│   │   ├── Demo.php            Beispieldaten der Ersteinrichtung: anlegen (`install()`), zählen (`status()`), unveränderte löschen (`remove()`)
+│   │   └── Setup.php           Ersteinrichtung: Verzeichnisse, Standardgruppen, Start-Checkliste, erster Admin, optional Beispieldaten
+│   ├── demo/                   Beispielbilder (`images/`) und Liste `images.php` für die Beispieldaten (nicht öffentlich, `app/.htaccess`)
 │   ├── controllers/            je Datei eine Funktion ctrl_<name>(string $r, string $a)
 │   └── views/                  PHP-Templates; Präfix _ = Teil-View
 ├── plugins/                    Plugins (`<slug>/plugin.json`, `plugin.php`, …), per .htaccess gesperrt; enthält `stations/` (§17)
@@ -107,6 +109,7 @@ gedenkseite/                    ← Webroot (gesamter Projektordner)
 data/
 ├── users.json  groups.json  shares.json  contacts.json  checklist.json
 ├── memorial.json  gallery.json  selections.json  ratelimit.json
+├── demo.json                   Beispieldaten: `items[typ][id]` = Prüfsumme der inhaltlichen Felder beim Anlegen, `memorial` (Prüfsumme, Felder, `name`), `created`; leer, sobald entfernt
 ├── stations.json               gehört dem Plugin „stations“ (Manifest `stores`); weitere Plugin-Dateien analog
 ├── settings.json               Einstellungen: `base_url` (öffentliche Adresse, Basis für Reset-Mail-Links, aus der Ersteinrichtung), `sender` (Absenderadresse, Zeilen-Array), `plugins` (`<slug>` → `{active, changed, config}`; `config` = Einstellungen laut Manifest `settings`, Schlüssel → bool)
 ├── resets.json                 flüchtig: Reset-Tokens (Hash), Anfragen, Zähler – nicht in Snapshots/Backup-Download
@@ -227,7 +230,8 @@ in `.htaccess` gesetzt) und nginx leiten selbstständig um.
 | `gallery` | `albumorder` | POST | A | Reihenfolge der Alben unter einem Elternalbum (`parent`=ID oder leer/`_root` für die oberste Ebene, `ids[]` in neuer Reihenfolge), Antwort JSON |
 | `gallery` | `delete` / `albumsave` / `albumdelete` | POST | A | Löschen, Alben (`parent`, `links[]`; Album löschen behält Unteralben und Bilder) |
 | `img` | – (`id`, `s`=thumb/medium/orig/raw, `v`) | GET | Galerie ansehen; `orig` braucht Herunterladen; `raw` nur Admin | Bildauslieferung mit ETag; Bilder mit `masks` immer mit `Cache-Control: private, no-cache` (Neuvalidierung), `v` = Cache-Umgehung der Oberfläche. `raw` = unmaskierte Vorschau des Originals (höchstens `medium_size`) für den Editor, kein Download |
-| `admin` | – (`days`) | GET | A | Dashboard |
+| `admin` | – (`days`) | GET | A | Dashboard; solange Beispieldaten vermerkt sind, mit Karte „Beispieldaten“ (Anzahl je Typ, davon bearbeitet) |
+| `admin` | `demoremove` | POST | A | Löscht die **unveränderten** Beispieldatensätze (Prüfsumme wie beim Anlegen); bearbeitete bleiben als eigene Daten erhalten. Reihenfolge: Benutzer, Gruppen (nur wenn ungenutzt), Kontakte, Bilder, Alben (Unteralben/fremde Bilder rücken auf), Aufgaben, Kategorien (nur ohne verbliebene Aufgaben), Gedenkseite |
 | `admin` | `users` / `usersave` / `userdelete` | GET/POST | A | Benutzer |
 | `admin` | `impersonate` (`id`) | POST | A | „Als Benutzer anmelden“ (siehe unten) |
 | `admin` | `groups` / `groupsave` / `groupdelete` | GET/POST | A | Gruppen (Löschen nur ohne Mitglieder) |
@@ -266,6 +270,7 @@ Regel: **Jede zustandsändernde Aktion ist POST** (CSRF-geschützt). GET-Aktione
 - Galerie (`group.gallery`): `view`, `upload`, `download` sowie die Einschränkungen `recent` (Block „Zuletzt hinzugefügte Bilder“ auf der Startseite) und `all` (Gesamtübersicht aller Bilder). **Fehlt `recent`/`all` in einer Gruppe (vor dieser Funktion gespeichert), gilt das Recht als erteilt** (`Perm::gallery()`, `Perm::GALLERY_DEFAULT_ON`). Ohne `all` sehen Mitglieder nur Alben und die Bilder darin: `Albums::forViewer()` entfernt Bilder ohne Album (Raster, Leuchtkasten, `img`, Auswahl, ZIP, API), die oberste Galerieebene zeigt nur die Albenleiste, `zip&what=all` und die Web-API-Liste ohne Album liefern 403, Upload und Verschieben in „Ohne Album“ sind gesperrt. Gedenkseite sichtbar für alle angemeldeten Benutzer.
 - Plugins (`group.plugins`, Slug → bool): `Perm::plugin($slug)`. Fehlt der Eintrag, gilt das Plugin als freigegeben. Die Prüfung steht zentral in `Plugins::call()` (403), `Plugins::applyNav()` (Menüpunkt) und der Route `pluginasset`; Plugins müssen nichts tun. **Ausnahme:** `apiRoute()`-Routen (Token-Zugriff) stehen außerhalb der Gruppenprüfung; die Operation `stations` der Web-API prüft das Recht selbst (`ApiSpec::available()`). Admins dürfen immer.
 - **Freigabelinks** (`Auth::isShare()`): erben Gruppenrechte, sehen **nie** Gedenkseite und Galerie, haben keinen Abmelden-Knopf, sehen einen Hinweisbalken. Ungültig bei `revoked` oder abgelaufenem `expires` (Ende des Tages). Ein angemeldeter Benutzer behält beim Öffnen eines Links seine Sitzung.
+- **Beispieldaten** (Option bei der Ersteinrichtung, `Demo::install()`): 7 Kontakte (3 nur mit Namen bzw. ohne Adresse), Gruppe „Nachbarschaft“, 3 Benutzer (`demo.family`, `demo.helper`, `demo.neighbour`; **Zufallspasswort, das niemand kennt** – Anmeldung nur über „Als Benutzer anmelden“), 3 Alben mit 11 Bildern aus `app/demo/images.php`, Aufgabenkategorie mit 5 Aufgaben (davon eine Unteraufgabe-Gruppe), Beispiel-Gedenkseite (nur leere Felder; Name nur wenn leer). Texte in `app/lang/<sprache>/demo.php`. „Unverändert“ wird über eine Prüfsumme der inhaltlichen Felder in `data/demo.json` erkannt (fehlend/leer/false gleichwertig), die übrigen Datendateien bekommen kein Zusatzfeld. Neue Beispielbilder: Datei in `app/demo/images/`, Zeile in `app/demo/images.php`, Beschriftung `demo.img.<name>`.
 - Standardgruppen aus `Setup::create()`:
 
 | Gruppe | Aufgaben | Kontakte | Zu/Absagen | Kondolenzen | Felder | Galerie | Plugin Stationen |

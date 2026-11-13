@@ -96,6 +96,8 @@ return [
     'setup.password2' => 'Passwort wiederholen',
     'setup.deceased' => 'Name des Verstorbenen (optional)',
     'setup.deceased_hint' => 'Kannst Du später unter „Gedenkseite bearbeiten“ ändern.',
+    'setup.demo' => 'Beispieldaten anlegen',
+    'setup.demo_hint' => 'Legt Beispielkontakte, -alben mit Bildern, -benutzer, eine zusätzliche Gruppe, Aufgaben und eine Beispiel-Gedenkseite an, damit Du alles ausprobieren kannst. Als Administrator kannst Du genau diese Daten später unter „Übersicht“ wieder entfernen.',
     'setup.base_url' => 'Öffentliche Adresse der Anwendung',
     'setup.base_url_hint' => 'Wird für Links in „Passwort vergessen“-Mails verwendet. Prüfe den Vorschlag und passe ihn an, falls die Seite unter anderer Adresse erreichbar ist (z. B. hinter einem Reverse Proxy). Leer lassen: Es werden keine Mails verschickt.',
     'setup.err_base_url' => 'Öffentliche Adresse: bitte eine gültige http- oder https-Adresse ohne Zugangsdaten und Parameter angeben.',

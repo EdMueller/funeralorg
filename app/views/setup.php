@@ -32,10 +32,15 @@
              autocapitalize="none" spellcheck="false" maxlength="200">
       <div class="form-text"><?= e(t('setup.base_url_hint')) ?></div>
     </div>
-    <div class="mb-4">
+    <div class="mb-3">
       <label class="form-label" for="deceased"><?= e(t('setup.deceased')) ?></label>
       <input class="form-control" id="deceased" name="deceased" value="<?= e($form['deceased']) ?>" maxlength="100">
       <div class="form-text"><?= e(t('setup.deceased_hint')) ?></div>
+    </div>
+    <div class="form-check mb-4">
+      <input class="form-check-input" type="checkbox" id="demo" name="demo" value="1"<?= $form['demo'] ? ' checked' : '' ?>>
+      <label class="form-check-label" for="demo"><?= e(t('setup.demo')) ?></label>
+      <div class="form-text"><?= e(t('setup.demo_hint')) ?></div>
     </div>
     <button class="btn btn-primary" type="submit"><?= e(t('setup.submit')) ?></button>
   </form>

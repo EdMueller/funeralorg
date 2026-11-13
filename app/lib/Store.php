@@ -22,6 +22,7 @@ final class Store
         'ratelimit'  => [],
         'settings'   => [],
         'resets'     => ['tokens' => [], 'requests' => [], 'rl' => []],
+        'demo'       => ['items' => [], 'memorial' => null],
         'market'     => ['sources' => [], 'token' => '', 'updates' => [], 'checked' => ''],
     ];
 

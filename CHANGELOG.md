@@ -5,6 +5,13 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+### Added
+
+- Setup: optional create sample data (contacts including some with name only, a group, users, albums with pictures,
+  tasks and a sample memorial page). Administrators can later delete exactly this data under "Overview"; records
+  that were edited in the meantime are kept as your own data. The sample users have no known password and can be
+  entered via "Sign in as user".
+
 ## [0.0.23] - 2026-11-13
 
 ### Added

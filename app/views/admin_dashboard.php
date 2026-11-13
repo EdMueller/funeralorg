@@ -24,6 +24,25 @@ $fails = ($t['login_fail'] ?? 0) + ($t['login_blocked'] ?? 0);
 </div>
 <?php require __DIR__ . '/_adminnav.php'; ?>
 
+<?php if (!empty($demo)): ?>
+<section class="surface surface-pad mb-4">
+  <h2 class="h4"><?= e(t('demo.title')) ?></h2>
+  <p class="mb-2"><?= e(t('demo.intro')) ?></p>
+  <ul class="mb-3">
+    <?php foreach (Demo::TYPES as $type): $row = $demo['rows'][$type]; if (!$row['total']) { continue; } ?>
+      <li><?= e(t('demo.type.' . $type)) ?>: <?= (int)$row['total'] ?><?= $row['total'] > $row['unchanged'] ? ' (' . e(t('demo.edited', ['n' => $row['total'] - $row['unchanged']])) . ')' : '' ?></li>
+    <?php endforeach; ?>
+    <?php if ($demo['memorial']): ?>
+      <li><?= e(t('demo.type.memorial')) ?><?= $demo['memorial_unchanged'] ? '' : ' (' . e(t('demo.edited', ['n' => 1])) . ')' ?></li>
+    <?php endif; ?>
+  </ul>
+  <form method="post" action="<?= e(url('admin', ['a' => 'demoremove'])) ?>" data-confirm="<?= e(t('demo.confirm')) ?>">
+    <?= Csrf::field() ?>
+    <button class="btn btn-outline-danger" type="submit"><i class="bi bi-trash me-1"></i><?= e(t('demo.remove')) ?></button>
+  </form>
+</section>
+<?php endif; ?>
+
 <div class="kpis">
   <div><strong><?= $stats['today_logins'] ?></strong><small><?= e(t('dash.kpi_logins_today')) ?></small></div>
   <div><strong><?= $t['login_ok'] ?? 0 ?></strong><small><?= e(t('dash.kpi_logins')) ?></small></div>

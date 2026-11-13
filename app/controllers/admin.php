@@ -7,7 +7,7 @@ function ctrl_admin(string $r, string $a): void
     $isPost = $_SERVER['REQUEST_METHOD'] === 'POST';
     if (in_array($a, ['usersave', 'userdelete', 'groupsave', 'groupdelete', 'sharesave', 'sharerevoke',
         'sharedelete', 'snapshot', 'requestdone', 'impersonate', 'sendersave', 'pluginset', 'pluginconfig', 'pluginimport',
-        'plugindelete', 'transferexport', 'transferimport', 'transferapply', 'transferdrop'], true) && !$isPost) {
+        'plugindelete', 'transferexport', 'transferimport', 'transferapply', 'transferdrop', 'demoremove'], true) && !$isPost) {
         abort(400);
     }
     $me = Auth::user();
@@ -442,6 +442,16 @@ function ctrl_admin(string $r, string $a): void
             flash(t('transfer.done', ['parts' => implode(', ', array_map(fn($k) => t('transfer.part.' . $k), $res['parts'])), 'dir' => $res['snapshot']]));
             redirect('admin', ['a' => 'backup']);
 
+        case 'demoremove':
+            if (!Demo::active()) {
+                flash(t('demo.none'), 'info');
+                redirect('admin');
+            }
+            $res = Demo::remove();
+            Log::add('admin', 'Beispieldaten gelöscht (' . $res['deleted'] . ' Datensätze, ' . $res['kept'] . ' bearbeitete behalten)');
+            flash(tn('demo.removed', $res['deleted']) . ($res['kept'] ? t('demo.kept', ['n' => $res['kept']]) : ''), 'success');
+            redirect('admin');
+
         case 'transferdrop':
             Transfer::drop((string)post('token'));
             redirect('admin', ['a' => 'backup']);
@@ -456,6 +466,7 @@ function ctrl_admin(string $r, string $a): void
         'days'   => $days,
         'images' => $images,
         'users'  => Store::read('users'),
+        'demo'   => Demo::active() ? Demo::status() : null,
     ]);
 }
 

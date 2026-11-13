@@ -52,7 +52,7 @@ final class Setup
      * Legt Standardgruppen, Start-Checkliste, Gedenkseite und den ersten Administrator an.
      * @return string|null Fehlermeldung oder null bei Erfolg
      */
-    public static function create(string $username, string $name, string $password, string $deceased): ?string
+    public static function create(string $username, string $name, string $password, string $deceased, bool $demo = false): ?string
     {
         $groups = Store::update('groups', function (array &$g): array {
             if (!$g) {
@@ -76,11 +76,12 @@ final class Setup
         });
 
         // Der Administrator wird zuletzt angelegt: Erst damit gilt die Einrichtung als abgeschlossen.
-        $err = Store::update('users', function (array &$u) use ($username, $name, $password, $groups): ?string {
+        $admin = null;
+        $err = Store::update('users', function (array &$u) use ($username, $name, $password, $groups, &$admin): ?string {
             if ($u) {
                 return t('setup.err_done');
             }
-            $u[] = ['id' => new_id(), 'username' => $username, 'name' => $name, 'role' => 'admin',
+            $u[] = $admin = ['id' => new_id(), 'username' => $username, 'name' => $name, 'role' => 'admin',
                     'group_id' => $groups[0]['id'], 'active' => true,
                     'pass_hash' => password_hash($password, PASSWORD_DEFAULT), 'created' => now(), 'last_login' => ''];
             return null;
@@ -111,6 +112,10 @@ final class Setup
                 }
             }
         });
+
+        if ($demo && $admin) {
+            Demo::install($groups, $admin);
+        }
         return null;
     }
 }

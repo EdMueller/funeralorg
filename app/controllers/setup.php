@@ -4,13 +4,14 @@ declare(strict_types=1);
 function ctrl_setup(string $r, string $a): void
 {
     $errors = Setup::prepare();
-    $form = ['username' => '', 'name' => '', 'deceased' => '', 'base_url' => request_base_url()];
+    $form = ['username' => '', 'name' => '', 'deceased' => '', 'base_url' => request_base_url(), 'demo' => false];
 
     if (!$errors && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $form['username'] = mb_strtolower(mb_substr((string)post('username'), 0, 60));
         $form['name'] = mb_substr((string)post('name'), 0, 100);
         $form['deceased'] = mb_substr((string)post('deceased'), 0, 100);
         $form['base_url'] = mb_substr((string)post('base_url'), 0, 200);
+        $form['demo'] = !empty($_POST['demo']);
         $baseUrl = normalize_base_url($form['base_url']);
         $pw = (string)($_POST['password'] ?? '');
 
@@ -30,12 +31,12 @@ function ctrl_setup(string $r, string $a): void
         }
 
         if (!$errors) {
-            $err = Setup::create($form['username'], $form['name'], $pw, $form['deceased']);
+            $err = Setup::create($form['username'], $form['name'], $pw, $form['deceased'], $form['demo']);
             if ($err === null) {
                 Store::update('settings', function (array &$s) use ($baseUrl) {
                     $s['base_url'] = $baseUrl;
                 });
-                Log::add('admin', 'Ersteinrichtung: Administrator angelegt', ['what' => $form['username']]);
+                Log::add('admin', 'Ersteinrichtung: Administrator angelegt' . ($form['demo'] ? ' (mit Beispieldaten)' : ''), ['what' => $form['username']]);
                 flash(t('setup.done'), 'success');
                 redirect('login');
             }

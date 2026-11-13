@@ -96,6 +96,8 @@ return [
     'setup.password2' => 'Repeat password',
     'setup.deceased' => 'Name of the deceased (optional)',
     'setup.deceased_hint' => 'You can change this later under “Edit memorial page”.',
+    'setup.demo' => 'Create sample data',
+    'setup.demo_hint' => 'Creates sample contacts, albums with pictures, users, an additional group, tasks and a sample memorial page so you can try everything out. As an administrator you can later remove exactly this data again under “Overview”.',
     'setup.base_url' => 'Public address of the application',
     'setup.base_url_hint' => 'Used for links in “forgot password” emails. Check the suggestion and adjust it if the site is reachable under a different address (e.g. behind a reverse proxy). Leave empty: no emails will be sent.',
     'setup.err_base_url' => 'Public address: please enter a valid http or https address without credentials or parameters.',
