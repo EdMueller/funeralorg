@@ -199,26 +199,30 @@ final class Qr
 
     /* ---------------------------------------------------------- Matrix */
 
-    private static function setFn(array &$mod, array &$fn, int $x, int $y, bool $dark): void
-    {
-        $mod[$y][$x] = $dark;
-        $fn[$y][$x] = true;
-    }
-
+    /**
+     * Funktionsmuster (Zeitmuster, Suchmuster, Ausrichtungsmuster). Bewusst ohne Hilfsfunktion und ohne
+     * Array-Destrukturierung geschrieben: PHP 8.4 (JIT) bleibt in diesen Schleifen sonst hängen.
+     */
     private static function drawFunctions(array &$mod, array &$fn, int $ver, int $size): void
     {
         for ($i = 0; $i < $size; $i++) {
-            self::setFn($mod, $fn, 6, $i, $i % 2 === 0);
-            self::setFn($mod, $fn, $i, 6, $i % 2 === 0);
+            $mod[$i][6] = $i % 2 === 0;
+            $fn[$i][6] = true;
+            $mod[6][$i] = $i % 2 === 0;
+            $fn[6][$i] = true;
         }
-        foreach ([[3, 3], [$size - 4, 3], [3, $size - 4]] as [$cx, $cy]) {
+        // Suchmuster: Mittelpunkte der drei Ecken (3|3, size-4|3, 3|size-4)
+        foreach ([0, 1, 2] as $corner) {
+            $cx = $corner === 1 ? $size - 4 : 3;
+            $cy = $corner === 2 ? $size - 4 : 3;
             for ($dy = -4; $dy <= 4; $dy++) {
                 for ($dx = -4; $dx <= 4; $dx++) {
                     $x = $cx + $dx;
                     $y = $cy + $dy;
                     if ($x >= 0 && $x < $size && $y >= 0 && $y < $size) {
                         $d = max(abs($dx), abs($dy));
-                        self::setFn($mod, $fn, $x, $y, $d !== 2 && $d !== 4);
+                        $mod[$y][$x] = $d !== 2 && $d !== 4;
+                        $fn[$y][$x] = true;
                     }
                 }
             }
@@ -232,7 +236,8 @@ final class Qr
                 }
                 for ($dy = -2; $dy <= 2; $dy++) {
                     for ($dx = -2; $dx <= 2; $dx++) {
-                        self::setFn($mod, $fn, $px + $dx, $py + $dy, max(abs($dx), abs($dy)) !== 1);
+                        $mod[$py + $dy][$px + $dx] = max(abs($dx), abs($dy)) !== 1;
+                        $fn[$py + $dy][$px + $dx] = true;
                     }
                 }
             }
@@ -248,8 +253,10 @@ final class Qr
                 $bit = (($bits >> $i) & 1) === 1;
                 $a = $size - 11 + $i % 3;
                 $b = intdiv($i, 3);
-                self::setFn($mod, $fn, $a, $b, $bit);
-                self::setFn($mod, $fn, $b, $a, $bit);
+                $mod[$b][$a] = $bit;
+                $fn[$b][$a] = true;
+                $mod[$a][$b] = $bit;
+                $fn[$a][$b] = true;
             }
         }
     }
