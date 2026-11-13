@@ -43,4 +43,5 @@ jobs:
         run: php bin/test-plugins.php
 
       - name: Smoke test
+        timeout-minutes: 5
         run: bin/smoke-test.sh
