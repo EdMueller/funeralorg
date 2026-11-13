@@ -23,6 +23,8 @@ jobs:
           php-version: ${{ matrix.php }}
           extensions: gd, zip, mbstring, fileinfo, exif, curl
           coverage: none
+          # PHP-Standardmodus des JIT; setup-php nutzt sonst 1235, das unter PHP 8.4 die QR-Schleifen endlos laufen lässt
+          ini-values: opcache.jit=tracing
 
       - name: Syntax check (php -l)
         run: |
