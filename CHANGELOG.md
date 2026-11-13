@@ -5,6 +5,13 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+## [0.0.27] - 2026-11-13
+
+### Changed
+
+- CI: the tests run with PHP's default JIT mode (`tracing`) and the smoke test step stops after 5 minutes. The mode
+  that `setup-php` configures by default made the QR code loops hang on PHP 8.4. The application itself is unchanged.
+
 ## [0.0.26] - 2026-11-13
 
 ### Fixed
@@ -307,7 +314,8 @@ First public release.
   `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `THIRD-PARTY.md`
 - GitHub Actions (syntax check, language files, smoke test on PHP 8.2 to 8.4) and issue/pull request templates
 
-[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.26...HEAD
+[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.27...HEAD
+[0.0.27]: https://github.com/EdMueller/funeralorg/compare/v0.0.26...v0.0.27
 [0.0.26]: https://github.com/EdMueller/funeralorg/compare/v0.0.25...v0.0.26
 [0.0.25]: https://github.com/EdMueller/funeralorg/compare/v0.0.24...v0.0.25
 [0.0.24]: https://github.com/EdMueller/funeralorg/compare/v0.0.23...v0.0.24
