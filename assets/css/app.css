@@ -130,7 +130,8 @@ main.app-main { max-width: 1120px; margin: 0 auto; padding: 1.5rem 1rem 5rem; }
   opacity: 0; transition: opacity 3s ease-in-out;
   filter: saturate(.55) brightness(.7);
 }
-.login-stage .slide.on { opacity: 1; animation: drift 16s ease-out forwards; }
+.login-stage .slide.on { opacity: 1; }
+.login-stage .slide.on, .login-stage .slide.was { animation: drift 16s ease-out forwards; } /* .was: ausblendendes Bild behält seine Zoomstufe */
 @keyframes drift { from { transform: scale(1.0); } to { transform: scale(1.06); } }
 .login-stage::after {
   content: ""; position: absolute; inset: 0;

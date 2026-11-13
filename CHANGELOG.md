@@ -5,6 +5,12 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+## [0.0.26] - 2026-11-13
+
+### Fixed
+
+- Login page slideshow: the outgoing picture no longer jumps back to its start size while fading out.
+
 ## [0.0.25] - 2026-11-13
 
 ### Changed
@@ -301,7 +307,8 @@ First public release.
   `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `THIRD-PARTY.md`
 - GitHub Actions (syntax check, language files, smoke test on PHP 8.2 to 8.4) and issue/pull request templates
 
-[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.25...HEAD
+[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.26...HEAD
+[0.0.26]: https://github.com/EdMueller/funeralorg/compare/v0.0.25...v0.0.26
 [0.0.25]: https://github.com/EdMueller/funeralorg/compare/v0.0.24...v0.0.25
 [0.0.24]: https://github.com/EdMueller/funeralorg/compare/v0.0.23...v0.0.24
 [0.0.23]: https://github.com/EdMueller/funeralorg/compare/v0.0.22...v0.0.23

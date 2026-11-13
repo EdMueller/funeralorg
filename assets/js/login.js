@@ -31,9 +31,14 @@
   function show(n) {
     var el = els[n];
     load(el, function () {
-      els.forEach(function (x) { if (x !== el) x.classList.remove('on'); });
+      els.forEach(function (x) {
+        if (x === el || !x.classList.contains('on')) return;
+        // Ausblendendes Bild behält die Zoomstufe (.was), sonst springt es zurück
+        x.classList.remove('on'); x.classList.add('was');
+        setTimeout(function () { x.classList.remove('was'); }, 3300);
+      });
       // Animation neu starten
-      el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+      el.classList.remove('on', 'was'); void el.offsetWidth; el.classList.add('on');
       // nächstes Bild vorladen
       if (els.length > 1) load(els[(n + 1) % els.length], function () {});
     });
