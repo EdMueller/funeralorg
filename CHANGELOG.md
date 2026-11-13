@@ -5,6 +5,10 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+### Changed
+
+- Sample data: four sample pictures are shown in the background slideshow of the login page.
+
 ## [0.0.24] - 2026-11-13
 
 ### Added

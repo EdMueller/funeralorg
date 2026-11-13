@@ -130,7 +130,7 @@ final class Demo
             } catch (Throwable $e) {
                 continue; // fehlende GD-Funktion o. Ä.: Bild überspringen, Einrichtung nicht abbrechen
             }
-            $rec += ['album' => $albums[$def['album']]['id'], 'caption' => t('demo.img.' . $def['name']), 'login' => false,
+            $rec += ['album' => $albums[$def['album']]['id'], 'caption' => t('demo.img.' . $def['name']), 'login' => !empty($def['login']),
                 'links' => [], 'uploaded_by' => $admin['name'], 'uploaded_by_id' => $admin['id'], 'uploaded_at' => now()];
             Store::update('gallery', function (array &$g) use ($rec) {
                 $g['images'][] = $rec;
