@@ -5,6 +5,8 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+## [0.0.24] - 2026-11-13
+
 ### Added
 
 - Setup: optional create sample data (contacts including some with name only, a group, users, albums with pictures,
@@ -293,7 +295,8 @@ First public release.
   `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `THIRD-PARTY.md`
 - GitHub Actions (syntax check, language files, smoke test on PHP 8.2 to 8.4) and issue/pull request templates
 
-[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.23...HEAD
+[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.24...HEAD
+[0.0.24]: https://github.com/EdMueller/funeralorg/compare/v0.0.23...v0.0.24
 [0.0.23]: https://github.com/EdMueller/funeralorg/compare/v0.0.22...v0.0.23
 [0.0.22]: https://github.com/EdMueller/funeralorg/compare/v0.0.21...v0.0.22
 [0.0.21]: https://github.com/EdMueller/funeralorg/compare/v0.0.20...v0.0.21
