@@ -5,6 +5,20 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+## [0.0.23] - 2026-11-13
+
+### Added
+
+- Contact table: sort by several columns. Shift+click on a column header adds it as a further sort criterion (or
+  reverses its direction); the headers show the rank of each criterion. A plain click sorts by that column only.
+  The sort order is remembered in the browser, and the scroll position is restored when you return from editing a
+  contact.
+
+### Changed
+
+- Address labels now include contacts without address data (name only, for handing over in person); empty address
+  lines are left out.
+
 ## [0.0.22] - 2026-11-04
 
 ### Added
@@ -272,7 +286,8 @@ First public release.
   `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `THIRD-PARTY.md`
 - GitHub Actions (syntax check, language files, smoke test on PHP 8.2 to 8.4) and issue/pull request templates
 
-[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.22...HEAD
+[Unreleased]: https://github.com/EdMueller/funeralorg/compare/v0.0.23...HEAD
+[0.0.23]: https://github.com/EdMueller/funeralorg/compare/v0.0.22...v0.0.23
 [0.0.22]: https://github.com/EdMueller/funeralorg/compare/v0.0.21...v0.0.22
 [0.0.21]: https://github.com/EdMueller/funeralorg/compare/v0.0.20...v0.0.21
 [0.0.20]: https://github.com/EdMueller/funeralorg/compare/v0.0.19...v0.0.20
