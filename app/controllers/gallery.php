@@ -7,8 +7,7 @@ function ctrl_gallery(string $r, string $a): void
     if ($r === 'pubimg') {
         $g = Store::read('gallery');
         $img = find_by_id($g['images'], (string)get('id'));
-        $portrait = Store::read('memorial')['portrait'] ?? '';
-        if (!$img || (empty($img['login']) && $img['id'] !== $portrait)) {
+        if (!$img || (empty($img['login']) && !Portraits::has(Store::read('memorial'), $img['id']))) {
             abort(404);
         }
         $v = get('s') === 'thumb' ? 'thumb' : 'medium';
@@ -188,9 +187,7 @@ function ctrl_gallery(string $r, string $a): void
             if ($removed) {
                 $ids = array_column($removed, 'id');
                 Store::update('memorial', function (array &$m) use ($ids) {
-                    if (in_array($m['portrait'] ?? '', $ids, true)) {
-                        $m['portrait'] = '';
-                    }
+                    Portraits::remove($m, $ids);
                 });
                 Store::update('selections', function (array &$all) use ($ids) {
                     foreach ($all as $u => $list) {
@@ -417,9 +414,7 @@ function ctrl_gallery(string $r, string $a): void
             if ($img) {
                 Image::delete($img);
                 Store::update('memorial', function (array &$m) use ($id) {
-                    if (($m['portrait'] ?? '') === $id) {
-                        $m['portrait'] = '';
-                    }
+                    Portraits::remove($m, [$id]);
                 });
                 Log::add('admin', 'Bild gelöscht: ' . ($img['caption'] ?: $img['orig_name']));
                 flash(t('gal.pic_deleted'));
@@ -469,7 +464,7 @@ function ctrl_gallery(string $r, string $a): void
         'canUpload' => Perm::gallery('upload'),
         'canDl'     => Perm::gallery('download'),
         'uid'       => $uid,
-        'portrait'  => Store::read('memorial')['portrait'] ?? '',
+        'portraitIds' => Portraits::rawIds(Store::read('memorial')), // Etikett „Portrait“
         'play'      => get('play') === '1' && $album !== '',
     ]);
 }

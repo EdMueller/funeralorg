@@ -324,9 +324,7 @@ final class Demo
         if ($goneImages) {
             $ids = array_column($goneImages, 'id');
             Store::update('memorial', function (array &$m) use ($ids) {
-                if (in_array($m['portrait'] ?? '', $ids, true)) {
-                    $m['portrait'] = '';
-                }
+                Portraits::remove($m, $ids);
             });
             Store::update('selections', function (array &$all) use ($ids) {
                 foreach ($all as $u => $list) {

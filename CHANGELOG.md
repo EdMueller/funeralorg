@@ -5,6 +5,15 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+## [0.0.28] - 2026-11-18
+
+### Added
+
+- Memorial page: several portrait pictures can be chosen. They fade into each other one after another (6 s each, soft
+  1.5 s cross-fade) on the home and login page. The order is changed in "Edit memorial page" by dragging with the mouse
+  or with the arrow buttons. All chosen pictures are visible on the login page without logging in.
+- Web API / MCP: `memorial.get` returns `portraits`, `memorial.update` accepts `portraits` (ordered list of picture IDs).
+
 ## [0.0.27] - 2026-11-13
 
 ### Changed

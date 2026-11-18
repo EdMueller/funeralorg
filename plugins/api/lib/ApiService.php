@@ -129,7 +129,7 @@ final class ApiService
         }
         $m = Store::read('memorial') + ['place' => '', 'quote_by' => ''];
         $m['frame'] = Frame::key($m['frame'] ?? '');
-        return array_intersect_key($m, array_flip(['name', 'born', 'died', 'place', 'quote', 'quote_by', 'text', 'portrait', 'frame']));
+        return array_intersect_key($m, array_flip(['name', 'born', 'died', 'place', 'quote', 'quote_by', 'text', 'portrait', 'frame'])) + ['portraits' => Portraits::rawIds($m)];
     }
 
     public static function memorialUpdate(array $a): array
@@ -142,14 +142,21 @@ final class ApiService
                 $in[$k] = $v;
             }
         }
-        if (($portrait = self::s($a, 'portrait', 40)) !== null) {
-            $in['portrait'] = ($portrait !== '' && find_by_id(Store::read('gallery')['images'], $portrait)) ? $portrait : '';
+        // `portraits` (geordnete Liste, auch kommagetrennt) hat Vorrang vor `portrait` (einzelnes Bild)
+        $list = $a['portraits'] ?? (isset($a['portrait']) && is_string($a['portrait']) ? [$a['portrait']] : null);
+        if (is_string($list)) {
+            $list = array_map('trim', explode(',', $list));
         }
+        $portraits = is_array($list) ? $list : null;
         if (($frame = self::s($a, 'frame', 20)) !== null) {
             $in['frame'] = Frame::key($frame);
         }
-        Store::update('memorial', function (array &$m) use ($in) {
+        $images = Store::read('gallery')['images'];
+        Store::update('memorial', function (array &$m) use ($in, $portraits, $images) {
             $m = $in + $m;
+            if ($portraits !== null) {
+                Portraits::set($m, $portraits, $images);
+            }
         });
         Log::add('admin', 'Gedenkseite bearbeitet');
         return self::memorialGet([]);

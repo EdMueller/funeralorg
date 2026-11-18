@@ -12,12 +12,9 @@ function ctrl_memorial(string $r, string $a): void
         Perm::needAdmin();
         $gallery = Store::read('gallery');
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $portrait = (string)post('portrait');
-            if ($portrait !== '' && !find_by_id($gallery['images'], $portrait)) {
-                $portrait = '';
-            }
+            $portraits = post('portraits');
             $frame = Frame::key(post('frame'));
-            Store::update('memorial', function (array &$m) use ($portrait, $frame) {
+            Store::update('memorial', function (array &$m) use ($portraits, $frame, $gallery) {
                 $m['name'] = mb_substr((string)post('name'), 0, 120);
                 $m['born'] = mb_substr((string)post('born'), 0, 40);
                 $m['died'] = mb_substr((string)post('died'), 0, 40);
@@ -25,7 +22,7 @@ function ctrl_memorial(string $r, string $a): void
                 $m['quote'] = mb_substr((string)post('quote'), 0, 400);
                 $m['quote_by'] = mb_substr((string)post('quote_by'), 0, 120);
                 $m['text'] = mb_substr((string)post('text'), 0, 8000);
-                $m['portrait'] = $portrait;
+                Portraits::set($m, $portraits, $gallery['images']);
                 $m['frame'] = $frame;
             });
             Log::add('admin', 'Gedenkseite bearbeitet');
@@ -41,7 +38,7 @@ function ctrl_memorial(string $r, string $a): void
 
     $m = Store::read('memorial');
     $gallery = Store::read('gallery');
-    $portrait = !empty($m['portrait']) ? find_by_id($gallery['images'], $m['portrait']) : null;
+    $portraits = Portraits::images($m, $gallery['images']);
     $recent = Perm::gallery('recent') ? array_slice(array_reverse(Albums::forViewer($gallery)['images']), 0, 8) : [];
 
     $summary = [];
@@ -63,5 +60,5 @@ function ctrl_memorial(string $r, string $a): void
         $contacts ??= Contacts::all();
         $summary['called_open'] = count(Contacts::filter($contacts, 'called_open'));
     }
-    view('home', compact('m', 'portrait', 'recent', 'summary'));
+    view('home', compact('m', 'portraits', 'recent', 'summary'));
 }

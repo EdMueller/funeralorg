@@ -187,12 +187,9 @@ function ctrl_auth(string $r, string $a): void
 
     $memorial = Store::read('memorial');
     $gallery = Store::read('gallery');
+    $portraits = Portraits::images($memorial, $gallery['images']); // immer auf der Anmeldeseite sichtbar (siehe Gedenkseite bearbeiten)
+    $portraitIds = array_column($portraits, 'id');
     $loginImages = array_values(array_filter($gallery['images'],
-        fn($i) => !empty($i['login']) && $i['id'] !== ($memorial['portrait'] ?? '')));
-    $portrait = null;
-    if (!empty($memorial['portrait'])) {
-        // Das Portrait ist immer auf der Anmeldeseite sichtbar (siehe Gedenkseite bearbeiten)
-        $portrait = find_by_id($gallery['images'], $memorial['portrait']);
-    }
-    view('login', compact('error', 'username', 'memorial', 'loginImages', 'portrait'), null);
+        fn($i) => !empty($i['login']) && !in_array($i['id'], $portraitIds, true)));
+    view('login', compact('error', 'username', 'memorial', 'loginImages', 'portraits'), null);
 }

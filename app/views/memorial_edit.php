@@ -24,10 +24,8 @@
   <p class="text-muted small mb-2"><?= e(t('memorial.frame_hint')) ?></p>
   <?php
     $curFrame = Frame::key($m['frame'] ?? '');
-    $thumb = null;
-    foreach ($images as $img) {
-        if ($img['id'] === ($m['portrait'] ?? '')) { $thumb = $img; }
-    }
+    $selected = Portraits::images($m, $images);
+    $thumb = $selected[0] ?? null;
   ?>
   <div class="frame-pick" role="radiogroup" aria-label="<?= e(t('memorial.frame')) ?>">
     <?php foreach (Frame::KEYS as $fk): ?>
@@ -50,19 +48,34 @@
   <?php if (!$images): ?>
     <p class="text-muted"><?= t('memorial.upload_first', ['link' => '<a href="' . e(url('gallery')) . '">' . e(t('memorial.gallery_link')) . '</a>']) ?></p>
   <?php else: ?>
-    <div class="gallery-grid" style="grid-template-columns:repeat(auto-fill,minmax(96px,1fr))">
-      <label class="g-item d-grid place-items-center text-center small p-2" style="place-items:center;cursor:pointer">
-        <input class="form-check-input mb-1" type="radio" name="portrait" value="" <?= $m['portrait'] === '' ? 'checked' : '' ?>>
-        <span><?= e(t('memorial.no_portrait')) ?></span>
-      </label>
-      <?php foreach ($images as $img): ?>
-        <label class="g-item" style="cursor:pointer">
-          <img src="<?= e(url('img', ['id' => $img['id'], 's' => 'thumb'])) ?>" alt="" loading="lazy">
-          <input class="form-check-input position-absolute" style="top:.4rem;left:.4rem" type="radio" name="portrait"
-                 value="<?= e($img['id']) ?>" <?= $m['portrait'] === $img['id'] ? 'checked' : '' ?> aria-label="<?= e(t('memorial.pick_portrait')) ?>">
-          <?php if (!empty($img['animated'])): ?><span class="tag">GIF</span><?php endif; ?>
-        </label>
-      <?php endforeach; ?>
+    <div data-portrait-picker data-max="<?= Portraits::MAX ?>"
+         data-l-up="<?= e(t('memorial.pp_up')) ?>" data-l-down="<?= e(t('memorial.pp_down')) ?>" data-l-remove="<?= e(t('memorial.pp_remove')) ?>">
+      <h3 class="h6 mb-2"><?= e(t('memorial.pp_selected')) ?></h3>
+      <ol class="pp-list" data-pp-list>
+        <?php foreach ($selected as $i => $img): ?>
+          <li class="pp-item" data-id="<?= e($img['id']) ?>">
+            <input type="hidden" name="portraits[]" value="<?= e($img['id']) ?>">
+            <span class="pp-n"><?= $i + 1 ?></span>
+            <img src="<?= e(url('img', ['id' => $img['id'], 's' => 'thumb'])) ?>" alt="">
+            <span class="pp-btns">
+              <button type="button" class="btn btn-sm btn-outline-secondary" data-act="up" aria-label="<?= e(t('memorial.pp_up')) ?>"><i class="bi bi-arrow-up"></i></button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" data-act="down" aria-label="<?= e(t('memorial.pp_down')) ?>"><i class="bi bi-arrow-down"></i></button>
+              <button type="button" class="btn btn-sm btn-outline-danger" data-act="remove" aria-label="<?= e(t('memorial.pp_remove')) ?>"><i class="bi bi-x-lg"></i></button>
+            </span>
+          </li>
+        <?php endforeach; ?>
+      </ol>
+      <p class="text-muted small" data-pp-none <?= $selected ? 'hidden' : '' ?>><?= e(t('memorial.pp_none')) ?></p>
+      <h3 class="h6 mt-3 mb-2"><?= e(t('memorial.pp_pick', ['max' => Portraits::MAX])) ?></h3>
+      <div class="gallery-grid" style="grid-template-columns:repeat(auto-fill,minmax(96px,1fr))">
+        <?php foreach ($images as $img): ?>
+          <button type="button" class="g-item pp-add p-0 border-0" data-pp-add="<?= e($img['id']) ?>" data-thumb="<?= e(url('img', ['id' => $img['id'], 's' => 'thumb'])) ?>"
+                  aria-pressed="false" aria-label="<?= e(t('memorial.pick_portrait')) ?>">
+            <img src="<?= e(url('img', ['id' => $img['id'], 's' => 'thumb'])) ?>" alt="" loading="lazy">
+            <?php if (!empty($img['animated'])): ?><span class="tag">GIF</span><?php endif; ?>
+          </button>
+        <?php endforeach; ?>
+      </div>
     </div>
   <?php endif; ?>
   <div class="mt-4 d-flex gap-2">
@@ -70,3 +83,4 @@
     <a class="btn btn-outline-secondary" href="<?= e(url('home')) ?>"><?= e(t('common.cancel')) ?></a>
   </div>
 </form>
+<script src="<?= e(asset('js/portrait-edit.js')) ?>"></script>

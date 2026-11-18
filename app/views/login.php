@@ -20,13 +20,7 @@ $flashes = take_flashes();
 
   <div class="login-wrap">
     <div class="login-hero">
-      <div class="portrait-frame frame-<?= e(Frame::key($memorial['frame'] ?? '')) ?> mx-auto">
-        <?php if ($portrait): ?>
-          <img src="<?= e(url('pubimg', ['id' => $portrait['id'], 's' => 'medium'])) ?>" alt="<?= e(t('login.portrait_alt', ['name' => $name])) ?>">
-        <?php else: ?>
-          <div class="portrait-empty w-100 h-100" aria-hidden="true"></div>
-        <?php endif; ?>
-      </div>
+      <?php $pImages = $portraits; $pRoute = 'pubimg'; $pAlt = t('login.portrait_alt', ['name' => $name]); $pClass = 'mx-auto'; require __DIR__ . '/_portrait.php'; ?>
 
       <h1 class="login-name"><?= e($name) ?></h1>
       <?php if ($memorial['born'] || $memorial['died']): ?>
@@ -63,5 +57,6 @@ $flashes = take_flashes();
   </div>
   <p class="login-foot"><?= e(t('login.foot')) ?></p>
 <script src="<?= e(asset('js/login.js')) ?>"></script>
+<?php if (count($portraits) > 1): ?><script src="<?= e(asset('js/portrait.js')) ?>"></script><?php endif; ?>
 </body>
 </html>

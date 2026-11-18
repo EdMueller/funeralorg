@@ -465,3 +465,19 @@ main.app-main.app-main-wide { max-width: none; }
 .mask-h.se { right: -.65rem; bottom: -.65rem; cursor: nwse-resize; }
 #maskModal .modal-body { text-align: center; }
 #maskModal .modal-body > div:first-child, #maskModal .modal-body > p { text-align: left; }
+
+/* ---------- Portrait: mehrere Bilder mit weicher Überblendung (portrait.js) ---------- */
+.portrait-frame[data-portrait-fade] > img + img { display: none; } /* ohne JS: nur das erste Bild */
+.portrait-frame.fading > img { display: block; position: absolute; inset: 0; opacity: 0; transition: opacity 1.5s ease-in-out; }
+.portrait-frame.fading > img.on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .portrait-frame.fading > img { transition: none; } }
+
+/* Portraitauswahl im Gedenkseiten-Formular */
+.pp-list { list-style: none; margin: 0 0 .5rem; padding: 0; display: grid; gap: .4rem; }
+.pp-item { display: flex; align-items: center; gap: .75rem; padding: .35rem .5rem; border: 1px solid var(--nebel); border-radius: .4rem; background: var(--papier); }
+.pp-item img { width: 48px; height: 48px; object-fit: cover; border-radius: .25rem; }
+.pp-n { min-width: 1.5rem; text-align: center; font-weight: 600; color: var(--grau); }
+.pp-btns { margin-left: auto; display: flex; gap: .3rem; }
+.pp-add { cursor: pointer; }
+.pp-item[draggable="true"] { cursor: grab; }
+.pp-item.dragging { opacity: .4; }

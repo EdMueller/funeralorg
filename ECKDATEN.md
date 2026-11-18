@@ -1,7 +1,7 @@
 # ECKDATEN – Gedenkseite
 
 Technische Referenz für die Weiterentwicklung (PHPStorm, Claude Code).
-Stand: 13.11.2026 · Version 0.0.27
+Stand: 18.11.2026 · Version 0.0.28
 
 ---
 
@@ -11,7 +11,7 @@ Webanwendung, mit der eine Familie einen Trauerfall organisiert:
 
 | Bereich | Inhalt |
 |---|---|
-| Gedenken | Startseite mit ovalem Portrait, Lebensdaten, Spruch, Gedenktext, Status-Übersicht |
+| Gedenken | Startseite mit ovalem Portrait (mehrere Bilder werden weich überblendet), Lebensdaten, Spruch, Gedenktext, Status-Übersicht |
 | Anmeldeseite | Vollbild-Diashow ausgewählter Fotos, Portrait (auch animiertes GIF), Name, Spruch |
 | Stationen (Plugin) | Horizontaler Zeitstrahl (Geburt bis Tod) und Weltkarte; Hover zeigt Popup am Ort, Klick startet die Diashow des verknüpften Albums; Farbe/Kategorie je Album, Legende filtert |
 | Bilder | Alben, Upload (Mehrfach, Drag & Drop, Fortschritt), Leuchtkasten, Diashow mit Überblendung, Auswahl („Warenkorb"), ZIP-Download |
@@ -181,7 +181,7 @@ in `.htaccess` gesetzt) und nginx leiten selbstständig um.
 | `logout` | – | POST | angemeldet | Abmelden; bei laufender Übernahme (siehe unten) nur Rückkehr zum Admin |
 | `unimpersonate` | – | POST | angemeldet, nur bei laufender Übernahme | Zurück zum Admin |
 | `s` | – (`t`=Token) | GET | öffentlich | Freigabelink öffnen → erste erlaubte Seite |
-| `pubimg` | – (`id`, `s`=thumb/medium) | GET | öffentlich | nur Portrait und als „Anmeldeseite" markierte Bilder |
+| `pubimg` | – (`id`, `s`=thumb/medium) | GET | öffentlich | nur Portrait(s) und als „Anmeldeseite" markierte Bilder |
 | `home` | – | GET | Benutzer (kein Link) | Gedenkseite |
 | `home` | `edit` | GET/POST | A | Gedenkseite bearbeiten |
 | `stations` (Plugin) | – | GET | Benutzer (kein Link) | Zeitstrahl + Weltkarte; Bild/Diashow-Link nur mit Galerie-Recht |
@@ -339,9 +339,10 @@ Sortierung in der Ansicht (`cl_cmp()`): offen vor erledigt; Aufgaben mit manuell
 ### memorial.json
 ```json
 { "name": "…", "born": "12. März 1941", "died": "15. September 2026", "place": "",
-  "quote": "…", "quote_by": "…", "text": "…", "portrait": "<bild-id>|''", "frame": "oval" }
+  "quote": "…", "quote_by": "…", "text": "…", "portrait": "<bild-id>|''", "portraits": ["<bild-id>", …], "frame": "oval" }
 ```
 Lebensdaten sind **Freitext** (Formatfreiheit, z. B. nur Jahr). `frame` ist einer der Schlüssel aus `Frame::KEYS` (`oval`, `round`, `rect`, `passepartout`, `wood`, `antique`, `baroque`, `mourning`); fehlende oder unbekannte Werte gelten als `oval`.
+**Portraits:** `portraits` ist die geordnete Liste (höchstens `Portraits::MAX` = 12) der Bild-IDs, `portrait` bleibt das erste Bild der Liste (Kompatibilität: Web-API, Beispieldaten, Backups); fehlt `portraits`, gilt `portrait` als einziges Bild (`Portraits::rawIds()`). Alle Bilder der Liste sind über `pubimg` ohne Anmeldung sichtbar und fehlen in der Hintergrund-Diashow der Anmeldeseite. Beim Löschen von Bildern entfernt `Portraits::remove()` die IDs. Anzeige: Partial `app/views/_portrait.php` (Startseite `img`, Anmeldeseite `pubimg`); bei mehr als einem Bild blendet `assets/js/portrait.js` die Bilder nacheinander über (6 s Anzeige, 1,5 s Überblendung per CSS `.portrait-frame.fading`; ohne JS und bei `prefers-reduced-motion` bleibt das erste Bild stehen). Auswahl und Reihenfolge im Formular „Gedenkseite bearbeiten“: `assets/js/portrait-edit.js` (`data-portrait-picker`, Hoch/Runter/Entfernen je Bild, versteckte Felder `portraits[]`). Web-API/MCP: `memorial.get` liefert `portraits`, `memorial.update` nimmt `portraits` (Array oder kommagetrennt, Vorrang vor `portrait`).
 
 ### gallery.json
 ```json

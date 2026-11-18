@@ -1,12 +1,6 @@
 <?php $pageTitle = ''; ?>
 <section class="memorial-hero">
-  <div class="portrait-frame frame-<?= e(Frame::key($m['frame'] ?? '')) ?>">
-    <?php if ($portrait): ?>
-      <img src="<?= e(url('img', ['id' => $portrait['id'], 's' => 'medium'])) ?>" alt="<?= e(t('memorial.portrait_of', ['name' => $m['name']])) ?>">
-    <?php else: ?>
-      <div class="portrait-empty w-100 h-100" aria-hidden="true"></div>
-    <?php endif; ?>
-  </div>
+  <?php $pImages = $portraits; $pRoute = 'img'; $pAlt = t('memorial.portrait_of', ['name' => $m['name']]); require __DIR__ . '/_portrait.php'; ?>
   <div>
     <h1><?= e($m['name'] ?: t('memorial.default_title')) ?></h1>
     <?php if ($m['born'] || $m['died']): ?>
@@ -62,3 +56,4 @@
     <?php endforeach; ?>
   </div>
 <?php endif; ?>
+<?php if (count($portraits) > 1): ?><script src="<?= e(asset('js/portrait.js')) ?>"></script><?php endif; ?>

@@ -158,7 +158,7 @@ foreach ($slides as $img) {
       <?php endif; ?>
       <?php if (!empty($img['animated'])): ?><span class="tag">GIF</span><?php endif; ?>
       <?php if ($isAdmin && !empty($img['masks'])): ?><span class="tag" style="left:auto;right:.4rem;top:.4rem;bottom:auto" title="<?= e(t('gal.tag_masked_tip')) ?>"><i class="bi bi-eye-slash me-1"></i><?= e(t('gal.tag_masked')) ?></span><?php endif; ?>
-      <?php if ($isAdmin && (!empty($img['login']) || $img['id'] === $portrait)): ?><span class="tag" style="left:auto;right:.4rem;bottom:.4rem"><?= e(t($img['id'] === $portrait ? 'gal.tag_portrait' : 'gal.tag_login')) ?></span><?php endif; ?>
+      <?php if ($isAdmin && (!empty($img['login']) || in_array($img['id'], $portraitIds, true))): ?><span class="tag" style="left:auto;right:.4rem;bottom:.4rem"><?= e(t(in_array($img['id'], $portraitIds, true) ? 'gal.tag_portrait' : 'gal.tag_login')) ?></span><?php endif; ?>
     </div>
   <?php endforeach; ?>
 </div>

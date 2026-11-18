@@ -48,11 +48,12 @@ final class ApiSpec
             ['me', 'GET', '/me', false, '', 'Angemeldeter Benutzer, Token-Bereich und Rechte', [], 'me'],
             ['summary', 'GET', '/summary', false, '', 'Kennzahlen wie auf der Startseite (offene Aufgaben, Rückmeldungen, offene Dankeskarten, Anrufe)', [], 'summary'],
 
-            ['memorial.get', 'GET', '/memorial', false, 'memorial', 'Gedenkseite: Name, Lebensdaten, Spruch, Text, Portrait-Bild-ID, Rahmen', [], 'memorialGet'],
+            ['memorial.get', 'GET', '/memorial', false, 'memorial', 'Gedenkseite: Name, Lebensdaten, Spruch, Text, Portrait-Bild-IDs (`portrait` = erstes, `portraits` = alle), Rahmen', [], 'memorialGet'],
             ['memorial.update', 'PATCH', '/memorial', true, 'admin', 'Gedenkseite ändern (nur Administratoren); nur übergebene Felder werden gesetzt', [
                 'name' => ['string', 'Name'], 'born' => ['string', 'Geboren (Freitext)'], 'died' => ['string', 'Gestorben (Freitext)'],
                 'place' => ['string', 'Ort'], 'quote' => ['string', 'Spruch'], 'quote_by' => ['string', 'Urheber des Spruchs'],
-                'text' => ['string', 'Text der Gedenkseite'], 'portrait' => ['string', 'Bild-ID des Portraits oder leer'],
+                'text' => ['string', 'Text der Gedenkseite'], 'portrait' => ['string', 'Bild-ID eines einzelnen Portraits oder leer'],
+                'portraits' => ['array', 'Bild-IDs der Portraits in Anzeigereihenfolge (mehrere werden überblendet, höchstens ' . Portraits::MAX . '); hat Vorrang vor `portrait`'],
                 'frame' => ['string', 'Portraitrahmen: ' . implode(', ', Frame::KEYS)],
             ], 'memorialUpdate'],
 
