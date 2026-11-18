@@ -95,7 +95,7 @@ foreach ($slides as $img) {
   <?php if ($album === '_none'): ?><li class="breadcrumb-item active" aria-current="page"><?= e(t('gal.no_album')) ?></li><?php endif; ?>
 </ol></nav>
 <?php endif; ?>
-<nav class="album-bar" aria-label="<?= e(t('gal.albums')) ?>" data-album-bar data-order-parent="<?= e($album === '' ? Albums::ROOT : $album) ?>">
+<nav class="album-bar" aria-label="<?= e(t('gal.albums')) ?>" data-album-bar data-order-parent="<?= e($album === '' ? Albums::ROOT : $album) ?>"<?= $isAdmin && count($subs) > 1 ? ' data-sortable title="' . e(t('gal.albums_sort_hint')) . '"' : '' ?>>
   <?php if ($album === '' && $canAll): ?>
     <a href="<?= e(url('gallery')) ?>" class="active"><?= e(t('gal.crumb_all')) ?><small><?= $total ?></small></a>
   <?php endif; ?>
@@ -108,9 +108,6 @@ foreach ($slides as $img) {
   <?php if ($isAdmin): ?>
     <span class="act-sep"></span>
     <a class="act" href="#" data-bs-toggle="modal" data-bs-target="#albumModal" data-album="<?= e(json_encode(['parent' => $album === '_none' ? '' : $album], JSON_FORCE_OBJECT)) ?>"><i class="bi bi-plus"></i> <?= e(t($album !== '' && $album !== '_none' ? 'gal.subalbum' : 'gal.album')) ?></a>
-    <?php if (count($subs) > 1): ?>
-      <a class="act" href="#" role="button" data-albsort-toggle data-done="<?= e(t('gal.sort_done')) ?>"><i class="bi bi-arrows-move"></i> <span data-sort-label><?= e(t('gal.albums_sort')) ?></span></a>
-    <?php endif; ?>
     <?php if ($album !== '' && $album !== '_none'): ?>
       <a class="act" href="#" data-bs-toggle="modal" data-bs-target="#albumModal" data-album="<?= e(json_encode(['id' => $album, 'name' => $albumNames[$album] ?? '', 'cat' => $albumCats[$album]['cat'] ?? '', 'color' => $albumCats[$album]['color'] ?? '', 'hidden' => !empty($albumCats[$album]['hidden']), 'parent' => $albumCats[$album]['parent'] ?? '', 'links' => $albumCats[$album]['links'] ?? [], 'exclude' => $subtree])) ?>"><i class="bi bi-pencil"></i> <?= e(t('gal.edit_album')) ?></a>
     <?php endif; ?>

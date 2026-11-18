@@ -1,7 +1,7 @@
 # ECKDATEN – Gedenkseite
 
 Technische Referenz für die Weiterentwicklung (PHPStorm, Claude Code).
-Stand: 18.11.2026 · Version 0.0.30
+Stand: 18.11.2026 · Version 0.0.31
 
 ---
 
@@ -342,7 +342,7 @@ Sortierung in der Ansicht (`cl_cmp()`): offen vor erledigt; Aufgaben mit manuell
   "quote": "…", "quote_by": "…", "text": "…", "portrait": "<bild-id>|''", "portraits": ["<bild-id>", …], "frame": "oval" }
 ```
 Lebensdaten sind **Freitext** (Formatfreiheit, z. B. nur Jahr). `frame` ist einer der Schlüssel aus `Frame::KEYS` (`oval`, `round`, `rect`, `passepartout`, `wood`, `antique`, `baroque`, `mourning`); fehlende oder unbekannte Werte gelten als `oval`.
-**Portraits:** `portraits` ist die geordnete Liste (höchstens `Portraits::MAX` = 12) der Bild-IDs, `portrait` bleibt das erste Bild der Liste (Kompatibilität: Web-API, Beispieldaten, Backups); fehlt `portraits`, gilt `portrait` als einziges Bild (`Portraits::rawIds()`). Alle Bilder der Liste sind über `pubimg` ohne Anmeldung sichtbar und fehlen in der Hintergrund-Diashow der Anmeldeseite. Beim Löschen von Bildern entfernt `Portraits::remove()` die IDs. Anzeige: Partial `app/views/_portrait.php` (Startseite `img`, Anmeldeseite `pubimg`); bei mehr als einem Bild blendet `assets/js/portrait.js` die Bilder nacheinander über (6 s Anzeige, 1,5 s Überblendung per CSS `.portrait-frame.fading`; ohne JS und bei `prefers-reduced-motion` bleibt das erste Bild stehen). Auswahl und Reihenfolge im Formular „Gedenkseite bearbeiten“: `assets/js/portrait-edit.js` (`data-portrait-picker`, Links/Rechts/Entfernen je Bild, Ziehen mit der Maus, Liste in einer Zeile, versteckte Felder `portraits[]`). Web-API/MCP: `memorial.get` liefert `portraits`, `memorial.update` nimmt `portraits` (Array oder kommagetrennt, Vorrang vor `portrait`).
+**Portraits:** `portraits` ist die geordnete Liste (höchstens `Portraits::MAX` = 12) der Bild-IDs, `portrait` bleibt das erste Bild der Liste (Kompatibilität: Web-API, Beispieldaten, Backups); fehlt `portraits`, gilt `portrait` als einziges Bild (`Portraits::rawIds()`). Alle Bilder der Liste sind über `pubimg` ohne Anmeldung sichtbar und fehlen in der Hintergrund-Diashow der Anmeldeseite. Beim Löschen von Bildern entfernt `Portraits::remove()` die IDs. Anzeige: Partial `app/views/_portrait.php` (Startseite `img`, Anmeldeseite `pubimg`); bei mehr als einem Bild blendet `assets/js/portrait.js` die Bilder nacheinander über (6 s Anzeige, 1,5 s Überblendung per CSS `.portrait-frame.fading`; ohne JS und bei `prefers-reduced-motion` bleibt das erste Bild stehen). Auswahl und Reihenfolge im Formular „Gedenkseite bearbeiten“: `assets/js/portrait-edit.js` (`data-portrait-picker`, Kacheln in einer Zeile; Entfernen per erneutem Klick im Raster, Sortieren per Ziehen (Maus sofort, Touch/Stift nach langem Druck) oder Pfeil links/rechts auf der fokussierten Kachel, versteckte Felder `portraits[]`). Web-API/MCP: `memorial.get` liefert `portraits`, `memorial.update` nimmt `portraits` (Array oder kommagetrennt, Vorrang vor `portrait`).
 
 ### gallery.json
 ```json
@@ -506,7 +506,7 @@ Format je Zeile (`data/logs/JJJJ-MM.jsonl`):
 | `data-pick="<bild-id>"`, `data-select-all` | Auswahl |
 | `data-open="<index>"`, `data-slideshow` | Leuchtkasten / Diashow |
 | `data-copy="<text>"` | in Zwischenablage kopieren |
-| `[data-album-bar]` (`data-order-parent`), `[data-albsort-toggle]`, `a[data-id]` | Album-Leiste: Sortiermodus für die Alben der aktuellen Ebene (`albumorder`); gemeinsame Logik `makeSortable()` mit dem Bildraster |
+| `[data-album-bar]` (`data-order-parent`, `data-sortable` nur Admin mit mehr als einem Album der Ebene), `a[data-id]` | Album-Leiste: Alben der aktuellen Ebene ohne Sortiermodus ziehen (Maus nach kurzer Bewegung, Touch/Stift nach langem Druck, Pfeil links/rechts auf fokussiertem Album; `albumorder`); das Bildraster nutzt weiter den Sortiermodus (`makeSortable()`) |
 | `table[data-sortable]` | Spaltenkopf-Klick sortiert die Tabelle (auf-/absteigend, `aria-sort`); `data-v` an einer Zelle liefert einen numerischen Sortierwert (z. B. Zeitstempel). Aktuell: Verwaltung → Protokoll |
 | `data-ct` (`#ctable`), `data-ct-search`, `data-ct-ids` (form) | Kontakt-Tabelle: Sortieren, Spaltenfilter, Spaltenauswahl (Rechtsklick auf Kopf), Breite ziehen, Inline-Bearbeitung (Doppelklick), Auswahl, Fußleiste, Rückgängig. Spalten kommen als JSON aus `#ctCols`; `data-ct-ids` hängt die Auswahl als `ids[]` an das Formular |
 | `data-view="cards\|table"` (Link) | merkt die Kontakt-Ansicht im Cookie `gdk_cview` |

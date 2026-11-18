@@ -5,6 +5,16 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+## [0.0.31] - 2026-11-18
+
+### Changed
+
+- "Edit memorial page": the selected portrait pictures no longer have arrow and remove buttons. They are reordered by
+  dragging (mouse immediately, touch and pen after a long press) or with the left/right arrow keys on a focused tile;
+  tapping the picture in the grid below removes it.
+- Gallery: the album bar no longer needs the "Sort albums" mode. Admins drag the albums directly (mouse, touch after a
+  long press) or use the left/right arrow keys on a focused album. The picture grid keeps its sort mode.
+
 ## [0.0.30] - 2026-11-18
 
 ### Fixed

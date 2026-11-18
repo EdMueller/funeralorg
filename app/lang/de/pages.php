@@ -138,7 +138,7 @@ return [
     'gal.to_back' => 'Nach hinten',
     'gal.sort_mode' => 'Reihenfolge ändern',
     'gal.sort_done' => 'Fertig',
-    'gal.albums_sort' => 'Alben sortieren',
+    'gal.albums_sort_hint' => 'Alben per Ziehen sortieren (am Touchdisplay gedrückt halten, dann ziehen; mit der Tastatur Pfeil links/rechts)',
     'gal.sort_by' => 'Sortieren nach',
     'gal.sort_uploaded' => 'Hochladedatum (älteste zuerst)',
     'gal.sort_uploaded_desc' => 'Hochladedatum (neueste zuerst)',

@@ -306,8 +306,9 @@ main.app-main { max-width: 1120px; margin: 0 auto; padding: 1.5rem 1rem 5rem; }
 .gallery-grid.sorting .g-item img { pointer-events: none; }
 .gallery-grid.sorting .g-item { touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .g-item.dragging { opacity: .35; }
-.album-bar.sorting a[data-id] { cursor: grab; border-style: dashed; border-color: var(--efeu); touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
-.album-bar.sorting a.dragging { opacity: .35; }
+.album-bar[data-sortable] a[data-id] { touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.album-bar[data-sortable] a[data-id]:hover { cursor: grab; }
+.album-bar a.dragging { opacity: .35; border-color: var(--efeu); }
 .album-bar a.act.active { background: var(--schiefer); color: #fff; border-style: solid; }
 .cart-bar {
   position: fixed; left: 50%; transform: translateX(-50%); bottom: 1rem; z-index: 1030;
@@ -474,11 +475,9 @@ main.app-main.app-main-wide { max-width: none; }
 
 /* Portraitauswahl im Gedenkseiten-Formular */
 .pp-list { list-style: none; margin: 0 0 .5rem; padding: 0 0 .25rem; display: flex; gap: .5rem; overflow-x: auto; } /* eine Zeile, bei Platzmangel horizontal scrollbar */
-.pp-item { position: relative; flex: none; width: 96px; display: flex; flex-direction: column; align-items: center; gap: .3rem; padding: .35rem; border: 1px solid var(--nebel); border-radius: .4rem; background: var(--papier); }
-.pp-item img { width: 82px; height: 82px; object-fit: cover; border-radius: .25rem; }
-.pp-n { position: absolute; left: .55rem; top: .55rem; min-width: 1.4rem; padding: 0 .3rem; text-align: center; font-size: .8rem; font-weight: 600; color: #fff; background: rgba(29,34,37,.75); border-radius: .2rem; }
-.pp-btns { display: flex; gap: .2rem; }
-.pp-btns .btn { --bs-btn-padding-x: .35rem; --bs-btn-padding-y: .15rem; }
+.pp-item { position: relative; flex: none; padding: .3rem; border: 1px solid var(--nebel); border-radius: .4rem; background: var(--papier); cursor: grab; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.pp-item:focus-visible { outline: 2px solid var(--efeu); outline-offset: 2px; }
+.pp-item.dragging { opacity: .45; box-shadow: 0 0 0 2px var(--efeu); }
+.pp-item img { display: block; width: 76px; height: 76px; object-fit: cover; border-radius: .25rem; pointer-events: none; }
+.pp-n { position: absolute; left: .5rem; top: .5rem; min-width: 1.4rem; padding: 0 .3rem; text-align: center; font-size: .8rem; font-weight: 600; color: #fff; background: rgba(29,34,37,.75); border-radius: .2rem; }
 .pp-add { cursor: pointer; }
-.pp-item[draggable="true"] { cursor: grab; }
-.pp-item.dragging { opacity: .4; }

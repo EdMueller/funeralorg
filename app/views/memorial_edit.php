@@ -48,20 +48,15 @@
   <?php if (!$images): ?>
     <p class="text-muted"><?= t('memorial.upload_first', ['link' => '<a href="' . e(url('gallery')) . '">' . e(t('memorial.gallery_link')) . '</a>']) ?></p>
   <?php else: ?>
-    <div data-portrait-picker data-max="<?= Portraits::MAX ?>"
-         data-l-up="<?= e(t('memorial.pp_up')) ?>" data-l-down="<?= e(t('memorial.pp_down')) ?>" data-l-remove="<?= e(t('memorial.pp_remove')) ?>">
-      <h3 class="h6 mb-2"><?= e(t('memorial.pp_selected')) ?></h3>
+    <div data-portrait-picker data-max="<?= Portraits::MAX ?>">
+      <h3 class="h6 mb-1"><?= e(t('memorial.pp_selected')) ?></h3>
+      <p class="text-muted small mb-2"><?= e(t('memorial.pp_hint')) ?></p>
       <ol class="pp-list" data-pp-list>
         <?php foreach ($selected as $i => $img): ?>
           <li class="pp-item" data-id="<?= e($img['id']) ?>">
             <input type="hidden" name="portraits[]" value="<?= e($img['id']) ?>">
             <span class="pp-n"><?= $i + 1 ?></span>
             <img src="<?= e(url('img', ['id' => $img['id'], 's' => 'thumb'])) ?>" alt="">
-            <span class="pp-btns">
-              <button type="button" class="btn btn-sm btn-outline-secondary" data-act="up" aria-label="<?= e(t('memorial.pp_up')) ?>"><i class="bi bi-arrow-left"></i></button>
-              <button type="button" class="btn btn-sm btn-outline-secondary" data-act="down" aria-label="<?= e(t('memorial.pp_down')) ?>"><i class="bi bi-arrow-right"></i></button>
-              <button type="button" class="btn btn-sm btn-outline-danger" data-act="remove" aria-label="<?= e(t('memorial.pp_remove')) ?>"><i class="bi bi-x-lg"></i></button>
-            </span>
           </li>
         <?php endforeach; ?>
       </ol>

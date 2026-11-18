@@ -548,25 +548,68 @@
     }, true);
   }
 
-  // Album-Leiste (Admin): Reihenfolge der Alben unter dem aktuellen Elternalbum
-  var albBar = $('[data-album-bar]');
-  var albBtn = $('[data-albsort-toggle]');
-  if (albBar && albBtn) {
+  // Album-Leiste (Admin): Reihenfolge der Alben unter dem aktuellen Elternalbum.
+  // Ohne Sortiermodus: Ziehen (Maus nach kurzer Bewegung, Touch/Stift nach langem Druck) oder Pfeil links/rechts auf dem fokussierten Album.
+  var albBar = $('[data-album-bar][data-sortable]');
+  if (albBar) {
     var albSel = 'a[data-id]';
+    var albIds = function () { return $$(albSel, albBar).map(function (i) { return i.dataset.id; }); };
     var albSave = function (ids) {
       var fd = new FormData();
       fd.append('parent', albBar.dataset.orderParent);
       ids.forEach(function (id) { fd.append('ids[]', id); });
       send(u('gallery', 'albumorder'), fd).catch(fail);
     };
-    makeSortable(albBar, albSel, albBtn, albSave, function (ev, r) { return ev.clientX > r.left + r.width / 2; });
-    // im Sortiermodus nicht navigieren
+    $$(albSel, albBar).forEach(function (a) { a.draggable = false; }); // kein nativer Link-Drag
+    var albDrag = null, albTimer = 0, albX = 0, albY = 0, albMoved = false, albBefore = '';
+    var albEnd = function () {
+      clearTimeout(albTimer);
+      if (albDrag && albDrag.on) {
+        albDrag.el.classList.remove('dragging');
+        albMoved = true; // folgenden Klick (Navigation) unterdrücken
+        setTimeout(function () { albMoved = false; }, 0);
+        if (albIds().join() !== albBefore) albSave(albIds());
+      }
+      albDrag = null;
+    };
+    albBar.addEventListener('pointerdown', function (ev) {
+      var it = ev.target.closest(albSel);
+      if (!it || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
+      albDrag = { el: it, id: ev.pointerId, mouse: ev.pointerType === 'mouse', on: false };
+      albX = ev.clientX; albY = ev.clientY; albBefore = albIds().join();
+      if (!albDrag.mouse) {
+        var d = albDrag;
+        albTimer = setTimeout(function () {
+          d.on = true; it.classList.add('dragging');
+          if (navigator.vibrate) navigator.vibrate(15);
+        }, 350);
+      }
+    });
+    albBar.addEventListener('pointermove', function (ev) {
+      if (!albDrag || ev.pointerId !== albDrag.id) return;
+      if (!albDrag.on) {
+        if (Math.abs(ev.clientX - albX) <= 6 && Math.abs(ev.clientY - albY) <= 6) return;
+        if (!albDrag.mouse) { clearTimeout(albTimer); albDrag = null; return; } // vor dem langen Druck bewegt: Scrollen
+        albDrag.on = true; albDrag.el.classList.add('dragging');
+      }
+      var t = document.elementFromPoint(ev.clientX, ev.clientY);
+      t = t && t.closest(albSel);
+      if (!t || t === albDrag.el || t.parentNode !== albBar) return;
+      var r = t.getBoundingClientRect();
+      albBar.insertBefore(albDrag.el, ev.clientX > r.left + r.width / 2 ? t.nextSibling : t);
+    });
+    ['pointerup', 'pointercancel'].forEach(function (n) {
+      document.addEventListener(n, function (ev) { if (albDrag && ev.pointerId === albDrag.id) albEnd(); }); // auch Loslassen außerhalb der Leiste
+    });
+    // gegriffen: nicht scrollen, kein Kontextmenü durch langen Druck; nach dem Ziehen nicht navigieren
+    albBar.addEventListener('touchmove', function (ev) { if (albDrag && albDrag.on) ev.preventDefault(); }, { passive: false });
+    albBar.addEventListener('contextmenu', function (ev) { if (albDrag) ev.preventDefault(); });
     albBar.addEventListener('click', function (ev) {
-      if (albBar.classList.contains('sorting') && ev.target.closest(albSel)) { ev.preventDefault(); ev.stopPropagation(); }
+      if (albMoved && ev.target.closest(albSel)) { ev.preventDefault(); ev.stopPropagation(); }
     }, true);
     // Tastatur: fokussiertes Album mit Pfeil links/rechts verschieben
     albBar.addEventListener('keydown', function (ev) {
-      if (!albBar.classList.contains('sorting') || (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight')) return;
+      if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') return;
       var it = ev.target.closest && ev.target.closest(albSel);
       if (!it) return;
       var left = ev.key === 'ArrowLeft';
@@ -576,7 +619,7 @@
       ev.preventDefault();
       albBar.insertBefore(left ? it : other, left ? other : it);
       it.focus();
-      albSave($$(albSel, albBar).map(function (i) { return i.dataset.id; }));
+      albSave(albIds());
     });
   }
 
