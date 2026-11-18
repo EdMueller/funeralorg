@@ -437,189 +437,95 @@
     });
   });
 
-  /* ---------- Galerie: Reihenfolge ändern (Ziehen, Touch: langer Druck) ---------- */
-  // root = Container, sel = Elemente mit data-id, btn = Umschalter, save(ids) = Speichern der neuen Reihenfolge
-  function makeSortable(root, sel, btn, save, touchAfter) {
-    var dragEl = null, before = '';
-    var order = function () { return $$(sel, root).map(function (i) { return i.dataset.id; }); };
-    btn.addEventListener('click', function (ev) {
-      ev.preventDefault();
-      if (root.classList.contains('sorting')) { window.location.reload(); return; } // Lightbox-Indizes bzw. Links neu aufbauen
-      root.classList.add('sorting');
-      btn.classList.add('active');
-      $('[data-sort-label]', btn).textContent = btn.dataset.done;
-      $$(sel, root).forEach(function (it) { it.draggable = true; });
-    });
-    // Touch/Stift: langer Druck greift das Element, danach folgt es dem Finger (HTML5-Drag gilt nur für die Maus)
-    var touchEl = null, touchId = null, pressTimer = 0, startX = 0, startY = 0, touchType = false;
-    var touchEnd = function (doSave) {
-      clearTimeout(pressTimer);
-      if (touchEl) {
-        touchEl.classList.remove('dragging');
-        if (doSave && order().join() !== before) save(order());
+  /* ---------- Reihenfolge ändern ohne Sortiermodus (Album-Leiste, Bilderraster) ----------
+     Ziehen: Maus nach kurzer Bewegung, Touch/Stift nach langem Druck; Tastatur: Pfeil links/rechts auf dem fokussierten Element.
+     root = Container, sel = Elemente mit data-id, skip = Selektor, der kein Ziehen startet, save(ids) = Speichern der neuen Reihenfolge. */
+  function pointerSort(root, sel, save, skip) {
+    var ids = function () { return $$(sel, root).map(function (i) { return i.dataset.id; }); };
+    $$(sel + ' img', root).forEach(function (im) { im.draggable = false; });
+    $$(sel, root).forEach(function (el) { if (el.tagName === 'A') el.draggable = false; }); // kein nativer Link-Drag
+    var drag = null, timer = 0, sx = 0, sy = 0, moved = false, before = '';
+    function changed() { root.dispatchEvent(new CustomEvent('reordered')); }
+    function end() {
+      clearTimeout(timer);
+      if (drag && drag.on) {
+        drag.el.classList.remove('dragging');
+        moved = true; // folgenden Klick (Navigation, Leuchtkasten) unterdrücken
+        setTimeout(function () { moved = false; }, 0);
+        if (ids().join() !== before) { save(ids()); changed(); }
       }
-      touchEl = null; touchId = null;
-    };
+      drag = null;
+    }
     root.addEventListener('pointerdown', function (ev) {
-      touchType = ev.pointerType !== 'mouse';
-      if (!touchType || !root.classList.contains('sorting') || ev.target.closest('[data-move]')) return;
       var it = ev.target.closest(sel);
-      if (!it) return;
-      startX = ev.clientX; startY = ev.clientY; touchId = ev.pointerId;
-      clearTimeout(pressTimer);
-      pressTimer = setTimeout(function () {
-        touchEl = it; before = order().join();
-        it.classList.add('dragging');
-        if (navigator.vibrate) navigator.vibrate(15);
-      }, 350);
-    });
-    root.addEventListener('pointermove', function (ev) {
-      if (ev.pointerId !== touchId) return;
-      if (!touchEl) {
-        // vor dem langen Druck bewegt: Scrollen, kein Greifen
-        if (Math.abs(ev.clientX - startX) > 8 || Math.abs(ev.clientY - startY) > 8) { clearTimeout(pressTimer); touchId = null; }
-        return;
-      }
-      var t = document.elementFromPoint(ev.clientX, ev.clientY);
-      t = t && t.closest(sel);
-      if (!t || t === touchEl || t.parentNode !== root) return;
-      root.insertBefore(touchEl, touchAfter(ev, t.getBoundingClientRect()) ? t.nextSibling : t);
-    });
-    ['pointerup', 'pointercancel'].forEach(function (n) {
-      root.addEventListener(n, function (ev) { if (ev.pointerId === touchId) touchEnd(n === 'pointerup'); });
-    });
-    // gegriffen: Seite nicht mehr scrollen
-    root.addEventListener('touchmove', function (ev) { if (touchEl) ev.preventDefault(); }, { passive: false });
-    root.addEventListener('contextmenu', function (ev) { if (touchType && root.classList.contains('sorting')) ev.preventDefault(); });
-    root.addEventListener('dragstart', function (ev) {
-      var it = ev.target.closest && ev.target.closest(sel);
-      if (!it || !root.classList.contains('sorting')) return;
-      if (touchType) { ev.preventDefault(); return; }
-      dragEl = it; before = order().join();
-      ev.dataTransfer.effectAllowed = 'move';
-      ev.dataTransfer.setData('text/plain', it.dataset.id);
-      setTimeout(function () { it.classList.add('dragging'); }, 0);
-    });
-    root.addEventListener('dragover', function (ev) {
-      if (!dragEl) return;
-      ev.preventDefault();
-      var t = ev.target.closest(sel);
-      if (!t || t === dragEl || t.parentNode !== root) return;
-      var r = t.getBoundingClientRect();
-      root.insertBefore(dragEl, ev.clientX > r.left + r.width / 2 ? t.nextSibling : t);
-    });
-    root.addEventListener('drop', function (ev) { if (dragEl) ev.preventDefault(); });
-    root.addEventListener('dragend', function () {
-      if (!dragEl) return;
-      dragEl.classList.remove('dragging');
-      dragEl = null;
-      if (order().join() !== before) save(order());
-    });
-    return order;
-  }
-
-  var sortGrid = document.getElementById('galleryGrid');
-  var sortBtn = $('[data-sort-toggle]');
-  if (sortGrid && sortBtn) {
-    var gridSave = function (ids) {
-      var fd = new FormData();
-      fd.append('album', sortGrid.dataset.orderAlbum);
-      ids.forEach(function (id) { fd.append('ids[]', id); });
-      send(u('gallery', 'imgorder'), fd).catch(fail);
-    };
-    makeSortable(sortGrid, '.g-item', sortBtn, gridSave, function (ev, r) {
-      return ev.clientY > r.bottom - r.height / 2 && ev.clientX > r.left + r.width / 2;
-    });
-    // im Sortiermodus weder Leuchtkasten öffnen noch Bild auswählen; Pfeile verschieben um eine Stelle
-    sortGrid.addEventListener('click', function (ev) {
-      if (!sortGrid.classList.contains('sorting')) return;
-      var mv = ev.target.closest('[data-move]');
-      if (mv) {
-        var it = mv.closest('.g-item');
-        var dir = +mv.dataset.move;
-        var other = dir < 0 ? it.previousElementSibling : it.nextElementSibling;
-        if (other) {
-          sortGrid.insertBefore(dir < 0 ? it : other, dir < 0 ? other : it);
-          gridSave($$('.g-item', sortGrid).map(function (i) { return i.dataset.id; }));
-          mv.focus();
-        }
-      }
-      if (ev.target.closest('.open, .pick') || mv) { ev.stopPropagation(); ev.preventDefault(); }
-    }, true);
-  }
-
-  // Album-Leiste (Admin): Reihenfolge der Alben unter dem aktuellen Elternalbum.
-  // Ohne Sortiermodus: Ziehen (Maus nach kurzer Bewegung, Touch/Stift nach langem Druck) oder Pfeil links/rechts auf dem fokussierten Album.
-  var albBar = $('[data-album-bar][data-sortable]');
-  if (albBar) {
-    var albSel = 'a[data-id]';
-    var albIds = function () { return $$(albSel, albBar).map(function (i) { return i.dataset.id; }); };
-    var albSave = function (ids) {
-      var fd = new FormData();
-      fd.append('parent', albBar.dataset.orderParent);
-      ids.forEach(function (id) { fd.append('ids[]', id); });
-      send(u('gallery', 'albumorder'), fd).catch(fail);
-    };
-    $$(albSel, albBar).forEach(function (a) { a.draggable = false; }); // kein nativer Link-Drag
-    var albDrag = null, albTimer = 0, albX = 0, albY = 0, albMoved = false, albBefore = '';
-    var albEnd = function () {
-      clearTimeout(albTimer);
-      if (albDrag && albDrag.on) {
-        albDrag.el.classList.remove('dragging');
-        albMoved = true; // folgenden Klick (Navigation) unterdrücken
-        setTimeout(function () { albMoved = false; }, 0);
-        if (albIds().join() !== albBefore) albSave(albIds());
-      }
-      albDrag = null;
-    };
-    albBar.addEventListener('pointerdown', function (ev) {
-      var it = ev.target.closest(albSel);
-      if (!it || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
-      albDrag = { el: it, id: ev.pointerId, mouse: ev.pointerType === 'mouse', on: false };
-      albX = ev.clientX; albY = ev.clientY; albBefore = albIds().join();
-      if (!albDrag.mouse) {
-        var d = albDrag;
-        albTimer = setTimeout(function () {
+      if (!it || (ev.pointerType === 'mouse' && ev.button !== 0) || (skip && ev.target.closest(skip))) return;
+      drag = { el: it, id: ev.pointerId, mouse: ev.pointerType === 'mouse', on: false };
+      sx = ev.clientX; sy = ev.clientY; before = ids().join();
+      if (!drag.mouse) {
+        var d = drag;
+        timer = setTimeout(function () {
           d.on = true; it.classList.add('dragging');
           if (navigator.vibrate) navigator.vibrate(15);
         }, 350);
       }
     });
-    albBar.addEventListener('pointermove', function (ev) {
-      if (!albDrag || ev.pointerId !== albDrag.id) return;
-      if (!albDrag.on) {
-        if (Math.abs(ev.clientX - albX) <= 6 && Math.abs(ev.clientY - albY) <= 6) return;
-        if (!albDrag.mouse) { clearTimeout(albTimer); albDrag = null; return; } // vor dem langen Druck bewegt: Scrollen
-        albDrag.on = true; albDrag.el.classList.add('dragging');
+    root.addEventListener('pointermove', function (ev) {
+      if (!drag || ev.pointerId !== drag.id) return;
+      if (!drag.on) {
+        if (Math.abs(ev.clientX - sx) <= 6 && Math.abs(ev.clientY - sy) <= 6) return;
+        if (!drag.mouse) { clearTimeout(timer); drag = null; return; } // vor dem langen Druck bewegt: Scrollen
+        drag.on = true; drag.el.classList.add('dragging');
       }
       var t = document.elementFromPoint(ev.clientX, ev.clientY);
-      t = t && t.closest(albSel);
-      if (!t || t === albDrag.el || t.parentNode !== albBar) return;
+      t = t && t.closest(sel);
+      if (!t || t === drag.el || t.parentNode !== root) return;
       var r = t.getBoundingClientRect();
-      albBar.insertBefore(albDrag.el, ev.clientX > r.left + r.width / 2 ? t.nextSibling : t);
+      root.insertBefore(drag.el, ev.clientX > r.left + r.width / 2 ? t.nextSibling : t);
     });
     ['pointerup', 'pointercancel'].forEach(function (n) {
-      document.addEventListener(n, function (ev) { if (albDrag && ev.pointerId === albDrag.id) albEnd(); }); // auch Loslassen außerhalb der Leiste
+      document.addEventListener(n, function (ev) { if (drag && ev.pointerId === drag.id) end(); }); // auch Loslassen außerhalb
     });
-    // gegriffen: nicht scrollen, kein Kontextmenü durch langen Druck; nach dem Ziehen nicht navigieren
-    albBar.addEventListener('touchmove', function (ev) { if (albDrag && albDrag.on) ev.preventDefault(); }, { passive: false });
-    albBar.addEventListener('contextmenu', function (ev) { if (albDrag) ev.preventDefault(); });
-    albBar.addEventListener('click', function (ev) {
-      if (albMoved && ev.target.closest(albSel)) { ev.preventDefault(); ev.stopPropagation(); }
+    // gegriffen: nicht scrollen, kein Kontextmenü durch langen Druck
+    root.addEventListener('touchmove', function (ev) { if (drag && drag.on) ev.preventDefault(); }, { passive: false });
+    root.addEventListener('contextmenu', function (ev) { if (drag) ev.preventDefault(); });
+    root.addEventListener('click', function (ev) {
+      if (moved && ev.target.closest(sel)) { ev.preventDefault(); ev.stopPropagation(); }
     }, true);
-    // Tastatur: fokussiertes Album mit Pfeil links/rechts verschieben
-    albBar.addEventListener('keydown', function (ev) {
+    root.addEventListener('keydown', function (ev) {
       if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') return;
-      var it = ev.target.closest && ev.target.closest(albSel);
+      var it = ev.target.closest && ev.target.closest(sel);
       if (!it) return;
       var left = ev.key === 'ArrowLeft';
       var other = left ? it.previousElementSibling : it.nextElementSibling;
-      while (other && !other.matches(albSel)) other = left ? other.previousElementSibling : other.nextElementSibling;
+      while (other && !other.matches(sel)) other = left ? other.previousElementSibling : other.nextElementSibling;
       if (!other) return;
       ev.preventDefault();
-      albBar.insertBefore(left ? it : other, left ? other : it);
-      it.focus();
-      albSave(albIds());
+      root.insertBefore(left ? it : other, left ? other : it);
+      ev.target.focus();
+      save(ids());
+      changed();
+    });
+  }
+
+  // Bilderraster eines Albums (Admin)
+  var sortGrid = $('#galleryGrid[data-sortable]');
+  if (sortGrid) {
+    pointerSort(sortGrid, '.g-item', function (ids) {
+      var fd = new FormData();
+      fd.append('album', sortGrid.dataset.orderAlbum);
+      ids.forEach(function (id) { fd.append('ids[]', id); });
+      send(u('gallery', 'imgorder'), fd).catch(fail);
+    }, '.pick');
+  }
+
+  // Album-Leiste (Admin): Reihenfolge der Alben unter dem aktuellen Elternalbum
+  var albBar = $('[data-album-bar][data-sortable]');
+  if (albBar) {
+    pointerSort(albBar, 'a[data-id]', function (ids) {
+      var fd = new FormData();
+      fd.append('parent', albBar.dataset.orderParent);
+      ids.forEach(function (id) { fd.append('ids[]', id); });
+      send(u('gallery', 'albumorder'), fd).catch(fail);
     });
   }
 
@@ -731,6 +637,15 @@
     }
 
     $$('[data-open]').forEach(function (b) { b.addEventListener('click', function () { open(+b.dataset.open, false); }); });
+    // Reihenfolge im Raster geändert: Bilderliste des Leuchtkastens und Indizes angleichen
+    var grid = document.getElementById('galleryGrid');
+    if (grid) grid.addEventListener('reordered', function () {
+      var byId = {};
+      items.forEach(function (it) { byId[it.id] = it; });
+      var order = $$('.g-item', grid).map(function (g) { return g.dataset.id; });
+      items = order.map(function (id) { return byId[id]; }).filter(Boolean);
+      $$('.g-item', grid).forEach(function (g, n) { var o = $('[data-open]', g); if (o) o.dataset.open = n; });
+    });
     $$('[data-slideshow]').forEach(function (b) { b.addEventListener('click', function () { open(0, true); }); });
     $('#lbClose').addEventListener('click', close);
     $('#lbPrev').addEventListener('click', function () { stopPlay(); show(idx - 1); });

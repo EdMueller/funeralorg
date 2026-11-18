@@ -5,6 +5,15 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+## [0.0.32] - 2026-11-18
+
+### Changed
+
+- Gallery: the pictures of an album are reordered directly in the grid, without the sort mode and without arrow buttons.
+  Admins drag them (mouse, touch after a long press) or use the left/right arrow keys on a focused picture. The
+  lightbox and slideshow follow the new order immediately. The "Sort by" button keeps the automatic sort options.
+  Album bar and picture grid share one sorting routine.
+
 ## [0.0.31] - 2026-11-18
 
 ### Changed

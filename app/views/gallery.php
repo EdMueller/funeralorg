@@ -67,9 +67,10 @@ foreach ($slides as $img) {
     <?php endif; ?>
     <?php if ($isAdmin && $album !== '' && count($images) > 1): ?>
       <div class="btn-group btn-group-sm">
-        <button class="btn btn-outline-primary" type="button" data-sort-toggle data-done="<?= e(t('gal.sort_done')) ?>"><i class="bi bi-arrows-move me-1"></i><span data-sort-label><?= e(t('gal.sort_mode')) ?></span></button>
-        <button class="btn btn-outline-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-label="<?= e(t('gal.sort_by')) ?>"></button>
+        <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-arrows-move me-1"></i><?= e(t('gal.sort_by')) ?></button>
         <ul class="dropdown-menu dropdown-menu-end">
+          <li><span class="dropdown-item-text small text-muted" style="max-width:18rem;white-space:normal"><?= e(t('gal.imgs_sort_hint')) ?></span></li>
+          <li><hr class="dropdown-divider"></li>
           <li><h6 class="dropdown-header"><?= e(t('gal.sort_by')) ?></h6></li>
           <?php foreach (['uploaded' => 'gal.sort_uploaded', 'uploaded_desc' => 'gal.sort_uploaded_desc', 'name' => 'gal.sort_name', 'caption' => 'gal.sort_caption'] as $by => $label): ?>
             <li><form method="post" action="<?= e(url('gallery', ['a' => 'imgsortby'])) ?>" data-confirm="<?= e(t('gal.sort_confirm')) ?>"><?= Csrf::field() ?>
@@ -141,7 +142,7 @@ foreach ($slides as $img) {
   <div class="empty surface"><i class="bi bi-images"></i><?= e(t($canUpload ? 'gal.empty_upload' : 'gal.empty')) ?>
     <?php if ($canUpload): ?><br><button class="btn btn-sm btn-primary mt-3" type="button" data-bs-toggle="collapse" data-bs-target="#uploadBox"><i class="bi bi-cloud-upload me-1"></i><?= e(t('gal.upload_first')) ?></button><?php endif; ?></div>
 <?php else: ?>
-<div class="gallery-grid" id="galleryGrid" data-order-album="<?= e($album) ?>">
+<div class="gallery-grid" id="galleryGrid" data-order-album="<?= e($album) ?>"<?= $isAdmin && $album !== '' && count($images) > 1 ? ' data-sortable' : '' ?>>
   <?php foreach ($images as $n => $img): $picked = in_array($img['id'], $selected, true); ?>
     <div class="g-item<?= $picked ? ' picked' : '' ?>" data-id="<?= e($img['id']) ?>">
       <button class="open" type="button" data-open="<?= $n ?>" title="<?= e(image_tip($img, $albumNames)) ?>" aria-label="<?= e(t('gal.open_pic') . ($img['caption'] ? ': ' . $img['caption'] : '')) ?>">
@@ -149,9 +150,6 @@ foreach ($slides as $img) {
       </button>
       <?php if ($canDl): ?>
         <button class="pick" type="button" data-pick="<?= e($img['id']) ?>" aria-pressed="<?= $picked ? 'true' : 'false' ?>" aria-label="<?= e(t('gal.add_to_sel')) ?>"><i class="bi bi-check-lg"></i></button>
-      <?php endif; ?>
-      <?php if ($isAdmin && $album !== ''): ?>
-        <span class="mv"><button type="button" data-move="-1" aria-label="<?= e(t('gal.to_front')) ?>"><i class="bi bi-chevron-left"></i></button><button type="button" data-move="1" aria-label="<?= e(t('gal.to_back')) ?>"><i class="bi bi-chevron-right"></i></button></span>
       <?php endif; ?>
       <?php if (!empty($img['animated'])): ?><span class="tag">GIF</span><?php endif; ?>
       <?php if ($isAdmin && !empty($img['masks'])): ?><span class="tag" style="left:auto;right:.4rem;top:.4rem;bottom:auto" title="<?= e(t('gal.tag_masked_tip')) ?>"><i class="bi bi-eye-slash me-1"></i><?= e(t('gal.tag_masked')) ?></span><?php endif; ?>
