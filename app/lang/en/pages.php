@@ -137,6 +137,7 @@ return [
     'gal.albums_sort_hint' => 'Drag albums to reorder (on a touch screen press and hold, then drag; with the keyboard use the left/right arrow keys)',
     'gal.sort_by' => 'Sort by',
     'gal.imgs_sort_hint' => 'Drag pictures to reorder (on a touch screen press and hold, then drag; with the keyboard use the left/right arrow keys).',
+    'gal.sort_in_album_hint' => 'Open an album to reorder its pictures. The “All” view has no order of its own.',
     'gal.to_front' => 'Forward',
     'gal.to_back' => 'Back',
     'gal.sort_uploaded' => 'Upload date (oldest first)',

@@ -1,7 +1,7 @@
 # ECKDATEN – Gedenkseite
 
 Technische Referenz für die Weiterentwicklung (PHPStorm, Claude Code).
-Stand: 18.11.2026 · Version 0.0.32
+Stand: 18.11.2026 · Version 0.0.33
 
 ---
 
@@ -366,7 +366,7 @@ Lebensdaten sind **Freitext** (Formatfreiheit, z. B. nur Jahr). `frame` ist eine
 
 **Unkenntlich machen (Gesichter, Kennzeichen):** Admin zieht im Leuchtkasten („Unkenntlich machen“, `#maskModal`, `app.js`) Rechtecke oder Ellipsen auf das Bild; Koordinaten sind relativ (0–1) zum gedrehten Original. `masks` (höchstens 50) gehört zum Bilddatensatz (`Image::cleanMasks()`). **Die Bereiche werden in `thumb` und `medium` eingebrannt** (`Image::rerender()`: Original laden → `applyMasks()` in Vollauflösung → beide Varianten über `.tmp` + `rename()` schreiben); `uploads/orig/` wird nie verändert. Dadurch zeigen **alle** Auslieferungsstellen (Galerie, `pubimg`, Stationen, Web-API/MCP, Transfer/Backup) ohne weitere Prüfung die maskierte Fassung; bewusst unmaskiert bleiben nur `orig` (Recht „Herunterladen“, Leuchtkasten-Button und ZIP) und die Admin-Vorschau `img&s=raw`. Arten: `black` (deckend), `pixel` (≈ 8 Zellen über die kürzere Seite), `blur` (Bereich zuerst auf ≈ 5 Zellen verkleinert, dann weich vergrößert und 3× geglättet – Information geht verloren, also nicht rückrechenbar). Formen: `rect`, `ellipse` (zeilenweise Sehne). Nicht für GIF (`Image::maskable()`); Zurücksetzen (leere Liste) rendert `thumb`/`medium` neu aus dem Original. Bereits im Browser-Cache anderer Benutzer liegende unmaskierte Vorschauen bleiben bis zu 24 h gültig (`max-age`); danach und für maskierte Bilder gilt Neuvalidierung. Web-API/MCP: `gallery.image.masks` (`PUT /gallery/images/{id}/masks`, nur Admin), `masked` in jeder Bildausgabe, `masks` nur für Admins. Admin-Raster zeigt das Etikett „unkenntlich“.
 
-**Bildreihenfolge:** `ord[<album-id>|_none]` = Position im Raster dieses Albums (`Albums::sortIn()`); Bilder ohne Eintrag folgen in Upload-Reihenfolge. **Nur Admins** dürfen die Reihenfolge ändern (Controller, Ansicht, Web-API/MCP `gallery.order`); neue Uploads anderer Benutzer landen am Ende des Albums. Ändern direkt im Raster ohne Sortiermodus: Ziehen (Maus), langer Druck und Ziehen (Touch/Stift, Pointer-Events, `pointerSort()` in `app.js`) oder Pfeil links/rechts am fokussierten Bild (`imgorder`), dazu das Dropdown „Sortieren nach“ (`imgsortby`); danach gleicht das Raster die Bilderliste des Leuchtkastens an; in „Alle“ nicht möglich. Wirkt auf Raster, Leuchtkasten und Diashow, nicht auf ZIP.
+**Bildreihenfolge:** `ord[<album-id>|_none]` = Position im Raster dieses Albums (`Albums::sortIn()`); Bilder ohne Eintrag folgen in Upload-Reihenfolge. **Nur Admins** dürfen die Reihenfolge ändern (Controller, Ansicht, Web-API/MCP `gallery.order`); neue Uploads anderer Benutzer landen am Ende des Albums. Ändern direkt im Raster ohne Sortiermodus: Ziehen (Maus), langer Druck und Ziehen (Touch/Stift, Pointer-Events, `pointerSort()` in `app.js`) oder Pfeil links/rechts am fokussierten Bild (`imgorder`), dazu das Dropdown „Sortieren nach“ (`imgsortby`); danach gleicht das Raster die Bilderliste des Leuchtkastens an; in „Alle“ nicht möglich (dort steht ein Hinweis „Album öffnen“). Wirkt auf Raster, Leuchtkasten und Diashow, nicht auf ZIP.
 
 Bild-Tooltip: `title` am Vorschaubild, erzeugt von `image_tip()` (`app/helpers.php`) aus Unterschrift/Dateiname, Maßen, Größe, Typ, Album, Hochlader und Datum (EXIF wird beim Upload entfernt).
 

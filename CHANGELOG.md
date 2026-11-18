@@ -5,6 +5,12 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+## [0.0.33] - 2026-11-18
+
+### Changed
+
+- Gallery: in the "All" view admins now see a short note that pictures can only be reordered inside an album.
+
 ## [0.0.32] - 2026-11-18
 
 ### Changed
