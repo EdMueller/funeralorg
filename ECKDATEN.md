@@ -1,7 +1,7 @@
 # ECKDATEN – Gedenkseite
 
 Technische Referenz für die Weiterentwicklung (PHPStorm, Claude Code).
-Stand: 18.11.2026 · Version 0.0.28
+Stand: 18.11.2026 · Version 0.0.29
 
 ---
 
@@ -342,7 +342,7 @@ Sortierung in der Ansicht (`cl_cmp()`): offen vor erledigt; Aufgaben mit manuell
   "quote": "…", "quote_by": "…", "text": "…", "portrait": "<bild-id>|''", "portraits": ["<bild-id>", …], "frame": "oval" }
 ```
 Lebensdaten sind **Freitext** (Formatfreiheit, z. B. nur Jahr). `frame` ist einer der Schlüssel aus `Frame::KEYS` (`oval`, `round`, `rect`, `passepartout`, `wood`, `antique`, `baroque`, `mourning`); fehlende oder unbekannte Werte gelten als `oval`.
-**Portraits:** `portraits` ist die geordnete Liste (höchstens `Portraits::MAX` = 12) der Bild-IDs, `portrait` bleibt das erste Bild der Liste (Kompatibilität: Web-API, Beispieldaten, Backups); fehlt `portraits`, gilt `portrait` als einziges Bild (`Portraits::rawIds()`). Alle Bilder der Liste sind über `pubimg` ohne Anmeldung sichtbar und fehlen in der Hintergrund-Diashow der Anmeldeseite. Beim Löschen von Bildern entfernt `Portraits::remove()` die IDs. Anzeige: Partial `app/views/_portrait.php` (Startseite `img`, Anmeldeseite `pubimg`); bei mehr als einem Bild blendet `assets/js/portrait.js` die Bilder nacheinander über (6 s Anzeige, 1,5 s Überblendung per CSS `.portrait-frame.fading`; ohne JS und bei `prefers-reduced-motion` bleibt das erste Bild stehen). Auswahl und Reihenfolge im Formular „Gedenkseite bearbeiten“: `assets/js/portrait-edit.js` (`data-portrait-picker`, Hoch/Runter/Entfernen je Bild, versteckte Felder `portraits[]`). Web-API/MCP: `memorial.get` liefert `portraits`, `memorial.update` nimmt `portraits` (Array oder kommagetrennt, Vorrang vor `portrait`).
+**Portraits:** `portraits` ist die geordnete Liste (höchstens `Portraits::MAX` = 12) der Bild-IDs, `portrait` bleibt das erste Bild der Liste (Kompatibilität: Web-API, Beispieldaten, Backups); fehlt `portraits`, gilt `portrait` als einziges Bild (`Portraits::rawIds()`). Alle Bilder der Liste sind über `pubimg` ohne Anmeldung sichtbar und fehlen in der Hintergrund-Diashow der Anmeldeseite. Beim Löschen von Bildern entfernt `Portraits::remove()` die IDs. Anzeige: Partial `app/views/_portrait.php` (Startseite `img`, Anmeldeseite `pubimg`); bei mehr als einem Bild blendet `assets/js/portrait.js` die Bilder nacheinander über (6 s Anzeige, 1,5 s Überblendung per CSS `.portrait-frame.fading`; ohne JS und bei `prefers-reduced-motion` bleibt das erste Bild stehen). Auswahl und Reihenfolge im Formular „Gedenkseite bearbeiten“: `assets/js/portrait-edit.js` (`data-portrait-picker`, Links/Rechts/Entfernen je Bild, Ziehen mit der Maus, Liste in einer Zeile, versteckte Felder `portraits[]`). Web-API/MCP: `memorial.get` liefert `portraits`, `memorial.update` nimmt `portraits` (Array oder kommagetrennt, Vorrang vor `portrait`).
 
 ### gallery.json
 ```json

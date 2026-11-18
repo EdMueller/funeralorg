@@ -5,6 +5,13 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+## [0.0.29] - 2026-11-18
+
+### Changed
+
+- "Edit memorial page": the selected portrait pictures are shown as tiles in a single row (horizontally scrollable)
+  instead of one row per picture. The buttons move a picture left or right.
+
 ## [0.0.28] - 2026-11-18
 
 ### Added

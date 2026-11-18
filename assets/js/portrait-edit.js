@@ -43,8 +43,8 @@
     var n = document.createElement('span'); n.className = 'pp-n';
     var im = document.createElement('img'); im.src = thumb; im.alt = '';
     var bs = document.createElement('span'); bs.className = 'pp-btns';
-    bs.appendChild(btn('up', 'btn-outline-secondary', 'arrow-up', root.dataset.lUp));
-    bs.appendChild(btn('down', 'btn-outline-secondary', 'arrow-down', root.dataset.lDown));
+    bs.appendChild(btn('up', 'btn-outline-secondary', 'arrow-left', root.dataset.lUp));
+    bs.appendChild(btn('down', 'btn-outline-secondary', 'arrow-right', root.dataset.lDown));
     bs.appendChild(btn('remove', 'btn-outline-danger', 'x-lg', root.dataset.lRemove));
     [h, n, im, bs].forEach(function (x) { li.appendChild(x); });
     list.appendChild(li);
@@ -78,7 +78,7 @@
     var t = ev.target.closest('li');
     if (!t || t === dragEl || t.parentNode !== list) return;
     var r = t.getBoundingClientRect();
-    list.insertBefore(dragEl, ev.clientY > r.top + r.height / 2 ? t.nextSibling : t);
+    list.insertBefore(dragEl, ev.clientX > r.left + r.width / 2 ? t.nextSibling : t);
   });
   list.addEventListener('drop', function (ev) { if (dragEl) ev.preventDefault(); });
   list.addEventListener('dragend', function () {

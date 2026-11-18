@@ -58,8 +58,8 @@
             <span class="pp-n"><?= $i + 1 ?></span>
             <img src="<?= e(url('img', ['id' => $img['id'], 's' => 'thumb'])) ?>" alt="">
             <span class="pp-btns">
-              <button type="button" class="btn btn-sm btn-outline-secondary" data-act="up" aria-label="<?= e(t('memorial.pp_up')) ?>"><i class="bi bi-arrow-up"></i></button>
-              <button type="button" class="btn btn-sm btn-outline-secondary" data-act="down" aria-label="<?= e(t('memorial.pp_down')) ?>"><i class="bi bi-arrow-down"></i></button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" data-act="up" aria-label="<?= e(t('memorial.pp_up')) ?>"><i class="bi bi-arrow-left"></i></button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" data-act="down" aria-label="<?= e(t('memorial.pp_down')) ?>"><i class="bi bi-arrow-right"></i></button>
               <button type="button" class="btn btn-sm btn-outline-danger" data-act="remove" aria-label="<?= e(t('memorial.pp_remove')) ?>"><i class="bi bi-x-lg"></i></button>
             </span>
           </li>
