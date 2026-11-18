@@ -467,7 +467,7 @@ main.app-main.app-main-wide { max-width: none; }
 #maskModal .modal-body > div:first-child, #maskModal .modal-body > p { text-align: left; }
 
 /* ---------- Portrait: mehrere Bilder mit weicher Überblendung (portrait.js) ---------- */
-.portrait-frame[data-portrait-fade] > img + img { display: none; } /* ohne JS: nur das erste Bild */
+.portrait-frame[data-portrait-fade]:not(.fading) > img + img { display: none; } /* ohne JS: nur das erste Bild */
 .portrait-frame.fading > img { display: block; position: absolute; inset: 0; opacity: 0; transition: opacity 1.5s ease-in-out; }
 .portrait-frame.fading > img.on { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .portrait-frame.fading > img { transition: none; } }

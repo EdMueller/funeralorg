@@ -5,6 +5,13 @@ and the project uses [Semantic Versioning](https://semver.org/). While the versi
 
 ## [Unreleased]
 
+## [0.0.30] - 2026-11-18
+
+### Fixed
+
+- Memorial portrait with several pictures: the first picture faded out but the next one never appeared, because the
+  no-JavaScript rule hiding the following pictures overrode the cross-fade styles.
+
 ## [0.0.29] - 2026-11-18
 
 ### Changed
